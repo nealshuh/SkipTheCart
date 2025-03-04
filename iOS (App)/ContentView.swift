@@ -3,7 +3,7 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         VStack(spacing: 20) {
-            Text("Zara Cart Image Extractor")
+            Text("PursePause")
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
@@ -22,7 +22,7 @@ struct ContentView: View {
                 Text("1. Open Safari")
                 Text("2. Tap the 'aA' button in the address bar")
                 Text("3. Select 'Manage Extensions'")
-                Text("4. Enable 'Zara Cart Image Extractor'")
+                Text("4. Enable 'PursePause'")
                 Text("5. Visit Zara.com shopping cart")
             }
             .padding()
