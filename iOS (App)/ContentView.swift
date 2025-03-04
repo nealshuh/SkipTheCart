@@ -32,8 +32,8 @@ struct ContentView: View {
             Spacer()
             
             // Opens Safari Settings
-            Button("Open Safari Settings") {
-                if let url = URL(string: "https://www.zara.com") {
+            Button("Add PursePause Extension") {
+                if let url = URL(string: "https://pursepause.carrd.co/") {
                     UIApplication.shared.open(url)
                 }
             }
