@@ -33,7 +33,7 @@ struct ContentView: View {
             
             // Opens Safari Settings
             Button("Open Safari Settings") {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
+                if let url = URL(string: "https://www.zara.com") {
                     UIApplication.shared.open(url)
                 }
             }

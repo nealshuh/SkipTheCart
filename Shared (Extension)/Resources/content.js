@@ -167,7 +167,10 @@ function handleStateChange() {
     // Reset initialization flag when URL changes
     if (lastCheckedUrl !== window.location.href) {
         hasInitialized = false;
-        lastCheckedUrl = window.location.href;
+        const newUrl = window.location.href;
+        console.log("Zara Cart Image Extractor: URL changed to:", newUrl);
+        showDebugOverlay("URL changed to: " + newUrl);
+        lastCheckedUrl = newUrl;
     }
     
     // Check immediately
