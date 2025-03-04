@@ -115,9 +115,6 @@
 				Resources/content.js,
 				Resources/images,
 				Resources/manifest.json,
-				Resources/popup.css,
-				Resources/popup.html,
-				Resources/popup.js,
 				SafariWebExtensionHandler.swift,
 			);
 			target = 1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */;
@@ -131,9 +128,6 @@
 				Resources/content.js,
 				Resources/images,
 				Resources/manifest.json,
-				Resources/popup.css,
-				Resources/popup.html,
-				Resources/popup.js,
 				SafariWebExtensionHandler.swift,
 			);
 			target = 1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */;
