@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "name": "Zara Cart Image Extractor",
+  "version": "1.0",
+  "description": "Extracts and displays images from your Zara shopping cart",
+  "permissions": ["activeTab"],
+  "host_permissions": ["*://www.zara.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["*://www.zara.com/*/shop/cart*"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "action": {
+    "default_title": "Zara Cart Image Extractor"
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}
