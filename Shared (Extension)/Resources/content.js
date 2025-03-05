@@ -1,24 +1,68 @@
 //
-//  content.js
-//  ReturnGuard
+//  aritzia-content.js
+//  PursePause for Aritzia
 //
-//  Created by Prafull Sharma on 3/3/25.
+//  Created on 3/4/25.
 //
 
-
-
+// IMMEDIATE SELF-EXECUTING FUNCTION FOR INSTANT DEBUGGING
 (function() {
-    var script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/2.4.1/eruda.min.js';
-    document.body.appendChild(script);
-    script.onload = function() {
-        eruda.init();
-        console.log("Eruda console initialized");
+    // Create debug overlay immediately before anything else
+    function createDebugOverlay() {
+        if (document.getElementById('debug-overlay')) return;
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'debug-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+        overlay.style.color = 'white';
+        overlay.style.padding = '20px';
+        overlay.style.zIndex = '10000';
+        overlay.style.maxHeight = '50%';
+        overlay.style.overflow = 'auto';
+        
+        // Add initial message
+        const initialMessage = document.createElement('div');
+        initialMessage.textContent = `[${new Date().toLocaleTimeString()}] PursePause initialized`;
+        overlay.appendChild(initialMessage);
+        
+        // Append to document if body exists, otherwise wait for it
+        if (document.body) {
+            document.body.appendChild(overlay);
+            console.log("DEBUG: Debug overlay created immediately");
+        } else {
+            // Set up a loop to check for body
+            const checkBodyInterval = setInterval(function() {
+                if (document.body) {
+                    document.body.appendChild(overlay);
+                    console.log("DEBUG: Debug overlay created after body was available");
+                    clearInterval(checkBodyInterval);
+                }
+            }, 10);
+        }
     }
+    
+    // Call immediately
+    createDebugOverlay();
+    
+    // Add first log message
+    console.log("PursePause: Script initialized - immediate execution");
+    showDebugOverlay("Script initialized - immediate execution");
 })();
 
-// Debug overlay function
+// Debug overlay function - works even if body isn't ready yet
 function showDebugOverlay(message) {
+    console.log(`DEBUG: ${message}`); // Always log to console
+    
+    // If body doesn't exist yet, queue the message and add it later
+    if (!document.body) {
+        if (!window.debugMessageQueue) window.debugMessageQueue = [];
+        window.debugMessageQueue.push(message);
+        return;
+    }
+    
     let overlay = document.getElementById('debug-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -40,8 +84,32 @@ function showDebugOverlay(message) {
     overlay.appendChild(logLine);
 }
 
+// Process any queued messages once body is available
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.debugMessageQueue && window.debugMessageQueue.length) {
+        window.debugMessageQueue.forEach(function(message) {
+            showDebugOverlay(message);
+        });
+        window.debugMessageQueue = [];
+    }
+});
+
+// Add Eruda console for mobile debugging
+setTimeout(function() {
+    if (document.body) {
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/2.4.1/eruda.min.js';
+        document.body.appendChild(script);
+        script.onload = function() {
+            eruda.init();
+            console.log("Eruda console initialized");
+            showDebugOverlay("Eruda console initialized");
+        }
+    }
+}, 100);
+
 // Log when script is loaded
-console.log("Zara Cart Image Extractor: Script loaded");
+console.log("PursePause for Aritzia: Script loaded");
 showDebugOverlay("Script loaded");
 
 // Track if we've already initialized for the current page
@@ -54,70 +122,121 @@ let lastCheckedUrl = '';
 // CORE INITIALIZATION STRATEGIES
 // =============================================
 
-// Check if we're on a cart page
-function checkIfCartPage() {
-    // Check URL pattern
-    const isCartUrl = window.location.href.includes('zara.com') &&
-                      (window.location.href.includes('/shop/cart') ||
-                       window.location.href.includes('/cart') ||
-                       window.location.href.includes('/checkout'));
-    
-    // Check for cart elements that might appear in the DOM
-    const hasCartElements = Boolean(
-        document.querySelector('.shop-cart-item') ||
-        document.querySelector('.shop-cart-grid-items') ||
-        document.querySelector('[data-qa-id="cart-item"]') ||
-        document.querySelector('[data-testid="cart-item"]') ||
-        document.querySelector('.cart-container') ||
-        document.querySelector('.cart-page') ||
-        document.querySelector('[data-qa-id="shopping-cart"]') ||
-        document.title.toLowerCase().includes('cart') ||
-        document.title.toLowerCase().includes('basket')
-    );
-    
-    // Check if there's any element with "cart" in its ID, class or text content
-    const cartTextCheck = Array.from(document.querySelectorAll('*')).some(el => {
-        return (el.id && el.id.toLowerCase().includes('cart')) ||
-               (el.className && el.className.toLowerCase().includes('cart')) ||
-               (el.textContent && el.textContent.toLowerCase().includes('shopping cart'));
-    });
-    
-    isCartPage = isCartUrl || hasCartElements || cartTextCheck;
-    
-    if (isCartPage) {
-        console.log("Zara Cart Image Extractor: Detected cart page");
-        showDebugOverlay("Detected cart page with method: " +
-                         (isCartUrl ? "URL match, " : "") +
-                         (hasCartElements ? "Cart elements, " : "") +
-                         (cartTextCheck ? "Text match" : ""));
+// Check if we're on an Aritzia website regardless of page
+function checkIfAritziaPage() {
+    const isAritzia = window.location.href.includes('aritzia.com');
+    if (isAritzia) {
+        showDebugOverlay("Detected Aritzia website");
     }
-    
-    return isCartPage;
+    return isAritzia;
+}
+
+// Check if we're on an Aritzia cart page
+function checkIfCartPage() {
+    try {
+        // First check if we're on Aritzia at all
+        if (!checkIfAritziaPage()) {
+            return false;
+        }
+        
+        // Check URL pattern - this is the most reliable method
+        const isCartUrl = window.location.href.includes('/cart') ||
+                          window.location.href.includes('/checkout') ||
+                          window.location.href.includes('/shopping-bag');
+        
+        if (isCartUrl) {
+            console.log("PursePause: Detected Aritzia cart page via URL");
+            showDebugOverlay("Detected Aritzia cart page via URL");
+            isCartPage = true;
+            return true;
+        }
+        
+        // Check for Aritzia-specific cart elements
+        const hasCartElements = Boolean(
+            document.querySelector('.ar-cart__table') ||
+            document.querySelector('.ar-cart-item') ||
+            document.querySelector('#js-cart-table') ||
+            document.querySelector('[data-selid="bag-product-info"]') ||
+            document.title.toLowerCase().includes('shopping bag')
+        );
+        
+        if (hasCartElements) {
+            console.log("PursePause: Detected Aritzia cart page via cart elements");
+            showDebugOverlay("Detected Aritzia cart page via cart elements");
+            isCartPage = true;
+            return true;
+        }
+        
+        // Additional check for any element with "cart" or "bag" in its text
+        const cartTextCheck = Array.from(document.querySelectorAll('*')).some(el => {
+            return (el.id && (el.id.toLowerCase().includes('cart') || el.id.toLowerCase().includes('bag'))) ||
+                   (el.className && typeof el.className === 'string' &&
+                    (el.className.toLowerCase().includes('cart') || el.className.toLowerCase().includes('bag'))) ||
+                   (el.textContent && (el.textContent.toLowerCase().includes('shopping bag') ||
+                                      el.textContent.toLowerCase().includes('my bag')));
+        });
+        
+        if (cartTextCheck) {
+            console.log("PursePause: Detected Aritzia cart page via text content");
+            showDebugOverlay("Detected Aritzia cart page via text content");
+            isCartPage = true;
+            return true;
+        }
+        
+        isCartPage = false;
+        return false;
+    } catch (error) {
+        console.error("PursePause: Error checking if cart page:", error);
+        showDebugOverlay("Error checking if cart page: " + error.message);
+        return false;
+    }
 }
 
 // Main initialization function - try to extract cart items
 function initializeExtension() {
-    if (hasInitialized) {
-        console.log("Zara Cart Image Extractor: Already initialized, skipping");
-        return;
-    }
-    
-    if (checkIfCartPage()) {
-        hasInitialized = true;
-        console.log("Zara Cart Image Extractor: Initializing extension on cart page");
-        showDebugOverlay("Initializing extension on cart page");
+    try {
+        console.log("PursePause: Attempting to initialize extension");
+        showDebugOverlay("Attempting to initialize extension");
         
-        // Extract cart items immediately
-        extractAndDisplayImages();
+        // Always check if we're on Aritzia first
+        if (!checkIfAritziaPage()) {
+            console.log("PursePause: Not on Aritzia website");
+            showDebugOverlay("Not on Aritzia website, exiting initialization");
+            return;
+        }
         
-        // Set up observation for dynamic changes
-        observeCartChanges();
+        showDebugOverlay("On Aritzia website: " + window.location.href);
         
-        // Set up continuous checking for cart items (safety net)
-        setupContinuousChecking();
-    } else {
-        console.log("Zara Cart Image Extractor: Not on cart page. Current URL:", window.location.href);
-        showDebugOverlay("Not on cart page. Current URL: " + window.location.href);
+        if (hasInitialized) {
+            console.log("PursePause: Already initialized, skipping");
+            showDebugOverlay("Already initialized, skipping");
+            return;
+        }
+        
+        // Check if we're on a cart page
+        const isOnCartPage = checkIfCartPage();
+        console.log(`PursePause: Is on cart page? ${isOnCartPage}`);
+        
+        if (isOnCartPage) {
+            hasInitialized = true;
+            console.log("PursePause: Initializing extension on Aritzia cart page");
+            showDebugOverlay("Initializing extension on Aritzia cart page");
+            
+            // Extract cart items immediately
+            extractAndDisplayImages();
+            
+            // Set up observation for dynamic changes
+            observeCartChanges();
+            
+            // Set up continuous checking for cart items (safety net)
+            setupContinuousChecking();
+        } else {
+            console.log("PursePause: Not on cart page. Current URL:", window.location.href);
+            showDebugOverlay("Not on cart page. Current URL: " + window.location.href);
+        }
+    } catch (error) {
+        console.error("PursePause: Error during initialization:", error);
+        showDebugOverlay("Error during initialization: " + error.message);
     }
 }
 
@@ -127,22 +246,29 @@ function initializeExtension() {
 
 // Listen to all possible events that might signal navigation or page changes
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Zara Cart Image Extractor: DOMContentLoaded fired");
+    console.log("PursePause: DOMContentLoaded fired");
     showDebugOverlay("DOMContentLoaded fired");
     initializeExtension();
 });
 
 window.addEventListener('load', function() {
-    console.log("Zara Cart Image Extractor: window.load fired");
+    console.log("PursePause: window.load fired");
     showDebugOverlay("window.load fired");
     initializeExtension();
 });
+
+// Initialize immediately if document is already complete
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    console.log("PursePause: Document already ready, initializing immediately");
+    showDebugOverlay("Document already ready, initializing immediately");
+    setTimeout(initializeExtension, 100); // Small delay to ensure DOM is accessible
+}
 
 // Monitor for History API changes - crucial for SPA navigation
 const originalPushState = history.pushState;
 history.pushState = function() {
     originalPushState.apply(this, arguments);
-    console.log("Zara Cart Image Extractor: pushState detected");
+    console.log("PursePause: pushState detected");
     showDebugOverlay("pushState detected");
     handleStateChange();
 };
@@ -150,13 +276,13 @@ history.pushState = function() {
 const originalReplaceState = history.replaceState;
 history.replaceState = function() {
     originalReplaceState.apply(this, arguments);
-    console.log("Zara Cart Image Extractor: replaceState detected");
+    console.log("PursePause: replaceState detected");
     showDebugOverlay("replaceState detected");
     handleStateChange();
 };
 
 window.addEventListener('popstate', function() {
-    console.log("Zara Cart Image Extractor: popstate event detected");
+    console.log("PursePause: popstate event detected");
     showDebugOverlay("popstate event detected");
     handleStateChange();
 });
@@ -167,7 +293,7 @@ function handleStateChange() {
     if (lastCheckedUrl !== window.location.href) {
         hasInitialized = false;
         const newUrl = window.location.href;
-        console.log("Zara Cart Image Extractor: URL changed to:", newUrl);
+        console.log("PursePause: URL changed to:", newUrl);
         showDebugOverlay("URL changed to: " + newUrl);
         lastCheckedUrl = newUrl;
     }
@@ -187,8 +313,8 @@ function setupContinuousChecking() {
     }
     
     continuousCheckInterval = setInterval(function() {
-        if (checkIfCartPage() && !document.getElementById('zara-cart-panel')) {
-            console.log("Zara Cart Image Extractor: Continuous check found cart page without panel");
+        if (checkIfCartPage() && !document.getElementById('aritzia-panel')) {
+            console.log("PursePause: Continuous check found Aritzia cart page without panel");
             showDebugOverlay("Continuous check triggered panel creation");
             extractAndDisplayImages();
         }
@@ -198,7 +324,7 @@ function setupContinuousChecking() {
     setTimeout(function() {
         if (continuousCheckInterval) {
             clearInterval(continuousCheckInterval);
-            console.log("Zara Cart Image Extractor: Stopped continuous checking after timeout");
+            console.log("PursePause: Stopped continuous checking after timeout");
         }
     }, 30000);
 }
@@ -206,11 +332,13 @@ function setupContinuousChecking() {
 // Observe for critical DOM mutations that might contain cart elements
 function observeBodyForCartElements() {
     const observer = new MutationObserver(function(mutations) {
-        // If we detect any significant change to the DOM and URL contains cart
-        if (!hasInitialized && window.location.href.includes('/cart')) {
+        // If we detect any significant change to the DOM and URL contains cart/bag
+        if (!hasInitialized &&
+            (window.location.href.includes('/cart') ||
+             window.location.href.includes('/shopping-bag'))) {
             setTimeout(function() {
                 if (checkIfCartPage()) {
-                    console.log("Zara Cart Image Extractor: DOM mutation observer detected cart page");
+                    console.log("PursePause: DOM mutation observer detected cart page");
                     showDebugOverlay("DOM mutation triggered initialization");
                     initializeExtension();
                 }
@@ -240,31 +368,29 @@ if (document.body) {
 
 // Function to extract and display cart images
 function extractAndDisplayImages() {
-    console.log("Zara Cart Image Extractor: Starting to extract images");
-    showDebugOverlay("Starting to extract images");
+    console.log("PursePause: Starting to extract Aritzia cart images");
+    showDebugOverlay("Starting to extract Aritzia cart images");
     
     // First, create our bottom panel if it doesn't exist
-    let panel = document.getElementById('zara-cart-panel');
+    let panel = document.getElementById('aritzia-panel');
     if (!panel) {
-        console.log("Zara Cart Image Extractor: Creating panel");
+        console.log("PursePause: Creating panel");
         showDebugOverlay("Creating panel");
         panel = createBottomPanel();
     } else {
-        console.log("Zara Cart Image Extractor: Panel already exists");
+        console.log("PursePause: Panel already exists");
         showDebugOverlay("Panel already exists");
     }
     
-    // Try multiple possible selectors for cart items, from most specific to general
+    // Try Aritzia-specific selectors
     const selectors = [
-        '.shop-cart-item',
-        '.shop-cart-grid-items .shop-cart-item',
-        '[data-qa-id="cart-item"]',
-        '[data-testid="cart-item"]',
-        '.cart-items .item',
-        '.cart-product',
-        '[class*="cart"][class*="item"]',
-        '[class*="cart"] [class*="product"]',
-        '[class*="basket"] [class*="item"]'
+        '.ar-cart-item',
+        '.ar-cart__table .ar-cart-item',
+        '#js-cart-table .ar-cart-item',
+        '#js-cart-table li',
+        '[data-selid="bag-product-info"]',
+        '[class*="cart-item"]',
+        '[class*="bag-item"]'
     ];
     
     let cartItems = [];
@@ -273,7 +399,7 @@ function extractAndDisplayImages() {
     // Try each selector until we find cart items
     for (const selector of selectors) {
         const items = document.querySelectorAll(selector);
-        console.log(`Zara Cart Image Extractor: Trying selector "${selector}" - found ${items.length} items`);
+        console.log(`PursePause: Trying Aritzia selector "${selector}" - found ${items.length} items`);
         showDebugOverlay(`Selector "${selector}": ${items.length} items`);
         
         if (items.length > 0) {
@@ -284,37 +410,38 @@ function extractAndDisplayImages() {
     }
     
     if (cartItems.length === 0) {
-        panel.innerHTML = '<div class="panel-message">Looking for items in your cart...</div>';
+        panel.innerHTML = '<div class="panel-message">Looking for items in your Aritzia bag...</div>';
         
         // Dump page HTML for debugging
-        console.log("Page HTML structure:", document.body.innerHTML.substring(0, 1000) + "...");
-        showDebugOverlay("Could not find cart items. Check console for HTML structure.");
+        const htmlSample = document.body.innerHTML.substring(0, 1000) + "...";
+        console.log("Page HTML structure:", htmlSample);
+        showDebugOverlay("Could not find Aritzia cart items. Check console for HTML structure.");
         
         // Set up a more aggressive observer to catch when items appear
         setupAggressiveCartObserver();
     } else {
-        processCartItems(cartItems, panel, usedSelector);
+        processAritziaCartItems(cartItems, panel, usedSelector);
     }
 }
 
 // More aggressive observation strategy
 function setupAggressiveCartObserver() {
-    console.log("Zara Cart Image Extractor: Setting up aggressive observer");
-    showDebugOverlay("Setting up aggressive observer");
+    console.log("PursePause: Setting up aggressive observer for Aritzia");
+    showDebugOverlay("Setting up aggressive observer for Aritzia");
+    
+    const selectors = [
+        '.ar-cart-item',
+        '#js-cart-table li',
+        '[data-selid="bag-product-info"]',
+        '.ar-cart__table'
+    ].join(', ');
     
     const observer = new MutationObserver(function(mutations) {
         // Check if any cart items have appeared using all our selectors
-        const selectors = [
-            '.shop-cart-item',
-            '[data-qa-id="cart-item"]',
-            '.cart-product',
-            '[class*="cart"][class*="item"]'
-        ].join(', ');
-        
         const anyCartItems = document.querySelectorAll(selectors).length > 0;
         
         if (anyCartItems) {
-            console.log("Zara Cart Image Extractor: Items detected via aggressive observer");
+            console.log("PursePause: Items detected via aggressive observer");
             showDebugOverlay("Items detected via aggressive observer");
             observer.disconnect();
             extractAndDisplayImages();
@@ -332,20 +459,20 @@ function setupAggressiveCartObserver() {
     // Safety timeout to avoid observing forever
     setTimeout(() => {
         observer.disconnect();
-        console.log("Zara Cart Image Extractor: Disconnected aggressive observer after timeout");
+        console.log("PursePause: Disconnected aggressive observer after timeout");
         showDebugOverlay("Disconnected aggressive observer after timeout");
     }, 10000);
 }
 
-// Process the cart items
-function processCartItems(cartItems, panel, usedSelector) {
+// Process the Aritzia cart items
+function processAritziaCartItems(cartItems, panel, usedSelector) {
     // Clear existing content
     panel.innerHTML = '';
     
     // Title for the panel
     const panelTitle = document.createElement('div');
     panelTitle.className = 'panel-title';
-    panelTitle.textContent = 'Items in Your Cart';
+    panelTitle.textContent = 'Items in Your Aritzia Bag';
     panel.appendChild(panelTitle);
     
     // Container for the images
@@ -356,119 +483,68 @@ function processCartItems(cartItems, panel, usedSelector) {
     // Extract all product information and images
     cartItems.forEach((item, index) => {
         try {
-            console.log(`Zara Cart Image Extractor: Processing item ${index+1}`);
-            showDebugOverlay(`Processing item ${index+1}`);
+            console.log(`PursePause: Processing Aritzia item ${index+1}`);
+            showDebugOverlay(`Processing Aritzia item ${index+1}`);
             
-            // Adapt image selectors based on which cart item selector worked
-            let imageSelectors = [
-                '.media-image__image',
-                'img.product-image',
-                '[data-qa-id="product-image"] img',
-                'img[src*="product"]',
-                'img',
-                '[style*="background-image"]'
-            ];
-            
-            // If we're using a specific known selector, prioritize relevant image selectors
-            if (usedSelector.includes('shop-cart-item')) {
-                imageSelectors.unshift('.media-image__image'); // Prioritize this selector
-            }
-            
-            let imgElement = null;
+            // Aritzia-specific image selectors
             let imageUrl = '';
+            const imageElement = item.querySelector('.ar-cart-item__img img') ||
+                                 item.querySelector('[class*="cart-item"] img') ||
+                                 item.querySelector('img');
             
-            // Try each image selector
-            for (const selector of imageSelectors) {
-                imgElement = item.querySelector(selector);
-                if (imgElement) {
-                    // Handle both img elements and background images
-                    if (imgElement.tagName === 'IMG' && imgElement.src) {
-                        imageUrl = imgElement.src;
-                        break;
-                    } else if (imgElement.style && imgElement.style.backgroundImage) {
-                        // Extract URL from background-image style
-                        const bgImg = imgElement.style.backgroundImage;
-                        imageUrl = bgImg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
-                        break;
-                    }
-                }
-            }
-            
-            // Last resort - look for any image URL in the attributes or styles
-            if (!imageUrl) {
-                const elementsWithUrl = item.querySelectorAll('[src], [style*="url"]');
-                for (const el of elementsWithUrl) {
-                    if (el.src && el.src.includes('/images/')) {
-                        imageUrl = el.src;
-                        break;
-                    } else if (el.style && el.style.backgroundImage) {
-                        const bgImg = el.style.backgroundImage;
-                        if (bgImg.includes('/images/')) {
-                            imageUrl = bgImg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
-                            break;
-                        }
-                    }
-                }
+            if (imageElement && imageElement.src) {
+                imageUrl = imageElement.src;
             }
             
             if (!imageUrl) {
-                console.log(`Zara Cart Image Extractor: No image found for item ${index+1}`);
-                showDebugOverlay(`No image found for item ${index+1}`);
+                console.log(`PursePause: No image found for Aritzia item ${index+1}`);
+                showDebugOverlay(`No image found for Aritzia item ${index+1}`);
                 return;
             }
             
-            console.log(`Zara Cart Image Extractor: Found image for item ${index+1}: ${imageUrl}`);
-            showDebugOverlay(`Found image for item ${index+1}`);
+            console.log(`PursePause: Found image for Aritzia item ${index+1}: ${imageUrl}`);
+            showDebugOverlay(`Found image for Aritzia item ${index+1}`);
             
-            // Try multiple possible selectors for product details
-            const nameSelectors = [
-                '.shop-cart-item-header__description-link',
-                '.product-name',
-                '[data-qa-id="product-name"]',
-                '.item-title',
-                'h2', 'h3', 'h4', 'a'
-            ];
-            
-            const priceSelectors = [
-                '.money-amount__main',
-                '.price',
-                '[data-qa-id="price"]',
-                '.item-price',
-                '[class*="price"]'
-            ];
-            
-            const sizeSelectors = [
-                '.shop-cart-item-details-base__size',
-                '.size',
-                '[data-qa-id="size"]',
-                '.item-size',
-                '[class*="size"]'
-            ];
-            
-            const colorSelectors = [
-                '.shop-cart-item-details-base__color',
-                '.color',
-                '[data-qa-id="color"]',
-                '.item-color',
-                '[class*="color"]'
-            ];
-            
-            // Helper function to try multiple selectors
-            function getTextFromSelectors(selectors) {
-                for (const selector of selectors) {
-                    const element = item.querySelector(selector);
-                    if (element && element.textContent) {
-                        return element.textContent.trim();
-                    }
-                }
-                return '';
+            // Extract product details
+            let productBrand = '';
+            const brandElement = item.querySelector('.js-cart-item__product-brand');
+            if (brandElement) {
+                productBrand = brandElement.textContent.trim();
             }
             
-            // Extract product details using multiple selectors
-            const productName = getTextFromSelectors(nameSelectors) || 'Product';
-            const price = getTextFromSelectors(priceSelectors) || '';
-            const size = getTextFromSelectors(sizeSelectors) || '';
-            const color = getTextFromSelectors(colorSelectors) || '';
+            let productName = '';
+            const nameElement = item.querySelector('.js-cart-item__product-name');
+            if (nameElement) {
+                productName = nameElement.textContent.trim();
+            }
+            
+            let productPrice = '';
+            const priceElement = item.querySelector('.js-cart-item__product-price span');
+            if (priceElement) {
+                productPrice = priceElement.textContent.trim();
+            }
+            
+            let productColor = '';
+            const colorElement = item.querySelector('.js-cart-item__product-color');
+            if (colorElement) {
+                productColor = colorElement.textContent.trim();
+            }
+            
+            let productSize = '';
+            const sizeElement = item.querySelector('.js-cart-item__product-size');
+            if (sizeElement) {
+                productSize = sizeElement.textContent.trim().replace(/\s+/g, ' ');
+            }
+            
+            // Fallback for product name if not found
+            if (!productName) {
+                const titleElement = item.querySelector('[title]');
+                if (titleElement && titleElement.getAttribute('title')) {
+                    productName = titleElement.getAttribute('title');
+                } else {
+                    productName = 'Product';
+                }
+            }
             
             // Create item container
             const itemElement = document.createElement('div');
@@ -494,6 +570,14 @@ function processCartItems(cartItems, panel, usedSelector) {
             const detailsElement = document.createElement('div');
             detailsElement.className = 'item-details';
             
+            // Add brand if available
+            if (productBrand) {
+                const brandDiv = document.createElement('div');
+                brandDiv.className = 'item-brand';
+                brandDiv.textContent = productBrand;
+                detailsElement.appendChild(brandDiv);
+            }
+            
             // Add product name
             const nameDiv = document.createElement('div');
             nameDiv.className = 'item-name';
@@ -503,13 +587,13 @@ function processCartItems(cartItems, panel, usedSelector) {
             // Add price
             const priceDiv = document.createElement('div');
             priceDiv.className = 'item-price';
-            priceDiv.textContent = price;
+            priceDiv.textContent = productPrice;
             detailsElement.appendChild(priceDiv);
             
             // Add size and color
             const specDiv = document.createElement('div');
             specDiv.className = 'item-specs';
-            specDiv.textContent = `${size} | ${color}`;
+            specDiv.textContent = `${productSize} | ${productColor}`;
             detailsElement.appendChild(specDiv);
             
             // Add all elements to item container
@@ -519,8 +603,8 @@ function processCartItems(cartItems, panel, usedSelector) {
             // Add item to the image container
             imageContainer.appendChild(itemElement);
         } catch (error) {
-            console.error('Zara Cart Image Extractor: Error extracting item details:', error);
-            showDebugOverlay('Error extracting item details: ' + error.message);
+            console.error('PursePause: Error extracting Aritzia item details:', error);
+            showDebugOverlay('Error extracting Aritzia item details: ' + error.message);
         }
     });
     
@@ -536,8 +620,8 @@ function processCartItems(cartItems, panel, usedSelector) {
     // Show panel
     panel.classList.remove('hidden');
     
-    console.log("Zara Cart Image Extractor: Panel populated and displayed");
-    showDebugOverlay("Panel populated and displayed");
+    console.log("PursePause: Aritzia panel populated and displayed");
+    showDebugOverlay("Aritzia panel populated and displayed");
 }
 
 // Function to create the bottom panel
@@ -545,7 +629,7 @@ function createBottomPanel() {
     // Add our CSS to the page
     const style = document.createElement('style');
     style.textContent = `
-        #zara-cart-panel {
+        #aritzia-panel {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -559,7 +643,7 @@ function createBottomPanel() {
             overflow-y: auto;
         }
         
-        #zara-cart-panel.hidden {
+        #aritzia-panel.hidden {
             transform: translateY(100%);
         }
         
@@ -592,6 +676,12 @@ function createBottomPanel() {
         
         .item-details {
             padding: 5px 0;
+        }
+        
+        .item-brand {
+            font-size: 11px;
+            color: #444;
+            margin-bottom: 2px;
         }
         
         .item-name {
@@ -633,11 +723,11 @@ function createBottomPanel() {
     
     // Create the panel
     const panel = document.createElement('div');
-    panel.id = 'zara-cart-panel';
+    panel.id = 'aritzia-panel';
     panel.className = 'cart-panel';
     document.body.appendChild(panel);
     
-    console.log("Zara Cart Image Extractor: Bottom panel created");
+    console.log("PursePause: Bottom panel created");
     showDebugOverlay("Bottom panel created");
     
     return panel;
@@ -645,15 +735,15 @@ function createBottomPanel() {
 
 // Observe changes to the cart to update our panel
 function observeCartChanges() {
-    console.log("Zara Cart Image Extractor: Setting up observer");
-    showDebugOverlay("Setting up observer");
+    console.log("PursePause: Setting up observer for Aritzia");
+    showDebugOverlay("Setting up observer for Aritzia");
     
-    // Look for the cart container using multiple possible selectors
+    // Different selectors for Aritzia
     const possibleCartContainers = [
-        '.shop-cart-grid-items',
-        '.cart-container',
-        '[data-qa-id="cart-container"]',
-        '[class*="cart-items"]',
+        '.ar-cart__table',
+        '#js-cart-table',
+        '[class*="cart-container"]',
+        '[class*="bag-container"]',
         'main'
     ];
     
@@ -663,16 +753,16 @@ function observeCartChanges() {
     for (const selector of possibleCartContainers) {
         cartContainer = document.querySelector(selector);
         if (cartContainer) {
-            console.log(`Zara Cart Image Extractor: Found cart container "${selector}" to observe`);
-            showDebugOverlay(`Found cart container "${selector}" to observe`);
+            console.log(`PursePause: Found Aritzia cart container "${selector}" to observe`);
+            showDebugOverlay(`Found Aritzia cart container "${selector}" to observe`);
             break;
         }
     }
     
     if (cartContainer) {
         const observer = new MutationObserver(function(mutations) {
-            console.log("Zara Cart Image Extractor: Cart content changed, updating panel");
-            showDebugOverlay("Cart content changed, updating panel");
+            console.log("PursePause: Aritzia cart content changed, updating panel");
+            showDebugOverlay("Aritzia cart content changed, updating panel");
             extractAndDisplayImages();
         });
         
@@ -682,27 +772,34 @@ function observeCartChanges() {
             attributes: true
         });
     } else {
-        console.log("Zara Cart Image Extractor: Couldn't find cart container to observe");
-        showDebugOverlay("Couldn't find cart container to observe");
+        console.log("PursePause: Couldn't find Aritzia cart container to observe");
+        showDebugOverlay("Couldn't find Aritzia cart container to observe");
         
         // Fallback to body observation with more focused checking
         const observer = new MutationObserver(function(mutations) {
             // Look for mutations that might indicate cart items loading
+            const relevantTerms = ['cart', 'bag'];
+            
             const cartRelatedMutation = mutations.some(mutation => {
-                // Check if mutation target or its parent has cart-related class/id
-                const isCartRelated =
-                    (mutation.target.className && mutation.target.className.toString().toLowerCase().includes('cart')) ||
-                    (mutation.target.id && mutation.target.id.toLowerCase().includes('cart')) ||
-                    (mutation.target.parentElement &&
-                    mutation.target.parentElement.className &&
-                    mutation.target.parentElement.className.toString().toLowerCase().includes('cart'));
+                // Check if mutation target or its parent has cart/bag-related class/id
+                const targetHasRelevantClass = mutation.target.className &&
+                    typeof mutation.target.className === 'string' &&
+                    relevantTerms.some(term => mutation.target.className.toLowerCase().includes(term));
                 
-                return isCartRelated;
+                const targetHasRelevantId = mutation.target.id &&
+                    relevantTerms.some(term => mutation.target.id.toLowerCase().includes(term));
+                
+                const parentHasRelevantClass = mutation.target.parentElement &&
+                    mutation.target.parentElement.className &&
+                    typeof mutation.target.parentElement.className === 'string' &&
+                    relevantTerms.some(term => mutation.target.parentElement.className.toLowerCase().includes(term));
+                
+                return targetHasRelevantClass || targetHasRelevantId || parentHasRelevantClass;
             });
             
             if (cartRelatedMutation) {
-                console.log("Zara Cart Image Extractor: Cart-related DOM change detected");
-                showDebugOverlay("Cart-related DOM change detected");
+                console.log("PursePause: Aritzia cart-related DOM change detected");
+                showDebugOverlay("Aritzia cart-related DOM change detected");
                 extractAndDisplayImages();
             }
         });

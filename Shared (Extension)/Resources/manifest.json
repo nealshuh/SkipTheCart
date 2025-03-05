@@ -1,19 +1,19 @@
 {
-  "manifest_version": 2,
-  "name": "PursePause",
+  "manifest_version": 3,
+  "name": "PursePause for Aritzia",
   "version": "1.0",
-  "description": "Extracts and displays images from your Zara shopping cart",
+  "description": "Extracts and displays images from your Aritzia shopping bag",
   "permissions": ["activeTab"],
-  "host_permissions": ["*://www.zara.com/*"],
+  "host_permissions": ["*://www.aritzia.com/*"],
   "content_scripts": [
     {
-      "matches": ["*://www.zara.com/*"],
+      "matches": ["*://www.aritzia.com/*"],
       "js": ["content.js"],
       "css": ["content.css"]
     }
   ],
   "action": {
-    "default_title": "PursePause"
+    "default_title": "PursePause for Aritzia"
   },
   "icons": {
     "16": "images/icon16.png",
