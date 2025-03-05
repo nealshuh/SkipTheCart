@@ -5,9 +5,8 @@
 //  Created by Prafull Sharma on 3/3/25.
 //
 
-// content.js - This runs on the Zara cart page
 
-// Add mobile console for debugging
+
 (function() {
     var script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/eruda/2.4.1/eruda.min.js';
@@ -715,80 +714,4 @@ function observeCartChanges() {
             attributeFilter: ['class', 'style', 'id']
         });
     }
-}
-
-// Handle messages from popup or background
-chrome.runtime.onMessage?.addListener(function(message, sender, sendResponse) {
-    if (message.action === "showPanel") {
-        let panel = document.getElementById('zara-cart-panel');
-        if (panel) {
-            panel.classList.remove('hidden');
-        } else {
-            extractAndDisplayImages();
-        }
-    }
-});
-
-// Additional initialization for iOS Safari which might behave differently
-if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-    console.log("Zara Cart Image Extractor: iOS device detected, adding additional initialization");
-    showDebugOverlay("iOS device detected, adding additional initialization");
-    
-    // Try special initialization for iOS Safari
-    setTimeout(function() {
-        console.log("Zara Cart Image Extractor: iOS-specific initialization");
-        showDebugOverlay("iOS-specific initialization");
-        
-        // Reset initialization flag to force check
-        hasInitialized = false;
-        initializeExtension();
-        
-        // iOS Safari sometimes needs more time to render elements
-        setTimeout(initializeExtension, 2500);
-        setTimeout(initializeExtension, 4000);
-    }, 1000);
-    
-    // Add touchend listener for iOS navigation detection
-    document.addEventListener('touchend', function() {
-        setTimeout(function() {
-            if (window.location.href.includes('/cart') && !hasInitialized) {
-                console.log("Zara Cart Image Extractor: Touch event on potential cart page");
-                showDebugOverlay("Touch event check");
-                initializeExtension();
-            }
-        }, 1000);
-    });
-    
-    // Monitor FastClick or similar libraries that might be used on mobile sites
-    document.addEventListener('click', function() {
-        setTimeout(function() {
-            if (window.location.href.includes('/cart') && !hasInitialized) {
-                console.log("Zara Cart Image Extractor: Click event on potential cart page");
-                showDebugOverlay("Click event check");
-                initializeExtension();
-            }
-        }, 1000);
-    }, true); // Use capture phase
-}
-
-// Initialize immediately if already on cart page
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    initializeExtension();
-} else {
-    document.addEventListener('readystatechange', function() {
-        if (document.readyState === 'interactive' || document.readyState === 'complete') {
-            initializeExtension();
-        }
-    });
-}
-
-// Last resort - check periodically for a limited time
-for (let delay of [500, 1000, 2000, 3000, 5000, 7000, 10000]) {
-    setTimeout(function() {
-        if (!hasInitialized && window.location.href.includes('/cart')) {
-            console.log(`Zara Cart Image Extractor: Timed check (${delay}ms)`);
-            showDebugOverlay(`Timed check (${delay}ms)`);
-            initializeExtension();
-        }
-    }, delay);
 }
