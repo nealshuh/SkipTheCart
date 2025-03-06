@@ -80,13 +80,6 @@
 			);
 			target = 1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */;
 		};
-		1F07C46C2D729B3800755618 /* Exceptions for "iOS (App)" folder in "ReturnGuard (iOS)" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 1F07C4152D729B3800755618 /* ReturnGuard (iOS) */;
-		};
 		1F07C46D2D729B3800755618 /* Exceptions for "Shared (App)" folder in "ReturnGuard (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -132,6 +125,22 @@
 			);
 			target = 1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */;
 		};
+		EF6D568B2D796FD7005FC3AE /* Exceptions for "iOS (App)" folder in "ReturnGuard (iOS)" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: LaunchScreen.storyboard",
+				"/Localized: Main.storyboard",
+				AppDelegate.swift,
+				Assets/cart.png,
+				Assets/insights.png,
+				Assets/shop.png,
+				Assets/wardrobe.png,
+				Assets/welcome.png,
+				ContentView.swift,
+				SceneDelegate.swift,
+			);
+			target = 1F07C4152D729B3800755618 /* ReturnGuard (iOS) */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -157,14 +166,6 @@
 			path = "Shared (Extension)";
 			sourceTree = "<group>";
 		};
-		1F07C4182D729B3800755618 /* iOS (App) */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1F07C46C2D729B3800755618 /* Exceptions for "iOS (App)" folder in "ReturnGuard (iOS)" target */,
-			);
-			path = "iOS (App)";
-			sourceTree = "<group>";
-		};
 		1F07C4292D729B3800755618 /* macOS (App) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "macOS (App)";
@@ -184,6 +185,14 @@
 				1F07C4712D729B3800755618 /* Exceptions for "macOS (Extension)" folder in "ReturnGuard Extension (macOS)" target */,
 			);
 			path = "macOS (Extension)";
+			sourceTree = "<group>";
+		};
+		EF6D56852D796FD7005FC3AE /* iOS (App) */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EF6D568B2D796FD7005FC3AE /* Exceptions for "iOS (App)" folder in "ReturnGuard (iOS)" target */,
+			);
+			path = "iOS (App)";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -225,11 +234,11 @@
 			children = (
 				1F07C3FE2D729B3500755618 /* Shared (App) */,
 				1F07C4072D729B3800755618 /* Shared (Extension) */,
-				1F07C4182D729B3800755618 /* iOS (App) */,
 				1F07C4292D729B3800755618 /* macOS (App) */,
 				1F07C4382D729B3800755618 /* iOS (Extension) */,
 				1F07C4422D729B3800755618 /* macOS (Extension) */,
 				1F07C4172D729B3800755618 /* Products */,
+				EF6D56852D796FD7005FC3AE /* iOS (App) */,
 			);
 			sourceTree = "<group>";
 		};
@@ -260,9 +269,6 @@
 			);
 			dependencies = (
 				1F07C4372D729B3800755618 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1F07C4182D729B3800755618 /* iOS (App) */,
 			);
 			name = "ReturnGuard (iOS)";
 			packageProductDependencies = (
