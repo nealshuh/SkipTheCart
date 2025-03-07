@@ -15,7 +15,7 @@ struct ContentView: View {
         if isUserAuthenticated {
             // Main app content
             VStack(spacing: AppStyles.Spacing.large) {
-                Text("PursePause")
+                Text("SkipTheCart")
                     .font(AppStyles.Typography.largeTitle)
                     .foregroundColor(AppStyles.Colors.text)
                 
@@ -38,7 +38,7 @@ struct ContentView: View {
                         Text("1. Open Safari")
                         Text("2. Tap the 'aA' button in the address bar")
                         Text("3. Select 'Manage Extensions'")
-                        Text("4. Enable 'PursePause'")
+                        Text("4. Enable 'SkipTheCart'")
                         Text("5. Visit Zara.com shopping cart")
                     }
                     .font(AppStyles.Typography.body)
@@ -52,11 +52,11 @@ struct ContentView: View {
                 
                 // Opens Safari Settings
                 Button(action: {
-                    if let url = URL(string: "https://pursepause.carrd.co/") {
+                    if let url = URL(string: "https://skipthecart.carrd.co/") {
                         UIApplication.shared.open(url)
                     }
                 }) {
-                    Text("Add PursePause Extension")
+                    Text("Add SkipTheCart Extension")
                 }
                 .primaryButtonStyle()
                 .padding(.horizontal, AppStyles.Layout.horizontalPadding)
@@ -118,7 +118,7 @@ struct PageInfo: Identifiable {
 }
 
 let pages = [
-    PageInfo(label: "Welcome to PursePause! 🛍️", text: "We help you shop smarter by showing how new items fit with what you already own. No more duplicates, no more regrets—just mindful choices.", image: .welcome),
+    PageInfo(label: "Welcome to SkipTheCart! 🛍️", text: "We help you shop smarter by showing how new items fit with what you already own. No more duplicates, no more regrets—just mindful choices.", image: .welcome),
     PageInfo(label: "Sync your wardrobe", text: "Snap photos or upload existing ones. We’ll analyze colors, styles, and patterns to build your unique closet profile.", image: .wardrobe),
     PageInfo(label: "Shop Like Always... But Smarter", text: "Visit your favorite stores and add items to your cart. We work seamlessly in the background while you shop!", image: .shop),
     PageInfo(label: "Instant Cart Insights", text: "Before checkout, we scan your cart. See how similar items are to your closet – by color, style, or exact duplicates.", image: .cart),
