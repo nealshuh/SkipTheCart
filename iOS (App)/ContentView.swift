@@ -14,52 +14,64 @@ struct ContentView: View {
     var body: some View {
         if isUserAuthenticated {
             // Main app content
-            VStack(spacing: 20) {
+            VStack(spacing: AppStyles.Spacing.large) {
                 Text("PursePause")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(AppStyles.Typography.largeTitle)
+                    .foregroundColor(AppStyles.Colors.text)
                 
                 Spacer()
                 
                 // App explanation
                 Text("This extension shows items in your Zara shopping cart at the bottom of the screen.")
+                    .font(AppStyles.Typography.body)
+                    .foregroundColor(AppStyles.Colors.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding()
                 
                 // Safari Extension instructions
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
                     Text("To enable the extension:")
-                        .font(.headline)
+                        .font(AppStyles.Typography.heading)
+                        .foregroundColor(AppStyles.Colors.text)
                     
-                    Text("1. Open Safari")
-                    Text("2. Tap the 'aA' button in the address bar")
-                    Text("3. Select 'Manage Extensions'")
-                    Text("4. Enable 'PursePause'")
-                    Text("5. Visit Zara.com shopping cart")
+                    VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
+                        Text("1. Open Safari")
+                        Text("2. Tap the 'aA' button in the address bar")
+                        Text("3. Select 'Manage Extensions'")
+                        Text("4. Enable 'PursePause'")
+                        Text("5. Visit Zara.com shopping cart")
+                    }
+                    .font(AppStyles.Typography.body)
+                    .foregroundColor(AppStyles.Colors.secondaryText)
                 }
                 .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .background(AppStyles.Colors.secondaryBackground)
+                .cornerRadius(AppStyles.Layout.cornerRadius)
                 
                 Spacer()
                 
                 // Opens Safari Settings
-                Button("Add PursePause Extension") {
+                Button(action: {
                     if let url = URL(string: "https://pursepause.carrd.co/") {
                         UIApplication.shared.open(url)
                     }
+                }) {
+                    Text("Add PursePause Extension")
                 }
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .primaryButtonStyle()
+                .padding(.horizontal, AppStyles.Layout.horizontalPadding)
                 
                 // Sign out button (for testing)
-                Button("Sign Out") {
-                    isUserAuthenticated = false
+                Button(action: {
+                    withAnimation {
+                        isUserAuthenticated = false
+                    }
+                }) {
+                    Text("Sign Out")
+                        .foregroundColor(AppStyles.Colors.error)
                 }
-                .padding()
-                .foregroundColor(.red)
+                .textButtonStyle()
+                .padding(.top, AppStyles.Spacing.medium)
             }
             .padding()
             .sheet(isPresented: $hasSeenWelcomePage) {
@@ -88,9 +100,15 @@ struct ContentView: View {
     }
 }
 
-#Preview {
-    WelcomeView(hasSeenWelcomePage: .constant(true))
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
+
+//#Preview {
+//    WelcomeView(hasSeenWelcomePage: .constant(true))
+//}
 
 struct PageInfo: Identifiable {
     let id = UUID()

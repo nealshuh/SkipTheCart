@@ -7,156 +7,293 @@
 
 import SwiftUI
 
-// Sign In View
+// MARK: - Sign In View
+
 struct SignInView: View {
-    let primaryColor = Color(red: 187/255, green: 143/255, blue: 206/255) // Light Purple
-    
     @Binding var isAuthenticated: Bool
     @Environment(\.dismiss) private var dismiss
     
     @State private var email = ""
     @State private var password = ""
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     var body: some View {
-        VStack(spacing: 25) {
-            // Header
-            Text("Sign In")
-                .font(.system(size: 28, weight: .bold))
-                .padding(.top, 50)
+        ZStack {
+            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
             
-            // Form
-            VStack(spacing: 20) {
-                // Email field
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Email")
-                        .font(.system(size: 16, weight: .medium))
-                    
-                    TextField("your@email.com", text: $email)
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(10)
-                        .autocapitalization(.none)
-                        .keyboardType(.emailAddress)
-                }
+            VStack(alignment: .center, spacing: AppStyles.Spacing.large) {
+                // Header
+                Text("Sign In")
+                    .font(AppStyles.Typography.title)
+                    .foregroundColor(AppStyles.Colors.text)
+                    .padding(.top, AppStyles.Spacing.xxlarge)
                 
-                // Password field
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Password")
-                        .font(.system(size: 16, weight: .medium))
+                // Form
+                VStack(spacing: AppStyles.Spacing.large) {
+                    // Email field
+                    StyledTextField(
+                        label: "Email",
+                        placeholder: "your@email.com",
+                        text: $email,
+                        keyboardType: .emailAddress,
+                        autocapitalization: .never
+                    )
                     
-                    SecureField("Your password", text: $password)
+                    // Password field
+                    StyledSecureField(
+                        label: "Password",
+                        placeholder: "Your password",
+                        text: $password
+                    )
+                    
+                    // Forgot Password
+                    HStack {
+                        Spacer()
+                        Button("Forgot Password?") {}
+                            .textButtonStyle()
+                    }
+                    .padding(.top, -AppStyles.Spacing.small)
+                }
+                .padding(.top, AppStyles.Spacing.large)
+                
+                // Sign In Button
+                Button(action: signIn) {
+                    Text("Sign In")
+                }
+                .primaryButtonStyle()
+                .padding(.top, AppStyles.Spacing.large)
+                
+                Spacer()
+                
+                // Developer shortcut button
+                Button(action: {
+                    isAuthenticated = true
+                    dismiss()
+                }) {
+                    Text("DEV: Quick Login")
+                        .font(AppStyles.Typography.caption)
+                }
+                .padding(.vertical, AppStyles.Spacing.small)
+                .padding(.horizontal, AppStyles.Spacing.medium)
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(AppStyles.Layout.smallCornerRadius)
+                .padding(.bottom, AppStyles.Spacing.medium)
+                
+                // Developer shortcut button
+                
+            }
+            .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+            .responsiveWidth()
+            
+            // Error message
+            if showError {
+                VStack {
+                    Spacer()
+                    
+                    Text(errorMessage)
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(.white)
                         .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
+                                .fill(AppStyles.Colors.error)
+                        )
+                        .padding()
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation {
+                                    showError = false
+                                }
+                            }
+                        }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            
-            // Sign In Button
-            Button(action: {
-                // In a real app, validate and authenticate here
-                isAuthenticated = true
+        }
+        .navigationBarItems(
+            trailing: Button(action: {
                 dismiss()
             }) {
-                Text("Sign In")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(primaryColor)
-                    )
+                Image(systemName: "xmark")
+                    .foregroundColor(AppStyles.Colors.secondaryText)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 30)
-            
-            Spacer()
+        )
+    }
+    
+    private func signIn() {
+        // Validate input
+        guard !email.isEmpty else {
+            showError(message: "Please enter your email")
+            return
         }
-        .padding()
+        
+        guard !password.isEmpty else {
+            showError(message: "Please enter your password")
+            return
+        }
+        
+        // In a real app, perform authentication here
+        
+        // For demo purposes, always authenticate
+        isAuthenticated = true
+        dismiss()
+    }
+    
+    private func showError(message: String) {
+        errorMessage = message
+        withAnimation {
+            showError = true
+        }
     }
 }
 
-// Sign Up View
+// MARK: - Sign Up View
+
 struct SignUpView: View {
-    let primaryColor = Color(red: 187/255, green: 143/255, blue: 206/255) // Light Purple
-    
     @Binding var isAuthenticated: Bool
     @Environment(\.dismiss) private var dismiss
     
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     var body: some View {
-        VStack(spacing: 25) {
-            // Header
-            Text("Create Account")
-                .font(.system(size: 28, weight: .bold))
-                .padding(.top, 50)
+        ZStack {
+            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
             
-            // Form
-            VStack(spacing: 20) {
-                // Email field
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Email")
-                        .font(.system(size: 16, weight: .medium))
-                    
-                    TextField("your@email.com", text: $email)
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(10)
-                        .autocapitalization(.none)
-                        .keyboardType(.emailAddress)
-                }
+            VStack(alignment: .center, spacing: AppStyles.Spacing.large) {
+                // Header
+                Text("Create Account")
+                    .font(AppStyles.Typography.title)
+                    .foregroundColor(AppStyles.Colors.text)
+                    .padding(.top, AppStyles.Spacing.xxlarge)
                 
-                // Password field
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Password")
-                        .font(.system(size: 16, weight: .medium))
+                // Form
+                VStack(spacing: AppStyles.Spacing.large) {
+                    // Email field
+                    StyledTextField(
+                        label: "Email",
+                        placeholder: "your@email.com",
+                        text: $email,
+                        keyboardType: .emailAddress,
+                        autocapitalization: TextInputAutocapitalization.never
+                    )
                     
-                    SecureField("Create a password", text: $password)
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(10)
+                    // Password field
+                    StyledSecureField(
+                        label: "Password",
+                        placeholder: "Create a password",
+                        text: $password
+                    )
+                    
+                    // Confirm Password field
+                    StyledSecureField(
+                        label: "Confirm Password",
+                        placeholder: "Confirm your password",
+                        text: $confirmPassword
+                    )
                 }
+                .padding(.top, AppStyles.Spacing.large)
                 
-                // Confirm Password field
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Confirm Password")
-                        .font(.system(size: 16, weight: .medium))
+                // Terms and Privacy
+                Text("By creating an account, you agree to our Terms of Service and Privacy Policy")
+                    .font(AppStyles.Typography.small)
+                    .foregroundColor(AppStyles.Colors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, AppStyles.Spacing.medium)
+                
+                // Sign Up Button
+                Button(action: signUp) {
+                    Text("Create Account")
+                }
+                .primaryButtonStyle()
+                .padding(.top, AppStyles.Spacing.large)
+                
+                Spacer()
+            }
+            .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+            .responsiveWidth()
+            
+            // Error message
+            if showError {
+                VStack {
+                    Spacer()
                     
-                    SecureField("Confirm your password", text: $confirmPassword)
+                    Text(errorMessage)
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(.white)
                         .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
+                                .fill(AppStyles.Colors.error)
+                        )
+                        .padding()
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation {
+                                    showError = false
+                                }
+                            }
+                        }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            
-            // Sign Up Button
-            Button(action: {
-                // In a real app, validate and create account here
-                isAuthenticated = true
+        }
+        .navigationBarItems(
+            trailing: Button(action: {
                 dismiss()
             }) {
-                Text("Create Account")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(primaryColor)
-                    )
+                Image(systemName: "xmark")
+                    .foregroundColor(AppStyles.Colors.secondaryText)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 30)
-            
-            Spacer()
+        )
+    }
+    
+    private func signUp() {
+        // Validate input
+        guard !email.isEmpty else {
+            showError(message: "Please enter your email")
+            return
         }
-        .padding()
+        
+        guard !password.isEmpty else {
+            showError(message: "Please enter a password")
+            return
+        }
+        
+        guard password == confirmPassword else {
+            showError(message: "Passwords don't match")
+            return
+        }
+        
+        // In a real app, create account here
+        
+        // For demo purposes, always authenticate
+        isAuthenticated = true
+        dismiss()
+    }
+    
+    private func showError(message: String) {
+        errorMessage = message
+        withAnimation {
+            showError = true
+        }
+    }
+}
+
+// MARK: - Preview Providers
+
+struct SignInView_Previews: PreviewProvider {
+    static var previews: some View {
+        SignInView(isAuthenticated: .constant(false))
+    }
+}
+
+struct SignUpView_Previews: PreviewProvider {
+    static var previews: some View {
+        SignUpView(isAuthenticated: .constant(false))
     }
 }
