@@ -131,6 +131,7 @@
 				"/Localized: LaunchScreen.storyboard",
 				"/Localized: Main.storyboard",
 				AppDelegate.swift,
+				AppStyles.swift,
 				Assets/cart.png,
 				Assets/insights.png,
 				Assets/shop.png,
