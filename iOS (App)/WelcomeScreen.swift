@@ -8,10 +8,6 @@
 import SwiftUI
 
 struct WelcomeScreen: View {
-    // Colors
-    let primaryColor = Color(red: 187/255, green: 143/255, blue: 206/255) // Light Purple
-    let secondaryColor = Color.white
-    
     // Actions
     var onSignUpTap: () -> Void
     var onSignInTap: () -> Void
@@ -19,64 +15,57 @@ struct WelcomeScreen: View {
     var body: some View {
         ZStack {
             // Background
-            secondaryColor.edgesIgnoringSafeArea(.all)
+            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 30) {
+            VStack(spacing: AppStyles.Spacing.xlarge) {
                 Spacer()
                 
                 // App logo
                 Image(systemName: "bag.fill")
                     .font(.system(size: 70))
-                    .foregroundColor(primaryColor)
+                    .foregroundColor(AppStyles.Colors.primary)
                 
                 // App name
                 Text("PursePause")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(Color.black.opacity(0.8))
+                    .font(AppStyles.Typography.largeTitle)
+                    .foregroundColor(AppStyles.Colors.text)
                 
                 // App tagline
                 Text("Shop smarter. Save better.")
-                    .font(.system(size: 18))
-                    .foregroundColor(Color.black.opacity(0.6))
-                    .padding(.bottom, 40)
+                    .font(AppStyles.Typography.subtitle)
+                    .foregroundColor(AppStyles.Colors.secondaryText)
+                    .padding(.bottom, AppStyles.Spacing.medium)
                 
                 Spacer()
                 
                 // Auth buttons
-                VStack(spacing: 16) {
+                VStack(spacing: AppStyles.Spacing.medium) {
                     // Sign Up button
                     Button(action: onSignUpTap) {
                         Text("Sign Up")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(primaryColor)
-                            )
                     }
+                    .primaryButtonStyle()
                     
                     // Sign In button
                     Button(action: onSignInTap) {
                         Text("Sign In")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(primaryColor)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(primaryColor, lineWidth: 1.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(secondaryColor)
-                                    )
-                            )
                     }
+                    .secondaryButtonStyle()
                 }
-                .padding(.horizontal, 30)
-                .padding(.bottom, 50)
+                .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+                .padding(.bottom, AppStyles.Spacing.xxlarge)
+                .responsiveWidth()
             }
         }
+    }
+}
+
+// Preview
+struct WelcomeScreen_Previews: PreviewProvider {
+    static var previews: some View {
+        WelcomeScreen(
+            onSignUpTap: {},
+            onSignInTap: {}
+        )
     }
 }
