@@ -26,7 +26,7 @@ struct WelcomeScreen: View {
                     .foregroundColor(AppStyles.Colors.primary)
                 
                 // App name
-                Text("PursePause")
+                Text("SkipTheCart")
                     .font(AppStyles.Typography.largeTitle)
                     .foregroundColor(AppStyles.Colors.text)
                 
