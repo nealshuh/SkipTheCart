@@ -1,10 +1,10 @@
 {
     "extension_name": {
-        "message": "PursePause",
+        "message": "SkipTheCart",
         "description": "The display name for the extension."
     },
     "extension_description": {
-        "message": "PursePause encourages mindful spending.",
+        "message": "SkipTheCart encourages mindful spending.",
         "description": "Description of what the extension does."
     }
 }
