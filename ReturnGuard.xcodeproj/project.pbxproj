@@ -131,13 +131,16 @@
 				"/Localized: LaunchScreen.storyboard",
 				"/Localized: Main.storyboard",
 				AppDelegate.swift,
+				AppStyles.swift,
 				Assets/cart.png,
 				Assets/insights.png,
 				Assets/shop.png,
 				Assets/wardrobe.png,
 				Assets/welcome.png,
+				AuthViews.swift,
 				ContentView.swift,
 				SceneDelegate.swift,
+				WelcomeScreen.swift,
 			);
 			target = 1F07C4152D729B3800755618 /* ReturnGuard (iOS) */;
 		};
