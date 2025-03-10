@@ -4,97 +4,133 @@ struct ContentView: View {
     // Original variable for onboarding tutorial
     @AppStorage("hasSeenWelcomePage") var hasSeenWelcomePage = true
     
-    // New variable for authentication status
-    @AppStorage("isUserAuthenticated") var isUserAuthenticated = false
+    // Authentication state
+    @State var isUserAuthenticated = false
+    @State private var isCheckingAuth = true
     
     // Auth state tracking
     @State private var showSignIn = false
     @State private var showSignUp = false
     
     var body: some View {
-        if isUserAuthenticated {
-            // Main app content
-            VStack(spacing: AppStyles.Spacing.large) {
-                Text("SkipTheCart")
-                    .font(AppStyles.Typography.largeTitle)
-                    .foregroundColor(AppStyles.Colors.text)
-                
-                Spacer()
-                
-                // App explanation
-                Text("This extension shows items in your Zara shopping cart at the bottom of the screen.")
-                    .font(AppStyles.Typography.body)
-                    .foregroundColor(AppStyles.Colors.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                
-                // Safari Extension instructions
-                VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                    Text("To enable the extension:")
-                        .font(AppStyles.Typography.heading)
+        ZStack {
+            if isCheckingAuth {
+                // Loading view
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+            } else if isUserAuthenticated {
+                // Main app content
+                VStack(spacing: AppStyles.Spacing.large) {
+                    Text("SkipTheCart")
+                        .font(AppStyles.Typography.largeTitle)
                         .foregroundColor(AppStyles.Colors.text)
                     
-                    VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
-                        Text("1. Open Safari")
-                        Text("2. Tap the 'aA' button in the address bar")
-                        Text("3. Select 'Manage Extensions'")
-                        Text("4. Enable 'SkipTheCart'")
-                        Text("5. Visit Zara.com shopping cart")
+                    Spacer()
+                    
+                    // App explanation
+                    Text("This extension shows items in your Zara shopping cart at the bottom of the screen.")
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(AppStyles.Colors.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    
+                    // Safari Extension instructions
+                    VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                        Text("To enable the extension:")
+                            .font(AppStyles.Typography.heading)
+                            .foregroundColor(AppStyles.Colors.text)
+                        
+                        VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
+                            Text("1. Open Safari")
+                            Text("2. Tap the 'aA' button in the address bar")
+                            Text("3. Select 'Manage Extensions'")
+                            Text("4. Enable 'SkipTheCart'")
+                            Text("5. Visit Zara.com shopping cart")
+                        }
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(AppStyles.Colors.secondaryText)
                     }
-                    .font(AppStyles.Typography.body)
-                    .foregroundColor(AppStyles.Colors.secondaryText)
+                    .padding()
+                    .background(AppStyles.Colors.secondaryBackground)
+                    .cornerRadius(AppStyles.Layout.cornerRadius)
+                    
+                    Spacer()
+                    
+                    // Opens Safari Settings
+                    Button(action: {
+                        if let url = URL(string: "https://skipthecart.carrd.co/") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("Add SkipTheCart Extension")
+                    }
+                    .primaryButtonStyle()
+                    .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+                    
+                    // Sign out button
+                    Button(action: {
+                        signOut()
+                    }) {
+                        Text("Sign Out")
+                            .foregroundColor(AppStyles.Colors.error)
+                    }
+                    .textButtonStyle()
+                    .padding(.top, AppStyles.Spacing.medium)
                 }
                 .padding()
-                .background(AppStyles.Colors.secondaryBackground)
-                .cornerRadius(AppStyles.Layout.cornerRadius)
-                
-                Spacer()
-                
-                // Opens Safari Settings
-                Button(action: {
-                    if let url = URL(string: "https://skipthecart.carrd.co/") {
-                        UIApplication.shared.open(url)
+                .sheet(isPresented: $hasSeenWelcomePage) {
+                    // Your original onboarding tutorial
+                    WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
+                }
+            } else {
+                // Authentication welcome screen
+                WelcomeScreen(
+                    onSignUpTap: {
+                        showSignUp = true
+                    },
+                    onSignInTap: {
+                        showSignIn = true
                     }
-                }) {
-                    Text("Add SkipTheCart Extension")
+                )
+                .sheet(isPresented: $showSignIn) {
+                    // Sign in screen with ability to set isUserAuthenticated to true
+                    SignInView(isAuthenticated: $isUserAuthenticated)
                 }
-                .primaryButtonStyle()
-                .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+                .sheet(isPresented: $showSignUp) {
+                    // Sign up screen with ability to set isUserAuthenticated to true
+                    SignUpView(isAuthenticated: $isUserAuthenticated)
+                }
+            }
+        }
+        .onAppear {
+            checkAuthStatus()
+        }
+    }
+    
+    // Check if user is already authenticated
+    private func checkAuthStatus() {
+        Task {
+            let authenticated = await AuthService.shared.isAuthenticated()
+            
+            DispatchQueue.main.async {
+                isUserAuthenticated = authenticated
+                isCheckingAuth = false
+            }
+        }
+    }
+    
+    // Sign out function
+    private func signOut() {
+        Task {
+            do {
+                try await AuthService.shared.signOut()
                 
-                // Sign out button (for testing)
-                Button(action: {
-                    withAnimation {
-                        isUserAuthenticated = false
-                    }
-                }) {
-                    Text("Sign Out")
-                        .foregroundColor(AppStyles.Colors.error)
+                DispatchQueue.main.async {
+                    isUserAuthenticated = false
                 }
-                .textButtonStyle()
-                .padding(.top, AppStyles.Spacing.medium)
-            }
-            .padding()
-            .sheet(isPresented: $hasSeenWelcomePage) {
-                // Your original onboarding tutorial
-                WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
-            }
-        } else {
-            // Authentication welcome screen
-            WelcomeScreen(
-                onSignUpTap: {
-                    showSignUp = true
-                },
-                onSignInTap: {
-                    showSignIn = true
-                }
-            )
-            .sheet(isPresented: $showSignIn) {
-                // Sign in screen with ability to set isUserAuthenticated to true
-                SignInView(isAuthenticated: $isUserAuthenticated)
-            }
-            .sheet(isPresented: $showSignUp) {
-                // Sign up screen with ability to set isUserAuthenticated to true
-                SignUpView(isAuthenticated: $isUserAuthenticated)
+            } catch {
+                print("Error signing out: \(error)")
             }
         }
     }
