@@ -50,4 +50,38 @@ class AuthService {
             return false
         }
     }
+    
+    // Delete current user account
+    // Delete current user account using Edge Function
+    func deleteAccount() async throws {
+        // Get the current session to obtain the access token
+        // Since session is not optional in your SDK version
+        let session = try await supabase.auth.session
+        
+        // Define response structure to match what your function returns
+        struct DeleteResponse: Decodable {
+            let message: String?
+            let error: String?
+        }
+        
+        // Call the edge function
+        do {
+            let response: DeleteResponse = try await supabase.functions.invoke(
+                "delete-current-user",
+                options: FunctionInvokeOptions(
+                    headers: ["Authorization": "Bearer \(session.accessToken)"]
+                )
+            )
+            
+            // Check for error in response
+            if let errorMessage = response.error {
+                throw NSError(domain: "AuthService", code: 2, userInfo: [NSLocalizedDescriptionKey: errorMessage])
+            }
+            
+            // If we reach here, the operation was successful
+        } catch {
+            print("Error calling delete-current-user function: \(error)")
+            throw error
+        }
+    }
 }

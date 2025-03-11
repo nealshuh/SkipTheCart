@@ -11,6 +11,7 @@ struct ContentView: View {
     // Auth state tracking
     @State private var showSignIn = false
     @State private var showSignUp = false
+    @State private var showSettings = false
     
     var body: some View {
         ZStack {
@@ -22,9 +23,24 @@ struct ContentView: View {
             } else if isUserAuthenticated {
                 // Main app content
                 VStack(spacing: AppStyles.Spacing.large) {
-                    Text("SkipTheCart")
-                        .font(AppStyles.Typography.largeTitle)
-                        .foregroundColor(AppStyles.Colors.text)
+                    HStack {
+                        Text("SkipTheCart")
+                            .font(AppStyles.Typography.largeTitle)
+                            .foregroundColor(AppStyles.Colors.text)
+                        
+                        Spacer()
+                        
+                        // Settings button
+                        Button(action: {
+                            showSettings = true
+                        }) {
+                            Image(systemName: "gear")
+                                .font(.system(size: 22))
+                                .foregroundColor(AppStyles.Colors.primary)
+                        }
+                        .padding(.trailing, 4)
+                    }
+                    .padding(.horizontal)
                     
                     Spacer()
                     
@@ -67,21 +83,14 @@ struct ContentView: View {
                     }
                     .primaryButtonStyle()
                     .padding(.horizontal, AppStyles.Layout.horizontalPadding)
-                    
-                    // Sign out button
-                    Button(action: {
-                        signOut()
-                    }) {
-                        Text("Sign Out")
-                            .foregroundColor(AppStyles.Colors.error)
-                    }
-                    .textButtonStyle()
-                    .padding(.top, AppStyles.Spacing.medium)
                 }
                 .padding()
                 .sheet(isPresented: $hasSeenWelcomePage) {
                     // Your original onboarding tutorial
                     WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
+                }
+                .sheet(isPresented: $showSettings) {
+                    SettingsView(isAuthenticated: $isUserAuthenticated)
                 }
             } else {
                 // Authentication welcome screen
