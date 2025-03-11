@@ -147,6 +147,7 @@
 				AuthViews.swift,
 				ContentView.swift,
 				SceneDelegate.swift,
+				SettingsView.swift,
 				SupabaseManager.swift,
 				WelcomeScreen.swift,
 			);
