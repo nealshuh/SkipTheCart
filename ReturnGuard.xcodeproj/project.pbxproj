@@ -150,6 +150,7 @@
 				SceneDelegate.swift,
 				SettingsView.swift,
 				SupabaseManager.swift,
+				test.swift,
 				WelcomeScreen.swift,
 			);
 			target = 1F07C4152D729B3800755618 /* ReturnGuard (iOS) */;

@@ -16,5 +16,28 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.window = window
             window.makeKeyAndVisible()
         }
+        
+        // Handle any deep links that were passed when launching the app
+        if let urlContext = connectionOptions.urlContexts.first {
+            handleDeepLink(url: urlContext.url)
+        }
+    }
+    
+    // Handle deep links when app is already running
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        if let urlContext = URLContexts.first {
+            handleDeepLink(url: urlContext.url)
+        }
+    }
+    
+    private func handleDeepLink(url: URL) {
+        print("Handling deep link: \(url.absoluteString)")
+        
+        // For now just log the URL
+        if url.scheme == "skipthecart" {
+            print("This is a skipthecart deep link")
+            
+            // We'll implement the notification in a later step
+        }
     }
 }
