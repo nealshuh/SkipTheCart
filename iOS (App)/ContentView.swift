@@ -13,6 +13,13 @@ struct ContentView: View {
     @State private var showSignUp = false
     @State private var showSettings = false
     
+    // New state for email verification
+    @State private var needsEmailVerification = false
+    @State private var userEmail = ""
+    
+    // Handle direct navigation from email verification to welcome screen
+    @State private var cleanReturnToWelcome = false
+    
     var body: some View {
         ZStack {
             if isCheckingAuth {
@@ -20,6 +27,20 @@ struct ContentView: View {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle())
                     .scaleEffect(1.5)
+            } else if needsEmailVerification {
+                // Email verification view when user is signed in but email not verified
+                EmailConfirmationView(isAuthenticated: $isUserAuthenticated, email: userEmail)
+                    .transition(.opacity)
+                    .onChange(of: isUserAuthenticated) { newValue in
+                        if !newValue {
+                            // Reset our state when authentication changes to false
+                            needsEmailVerification = false
+                        }
+                    }
+                    .onDisappear {
+                        // When this view disappears, make sure we reset verification state
+                        checkAuthStatus() // Recheck auth status when the view disappears
+                    }
             } else if isUserAuthenticated {
                 // Main app content
                 VStack(spacing: AppStyles.Spacing.large) {
@@ -114,6 +135,34 @@ struct ContentView: View {
         }
         .onAppear {
             checkAuthStatus()
+            
+            // Set up notification observer for direct return to welcome screen
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ReturnToWelcomeScreen"), object: nil, queue: .main) { _ in
+                cleanReturnToWelcome = true
+                // Reset all sheets and views
+                showSignIn = false
+                showSignUp = false
+                needsEmailVerification = false
+                
+                // Add a small delay to ensure smooth transition
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    cleanReturnToWelcome = false
+                }
+            }
+        }
+        .onChange(of: isUserAuthenticated) { newValue in
+            if newValue {
+                // When authentication state changes to true, check email verification
+                checkEmailVerification()
+            } else {
+                // When authentication changes to false, make sure we reset verification state
+                needsEmailVerification = false
+                if !cleanReturnToWelcome {
+                    // Only reset these if not triggered by our special notification
+                    showSignIn = false
+                    showSignUp = false
+                }
+            }
         }
     }
     
@@ -122,9 +171,61 @@ struct ContentView: View {
         Task {
             let authenticated = await AuthService.shared.isAuthenticated()
             
+            if authenticated {
+                // Get the user's email if authenticated
+                do {
+                    let email = try await AuthService.shared.getCurrentUserEmail()
+                    DispatchQueue.main.async {
+                        userEmail = email
+                    }
+                } catch {
+                    print("Error getting user email: \(error)")
+                }
+                
+                // Check email verification status
+                await checkEmailVerificationAsync()
+            }
+            
             DispatchQueue.main.async {
                 isUserAuthenticated = authenticated
                 isCheckingAuth = false
+            }
+        }
+    }
+    
+    // Check if email is verified
+    private func checkEmailVerification() {
+        Task {
+            await checkEmailVerificationAsync()
+        }
+    }
+    
+    private func checkEmailVerificationAsync() async {
+        do {
+            // First get user email if we don't have it yet
+            if userEmail.isEmpty {
+                do {
+                    let email = try await AuthService.shared.getCurrentUserEmail()
+                    DispatchQueue.main.async {
+                        userEmail = email
+                    }
+                } catch {
+                    print("Error getting user email: \(error)")
+                }
+            }
+            
+            let isVerified = try await AuthService.shared.isEmailVerified()
+            
+            DispatchQueue.main.async {
+                // If email is not verified, show email verification screen
+                needsEmailVerification = !isVerified
+            }
+        } catch {
+            print("Error checking email verification: \(error)")
+            
+            DispatchQueue.main.async {
+                // On error, assume not verified for safety
+                needsEmailVerification = false
             }
         }
     }
@@ -137,6 +238,7 @@ struct ContentView: View {
                 
                 DispatchQueue.main.async {
                     isUserAuthenticated = false
+                    needsEmailVerification = false
                 }
             } catch {
                 print("Error signing out: \(error)")
@@ -151,10 +253,6 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-//#Preview {
-//    WelcomeView(hasSeenWelcomePage: .constant(true))
-//}
-
 struct PageInfo: Identifiable {
     let id = UUID()
     let label: String
@@ -164,7 +262,7 @@ struct PageInfo: Identifiable {
 
 let pages = [
     PageInfo(label: "Welcome to SkipTheCart! 🛍️", text: "We help you shop smarter by showing how new items fit with what you already own. No more duplicates, no more regrets—just mindful choices.", image: .welcome),
-    PageInfo(label: "Sync your wardrobe", text: "Snap photos or upload existing ones. We’ll analyze colors, styles, and patterns to build your unique closet profile.", image: .wardrobe),
+    PageInfo(label: "Sync your wardrobe", text: "Snap photos or upload existing ones. We'll analyze colors, styles, and patterns to build your unique closet profile.", image: .wardrobe),
     PageInfo(label: "Shop Like Always... But Smarter", text: "Visit your favorite stores and add items to your cart. We work seamlessly in the background while you shop!", image: .shop),
     PageInfo(label: "Instant Cart Insights", text: "Before checkout, we scan your cart. See how similar items are to your closet – by color, style, or exact duplicates.", image: .cart),
     PageInfo(label: "Your Money, Your Impact.", text: "Track your savings. See how mindfulness turns into real savings and a clutter-free closet.", image: .insights),

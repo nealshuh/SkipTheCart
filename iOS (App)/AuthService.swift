@@ -39,7 +39,6 @@ class AuthService {
     }
     
     // Check if user is signed in
-    // Check if user is signed in
     func isAuthenticated() async -> Bool {
         do {
             // If accessing the session doesn't throw an error, the user is authenticated
@@ -51,8 +50,67 @@ class AuthService {
         }
     }
     
+    // Check if email is verified
+    func isEmailVerified() async throws -> Bool {
+        do {
+            // First check if we're authenticated at all
+            guard await isAuthenticated() else {
+                // Not authenticated, so not verified
+                throw NSError(domain: "AuthService",
+                             code: 1,
+                             userInfo: [NSLocalizedDescriptionKey: "User is not authenticated"])
+            }
+            
+            let session = try await supabase.auth.session
+            
+            // Access the user metadata to check if email is confirmed
+            let user = session.user
+            // Check if emailConfirmedAt exists and is not nil
+            if user.emailConfirmedAt != nil {
+                return true
+            }
+            
+            return false
+        } catch {
+            // Log the error for debugging
+            print("Email verification check error: \(error)")
+            throw error
+        }
+    }
+    
+    // Resend verification email
+    func resendVerificationEmail() async throws {
+        do {
+            let session = try await supabase.auth.session
+            
+            guard let email = session.user.email else {
+                throw NSError(domain: "AuthService", code: 1, userInfo: [NSLocalizedDescriptionKey: "No email found for current user"])
+            }
+            
+            // Call Supabase to resend the verification email
+            try await supabase.auth.resend(
+                email: email,
+                type: .signup
+            )
+        } catch {
+            throw error
+        }
+    }
+    
+    // Get current user's email
+    func getCurrentUserEmail() async throws -> String {
+        do {
+            let session = try await supabase.auth.session
+            guard let email = session.user.email else {
+                throw NSError(domain: "AuthService", code: 1, userInfo: [NSLocalizedDescriptionKey: "No email found for current user"])
+            }
+            return email
+        } catch {
+            throw error
+        }
+    }
+    
     // Delete current user account
-    // Delete current user account using Edge Function
     func deleteAccount() async throws {
         // Get the current session to obtain the access token
         // Since session is not optional in your SDK version
