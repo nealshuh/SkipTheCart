@@ -17,8 +17,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
+    // Add this method to handle deep links
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        print("AppDelegate handling URL: \(url.absoluteString)")
+        return true
+    }
+    
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
-
 }
