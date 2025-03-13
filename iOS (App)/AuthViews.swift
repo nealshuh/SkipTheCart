@@ -183,6 +183,9 @@ struct SignUpView: View {
     @State private var errorMessage = ""
     @State private var isLoading = false
     
+    // New state for email verification
+    @State private var showEmailVerification = false
+    
     var body: some View {
         ZStack {
             AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
@@ -280,6 +283,17 @@ struct SignUpView: View {
                     .foregroundColor(AppStyles.Colors.secondaryText)
             }
         )
+        .fullScreenCover(isPresented: $showEmailVerification) {
+            // Show email verification view when sign up completes
+            EmailConfirmationView(isAuthenticated: $isAuthenticated, email: email)
+        }
+        // Listen for the notification to close this view as well
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ReturnToWelcomeScreen"))) { _ in
+            // Dismiss this view when returning to welcome screen
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                dismiss()
+            }
+        }
     }
     
     private func signUp() {
@@ -310,8 +324,9 @@ struct SignUpView: View {
                 // Update UI on main thread
                 DispatchQueue.main.async {
                     isLoading = false
-                    isAuthenticated = true
-                    dismiss()
+                    
+                    // Show email verification screen
+                    showEmailVerification = true
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -329,6 +344,7 @@ struct SignUpView: View {
         }
     }
 }
+
 // MARK: - Preview Providers
 
 struct SignInView_Previews: PreviewProvider {

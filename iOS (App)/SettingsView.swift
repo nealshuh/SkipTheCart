@@ -47,6 +47,21 @@ struct SettingsView: View {
 //                    }
                 }
                 
+                // Support Section
+                Section(header: Text("Support")) {
+                    Button(action: {
+                        sendContactEmail()
+                    }) {
+                        HStack {
+                            Text("Contact Us")
+                                .foregroundColor(AppStyles.Colors.text)
+                            Spacer()
+                            Image(systemName: "envelope")
+                                .foregroundColor(AppStyles.Colors.primary)
+                        }
+                    }
+                }
+                
                 // App Information
                 Section(header: Text("About")) {
                     HStack {
@@ -79,16 +94,17 @@ struct SettingsView: View {
                         .foregroundColor(AppStyles.Colors.secondaryText)
                 }
             )
-            .alert(isPresented: $showDeleteConfirmation) {
-                Alert(
-                    title: Text("Delete Account"),
-                    message: Text("Are you sure you want to delete your account? This action cannot be undone."),
-                    primaryButton: .destructive(Text("Delete")) {
-                        deleteAccount()
-                    },
-                    secondaryButton: .cancel()
-                )
-            }
+//            .alert(isPresented: $showDeleteConfirmation) {
+//                Alert(
+//                    title: Text("Delete Account"),
+//                    message: Text("Are you sure you want to delete your account? This action cannot be undone."),
+//                    primaryButton: .destructive(Text("Delete")) {
+//                        deleteAccount()
+//                    },
+//                    secondaryButton: .cancel()
+//                )
+//            }
+
             .overlay(
                 isLoading ?
                     ProgressView()
@@ -124,6 +140,25 @@ struct SettingsView: View {
                         }
                 }
             }
+        }
+    }
+    
+    private func sendContactEmail() -> Bool {
+        let emailAddress = "skipthecartapp@gmail.com"
+        let subject = "SkipTheCart App Support"
+        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "mailto:\(emailAddress)?subject=\(encodedSubject)"
+        
+        guard let url = URL(string: urlString) else {
+            showError(message: "Invalid email format")
+            return false
+        }
+        
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            return true
+        } else {
+            return false
         }
     }
     
