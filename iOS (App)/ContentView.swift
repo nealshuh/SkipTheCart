@@ -4,97 +4,244 @@ struct ContentView: View {
     // Original variable for onboarding tutorial
     @AppStorage("hasSeenWelcomePage") var hasSeenWelcomePage = true
     
-    // New variable for authentication status
-    @AppStorage("isUserAuthenticated") var isUserAuthenticated = false
+    // Authentication state
+    @State var isUserAuthenticated = false
+    @State private var isCheckingAuth = true
     
     // Auth state tracking
     @State private var showSignIn = false
     @State private var showSignUp = false
+    @State private var showSettings = false
+    
+    // New state for email verification
+    @State private var needsEmailVerification = false
+    @State private var userEmail = ""
+    
+    // Handle direct navigation from email verification to welcome screen
+    @State private var cleanReturnToWelcome = false
     
     var body: some View {
-        if isUserAuthenticated {
-            // Main app content
-            VStack(spacing: AppStyles.Spacing.large) {
-                Text("SkipTheCart")
-                    .font(AppStyles.Typography.largeTitle)
-                    .foregroundColor(AppStyles.Colors.text)
-                
-                Spacer()
-                
-                // App explanation
-                Text("This extension shows items in your Zara shopping cart at the bottom of the screen.")
-                    .font(AppStyles.Typography.body)
-                    .foregroundColor(AppStyles.Colors.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                
-                // Safari Extension instructions
-                VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                    Text("To enable the extension:")
-                        .font(AppStyles.Typography.heading)
-                        .foregroundColor(AppStyles.Colors.text)
-                    
-                    VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
-                        Text("1. Open Safari")
-                        Text("2. Tap the 'aA' button in the address bar")
-                        Text("3. Select 'Manage Extensions'")
-                        Text("4. Enable 'SkipTheCart'")
-                        Text("5. Visit Zara.com shopping cart")
+        ZStack {
+            if isCheckingAuth {
+                // Loading view
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+            } else if needsEmailVerification {
+                // Email verification view when user is signed in but email not verified
+                EmailConfirmationView(isAuthenticated: $isUserAuthenticated, email: userEmail)
+                    .transition(.opacity)
+                    .onChange(of: isUserAuthenticated) { newValue in
+                        if !newValue {
+                            // Reset our state when authentication changes to false
+                            needsEmailVerification = false
+                        }
                     }
-                    .font(AppStyles.Typography.body)
-                    .foregroundColor(AppStyles.Colors.secondaryText)
+                    .onDisappear {
+                        // When this view disappears, make sure we reset verification state
+                        checkAuthStatus() // Recheck auth status when the view disappears
+                    }
+            } else if isUserAuthenticated {
+                // Main app content
+                VStack(spacing: AppStyles.Spacing.large) {
+                    HStack {
+                        Text("SkipTheCart")
+                            .font(AppStyles.Typography.largeTitle)
+                            .foregroundColor(AppStyles.Colors.text)
+                        
+                        Spacer()
+                        
+                        // Settings button
+                        Button(action: {
+                            showSettings = true
+                        }) {
+                            Image(systemName: "gear")
+                                .font(.system(size: 22))
+                                .foregroundColor(AppStyles.Colors.primary)
+                        }
+                        .padding(.trailing, 4)
+                    }
+                    .padding(.horizontal)
+                    
+                    Spacer()
+                    
+                    // App explanation
+                    Text("This extension shows items in your Zara shopping cart at the bottom of the screen.")
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(AppStyles.Colors.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    
+                    // Safari Extension instructions
+                    VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                        Text("To enable the extension:")
+                            .font(AppStyles.Typography.heading)
+                            .foregroundColor(AppStyles.Colors.text)
+                        
+                        VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
+                            Text("1. Open Safari")
+                            Text("2. Tap the 'aA' button in the address bar")
+                            Text("3. Select 'Manage Extensions'")
+                            Text("4. Enable 'SkipTheCart'")
+                            Text("5. Visit Zara.com shopping cart")
+                        }
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(AppStyles.Colors.secondaryText)
+                    }
+                    .padding()
+                    .background(AppStyles.Colors.secondaryBackground)
+                    .cornerRadius(AppStyles.Layout.cornerRadius)
+                    
+                    Spacer()
+                    
+                    // Opens Safari Settings
+                    Button(action: {
+                        if let url = URL(string: "https://skipthecart.carrd.co/") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("Add SkipTheCart Extension")
+                    }
+                    .primaryButtonStyle()
+                    .padding(.horizontal, AppStyles.Layout.horizontalPadding)
                 }
                 .padding()
-                .background(AppStyles.Colors.secondaryBackground)
-                .cornerRadius(AppStyles.Layout.cornerRadius)
-                
-                Spacer()
-                
-                // Opens Safari Settings
-                Button(action: {
-                    if let url = URL(string: "https://skipthecart.carrd.co/") {
-                        UIApplication.shared.open(url)
+                .sheet(isPresented: $hasSeenWelcomePage) {
+                    // Your original onboarding tutorial
+                    WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
+                }
+                .sheet(isPresented: $showSettings) {
+                    SettingsView(isAuthenticated: $isUserAuthenticated)
+                }
+            } else {
+                // Authentication welcome screen
+                WelcomeScreen(
+                    onSignUpTap: {
+                        showSignUp = true
+                    },
+                    onSignInTap: {
+                        showSignIn = true
                     }
-                }) {
-                    Text("Add SkipTheCart Extension")
+                )
+                .sheet(isPresented: $showSignIn) {
+                    // Sign in screen with ability to set isUserAuthenticated to true
+                    SignInView(isAuthenticated: $isUserAuthenticated)
                 }
-                .primaryButtonStyle()
-                .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+                .sheet(isPresented: $showSignUp) {
+                    // Sign up screen with ability to set isUserAuthenticated to true
+                    SignUpView(isAuthenticated: $isUserAuthenticated)
+                }
+            }
+        }
+        .onAppear {
+            checkAuthStatus()
+            
+            // Set up notification observer for direct return to welcome screen
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ReturnToWelcomeScreen"), object: nil, queue: .main) { _ in
+                cleanReturnToWelcome = true
+                // Reset all sheets and views
+                showSignIn = false
+                showSignUp = false
+                needsEmailVerification = false
                 
-                // Sign out button (for testing)
-                Button(action: {
-                    withAnimation {
-                        isUserAuthenticated = false
+                // Add a small delay to ensure smooth transition
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    cleanReturnToWelcome = false
+                }
+            }
+        }
+        .onChange(of: isUserAuthenticated) { newValue in
+            if newValue {
+                // When authentication state changes to true, check email verification
+                checkEmailVerification()
+            } else {
+                // When authentication changes to false, make sure we reset verification state
+                needsEmailVerification = false
+                if !cleanReturnToWelcome {
+                    // Only reset these if not triggered by our special notification
+                    showSignIn = false
+                    showSignUp = false
+                }
+            }
+        }
+    }
+    
+    // Check if user is already authenticated
+    private func checkAuthStatus() {
+        Task {
+            let authenticated = await AuthService.shared.isAuthenticated()
+            
+            if authenticated {
+                // Get the user's email if authenticated
+                do {
+                    let email = try await AuthService.shared.getCurrentUserEmail()
+                    DispatchQueue.main.async {
+                        userEmail = email
                     }
-                }) {
-                    Text("Sign Out")
-                        .foregroundColor(AppStyles.Colors.error)
+                } catch {
+                    print("Error getting user email: \(error)")
                 }
-                .textButtonStyle()
-                .padding(.top, AppStyles.Spacing.medium)
+                
+                // Check email verification status
+                await checkEmailVerificationAsync()
             }
-            .padding()
-            .sheet(isPresented: $hasSeenWelcomePage) {
-                // Your original onboarding tutorial
-                WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
+            
+            DispatchQueue.main.async {
+                isUserAuthenticated = authenticated
+                isCheckingAuth = false
             }
-        } else {
-            // Authentication welcome screen
-            WelcomeScreen(
-                onSignUpTap: {
-                    showSignUp = true
-                },
-                onSignInTap: {
-                    showSignIn = true
+        }
+    }
+    
+    // Check if email is verified
+    private func checkEmailVerification() {
+        Task {
+            await checkEmailVerificationAsync()
+        }
+    }
+    
+    private func checkEmailVerificationAsync() async {
+        do {
+            // First get user email if we don't have it yet
+            if userEmail.isEmpty {
+                do {
+                    let email = try await AuthService.shared.getCurrentUserEmail()
+                    DispatchQueue.main.async {
+                        userEmail = email
+                    }
+                } catch {
+                    print("Error getting user email: \(error)")
                 }
-            )
-            .sheet(isPresented: $showSignIn) {
-                // Sign in screen with ability to set isUserAuthenticated to true
-                SignInView(isAuthenticated: $isUserAuthenticated)
             }
-            .sheet(isPresented: $showSignUp) {
-                // Sign up screen with ability to set isUserAuthenticated to true
-                SignUpView(isAuthenticated: $isUserAuthenticated)
+            
+            let isVerified = try await AuthService.shared.isEmailVerified()
+            
+            DispatchQueue.main.async {
+                // If email is not verified, show email verification screen
+                needsEmailVerification = !isVerified
+            }
+        } catch {
+            print("Error checking email verification: \(error)")
+            
+            DispatchQueue.main.async {
+                // On error, assume not verified for safety
+                needsEmailVerification = false
+            }
+        }
+    }
+    
+    // Sign out function
+    private func signOut() {
+        Task {
+            do {
+                try await AuthService.shared.signOut()
+                
+                DispatchQueue.main.async {
+                    isUserAuthenticated = false
+                    needsEmailVerification = false
+                }
+            } catch {
+                print("Error signing out: \(error)")
             }
         }
     }
@@ -106,10 +253,6 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-//#Preview {
-//    WelcomeView(hasSeenWelcomePage: .constant(true))
-//}
-
 struct PageInfo: Identifiable {
     let id = UUID()
     let label: String
@@ -119,7 +262,7 @@ struct PageInfo: Identifiable {
 
 let pages = [
     PageInfo(label: "Welcome to SkipTheCart! 🛍️", text: "We help you shop smarter by showing how new items fit with what you already own. No more duplicates, no more regrets—just mindful choices.", image: .welcome),
-    PageInfo(label: "Sync your wardrobe", text: "Snap photos or upload existing ones. We’ll analyze colors, styles, and patterns to build your unique closet profile.", image: .wardrobe),
+    PageInfo(label: "Sync your wardrobe", text: "Snap photos or upload existing ones. We'll analyze colors, styles, and patterns to build your unique closet profile.", image: .wardrobe),
     PageInfo(label: "Shop Like Always... But Smarter", text: "Visit your favorite stores and add items to your cart. We work seamlessly in the background while you shop!", image: .shop),
     PageInfo(label: "Instant Cart Insights", text: "Before checkout, we scan your cart. See how similar items are to your closet – by color, style, or exact duplicates.", image: .cart),
     PageInfo(label: "Your Money, Your Impact.", text: "Track your savings. See how mindfulness turns into real savings and a clutter-free closet.", image: .insights),

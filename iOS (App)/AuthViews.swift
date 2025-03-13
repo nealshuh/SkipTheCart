@@ -9,6 +9,8 @@ import SwiftUI
 
 // MARK: - Sign In View
 
+// Update SignInView in AuthViews.swift
+
 struct SignInView: View {
     @Binding var isAuthenticated: Bool
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +19,7 @@ struct SignInView: View {
     @State private var password = ""
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var isLoading = false
     
     var body: some View {
         ZStack {
@@ -63,10 +66,17 @@ struct SignInView: View {
                 }
                 .primaryButtonStyle()
                 .padding(.top, AppStyles.Spacing.large)
+                .overlay(
+                    isLoading ?
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        : nil
+                )
+                .disabled(isLoading)
                 
                 Spacer()
                 
-                // Developer shortcut button
+                // Developer shortcut button (you can remove this in production)
                 Button(action: {
                     isAuthenticated = true
                     dismiss()
@@ -79,9 +89,6 @@ struct SignInView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(AppStyles.Layout.smallCornerRadius)
                 .padding(.bottom, AppStyles.Spacing.medium)
-                
-                // Developer shortcut button
-                
             }
             .padding(.horizontal, AppStyles.Layout.horizontalPadding)
             .responsiveWidth()
@@ -133,11 +140,26 @@ struct SignInView: View {
             return
         }
         
-        // In a real app, perform authentication here
+        isLoading = true
         
-        // For demo purposes, always authenticate
-        isAuthenticated = true
-        dismiss()
+        // Use AuthService to sign in
+        Task {
+            do {
+                try await AuthService.shared.signIn(email: email, password: password)
+                
+                // Update UI on main thread
+                DispatchQueue.main.async {
+                    isLoading = false
+                    isAuthenticated = true
+                    dismiss()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    isLoading = false
+                    showError(message: "Sign in failed: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     private func showError(message: String) {
@@ -159,6 +181,10 @@ struct SignUpView: View {
     @State private var confirmPassword = ""
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var isLoading = false
+    
+    // New state for email verification
+    @State private var showEmailVerification = false
     
     var body: some View {
         ZStack {
@@ -211,6 +237,13 @@ struct SignUpView: View {
                 }
                 .primaryButtonStyle()
                 .padding(.top, AppStyles.Spacing.large)
+                .overlay(
+                    isLoading ?
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        : nil
+                )
+                .disabled(isLoading)
                 
                 Spacer()
             }
@@ -250,6 +283,17 @@ struct SignUpView: View {
                     .foregroundColor(AppStyles.Colors.secondaryText)
             }
         )
+        .fullScreenCover(isPresented: $showEmailVerification) {
+            // Show email verification view when sign up completes
+            EmailConfirmationView(isAuthenticated: $isAuthenticated, email: email)
+        }
+        // Listen for the notification to close this view as well
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ReturnToWelcomeScreen"))) { _ in
+            // Dismiss this view when returning to welcome screen
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                dismiss()
+            }
+        }
     }
     
     private func signUp() {
@@ -269,11 +313,28 @@ struct SignUpView: View {
             return
         }
         
-        // In a real app, create account here
+        // Show loading indicator
+        isLoading = true
         
-        // For demo purposes, always authenticate
-        isAuthenticated = true
-        dismiss()
+        // Use AuthService to sign up
+        Task {
+            do {
+                try await AuthService.shared.signUp(email: email, password: password)
+                
+                // Update UI on main thread
+                DispatchQueue.main.async {
+                    isLoading = false
+                    
+                    // Show email verification screen
+                    showEmailVerification = true
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    isLoading = false
+                    showError(message: "Sign up failed: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     private func showError(message: String) {
