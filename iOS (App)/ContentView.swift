@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     // Original variable for onboarding tutorial
-    @AppStorage("hasSeenWelcomePage") var hasSeenWelcomePage = true
+    @AppStorage("hasSeenWelcomePage") var hasSeenWelcomePage = false
     
     // Authentication state
     @State var isUserAuthenticated = false
