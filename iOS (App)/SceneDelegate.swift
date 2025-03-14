@@ -33,11 +33,29 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private func handleDeepLink(url: URL) {
         print("Handling deep link: \(url.absoluteString)")
         
-        // For now just log the URL
+        // Check if this is our custom URL scheme
         if url.scheme == "skipthecart" {
             print("This is a skipthecart deep link")
             
-            // We'll implement the notification in a later step
+            // Parse the path and parameters
+            let path = url.host
+            let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+            
+            // Handle email confirmation links
+            if path == "email-confirmation" || path == "verify-email" {
+                // Check for success or failure parameters
+                let isSuccess = queryItems?.first(where: { $0.name == "status" })?.value == "success"
+                
+                if isSuccess {
+                    // Notify the app to show the email confirmation success view
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("EmailVerificationSuccess"),
+                            object: nil
+                        )
+                    }
+                }
+            }
         }
     }
 }

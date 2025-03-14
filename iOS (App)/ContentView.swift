@@ -13,9 +13,12 @@ struct ContentView: View {
     @State private var showSignUp = false
     @State private var showSettings = false
     
-    // New state for email verification
+    // Email verification states
     @State private var needsEmailVerification = false
     @State private var userEmail = ""
+    
+    // New state for email confirmation success
+    @State private var showEmailConfirmationSuccess = false
     
     // Handle direct navigation from email verification to welcome screen
     @State private var cleanReturnToWelcome = false
@@ -27,6 +30,16 @@ struct ContentView: View {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle())
                     .scaleEffect(1.5)
+            } else if showEmailConfirmationSuccess {
+                // New email confirmation success view
+                EmailConfirmationSuccessView(isAuthenticated: $isUserAuthenticated)
+                    .transition(.opacity)
+                    .onChange(of: isUserAuthenticated) { newValue in
+                        if !newValue {
+                            // Reset our state when authentication changes to false
+                            showEmailConfirmationSuccess = false
+                        }
+                    }
             } else if needsEmailVerification {
                 // Email verification view when user is signed in but email not verified
                 EmailConfirmationView(isAuthenticated: $isUserAuthenticated, email: userEmail)
@@ -143,10 +156,19 @@ struct ContentView: View {
                 showSignIn = false
                 showSignUp = false
                 needsEmailVerification = false
+                showEmailConfirmationSuccess = false
                 
                 // Add a small delay to ensure smooth transition
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     cleanReturnToWelcome = false
+                }
+            }
+            
+            // Add a new notification for email verification success
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("EmailVerificationSuccess"), object: nil, queue: .main) { _ in
+                DispatchQueue.main.async {
+                    showEmailConfirmationSuccess = true
+                    needsEmailVerification = false
                 }
             }
         }
@@ -157,6 +179,7 @@ struct ContentView: View {
             } else {
                 // When authentication changes to false, make sure we reset verification state
                 needsEmailVerification = false
+                showEmailConfirmationSuccess = false
                 if !cleanReturnToWelcome {
                     // Only reset these if not triggered by our special notification
                     showSignIn = false
@@ -239,6 +262,7 @@ struct ContentView: View {
                 DispatchQueue.main.async {
                     isUserAuthenticated = false
                     needsEmailVerification = false
+                    showEmailConfirmationSuccess = false
                 }
             } catch {
                 print("Error signing out: \(error)")

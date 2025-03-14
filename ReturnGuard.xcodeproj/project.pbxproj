@@ -146,6 +146,7 @@
 				AuthService.swift,
 				AuthViews.swift,
 				ContentView.swift,
+				EmailConfirmationSuccessView.swift,
 				EmailConfirmationView.swift,
 				SceneDelegate.swift,
 				SettingsView.swift,
