@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     // Original variable for onboarding tutorial
-    @AppStorage("hasSeenWelcomePage") var hasSeenWelcomePage = false
     
     // Authentication state
     @State var isUserAuthenticated = false
@@ -119,10 +118,6 @@ struct ContentView: View {
                     .padding(.horizontal, AppStyles.Layout.horizontalPadding)
                 }
                 .padding()
-                .sheet(isPresented: $hasSeenWelcomePage) {
-                    // Your original onboarding tutorial
-                    WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
-                }
                 .sheet(isPresented: $showSettings) {
                     SettingsView(isAuthenticated: $isUserAuthenticated)
                 }

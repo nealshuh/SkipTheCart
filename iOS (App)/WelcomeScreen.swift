@@ -15,9 +15,8 @@ struct WelcomeScreen: View {
     // Add the AppStorage binding here
     @AppStorage("hasSeenWelcomePage") var hasSeenWelcomePage = false
     
-    // Add state variables to control splash screen and welcome view
+    // Only need one state variable for splash control
     @State private var isShowingSplash = true
-    @State private var showWelcomeView = false
     
     var body: some View {
         ZStack {
@@ -36,7 +35,7 @@ struct WelcomeScreen: View {
                         .foregroundColor(AppStyles.Colors.text)
                 }
                 .transition(.opacity)
-            } else if !hasSeenWelcomePage && showWelcomeView {
+            } else if !hasSeenWelcomePage {
                 // Welcome slideshow - shown only once
                 WelcomeView(hasSeenWelcomePage: $hasSeenWelcomePage)
                 .transition(.opacity)
@@ -85,17 +84,10 @@ struct WelcomeScreen: View {
             }
         }
         .onAppear {
-            // First show splash for 1 second
+            // Show splash for 1 second, then transition to the appropriate next view
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 withAnimation {
                     isShowingSplash = false
-                }
-                
-                // After splash, determine what to show next
-                if !hasSeenWelcomePage {
-                    withAnimation {
-                        showWelcomeView = true
-                    }
                 }
             }
         }
