@@ -84,7 +84,7 @@ struct EmailConfirmationView: View {
 //                    
                     // Back to Sign In button - Fixed to properly return to welcome screen
                     Button(action: backToSignIn) {
-                        Text("Back to Sign In")
+                        Text("Back to Home")
                     }
                     .textButtonStyle()
                     .padding(.top, AppStyles.Spacing.small)
