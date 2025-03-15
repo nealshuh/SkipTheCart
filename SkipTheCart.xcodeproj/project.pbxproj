@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1F07C4352D729B3800755618 /* ReturnGuard Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F07C4342D729B3800755618 /* ReturnGuard Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		1F07C43F2D729B3800755618 /* ReturnGuard Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F07C43E2D729B3800755618 /* ReturnGuard Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1F07C4352D729B3800755618 /* SkipTheCart Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F07C4342D729B3800755618 /* SkipTheCart Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1F07C43F2D729B3800755618 /* SkipTheCart Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F07C43E2D729B3800755618 /* SkipTheCart Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		EF3E69352D7E3F570097CB17 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = EF3E69342D7E3F570097CB17 /* Auth */; };
 		EF3E69372D7E3F570097CB17 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = EF3E69362D7E3F570097CB17 /* Functions */; };
 		EF3E69392D7E3F570097CB17 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = EF3E69382D7E3F570097CB17 /* PostgREST */; };
@@ -41,7 +41,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				1F07C4352D729B3800755618 /* ReturnGuard Extension.appex in Embed Foundation Extensions */,
+				1F07C4352D729B3800755618 /* SkipTheCart Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -52,7 +52,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				1F07C43F2D729B3800755618 /* ReturnGuard Extension.appex in Embed Foundation Extensions */,
+				1F07C43F2D729B3800755618 /* SkipTheCart Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -60,14 +60,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1F07C4162D729B3800755618 /* ReturnGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReturnGuard.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1F07C4282D729B3800755618 /* ReturnGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReturnGuard.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1F07C4342D729B3800755618 /* ReturnGuard Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ReturnGuard Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		1F07C43E2D729B3800755618 /* ReturnGuard Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ReturnGuard Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F07C4162D729B3800755618 /* SkipTheCart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkipTheCart.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F07C4282D729B3800755618 /* SkipTheCart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkipTheCart.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F07C4342D729B3800755618 /* SkipTheCart Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "SkipTheCart Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F07C43E2D729B3800755618 /* SkipTheCart Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "SkipTheCart Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1F07C4632D729B3800755618 /* Exceptions for "Shared (App)" folder in "ReturnGuard (iOS)" target */ = {
+		1F07C4632D729B3800755618 /* Exceptions for "Shared (App)" folder in "SkipTheCart (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
@@ -77,16 +77,16 @@
 				Resources/Style.css,
 				ViewController.swift,
 			);
-			target = 1F07C4152D729B3800755618 /* ReturnGuard (iOS) */;
+			target = 1F07C4152D729B3800755618 /* SkipTheCart (iOS) */;
 		};
-		1F07C4672D729B3800755618 /* Exceptions for "iOS (Extension)" folder in "ReturnGuard Extension (iOS)" target */ = {
+		1F07C4672D729B3800755618 /* Exceptions for "iOS (Extension)" folder in "SkipTheCart Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */;
+			target = 1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */;
 		};
-		1F07C46D2D729B3800755618 /* Exceptions for "Shared (App)" folder in "ReturnGuard (macOS)" target */ = {
+		1F07C46D2D729B3800755618 /* Exceptions for "Shared (App)" folder in "SkipTheCart (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
@@ -96,16 +96,16 @@
 				Resources/Style.css,
 				ViewController.swift,
 			);
-			target = 1F07C4272D729B3800755618 /* ReturnGuard (macOS) */;
+			target = 1F07C4272D729B3800755618 /* SkipTheCart (macOS) */;
 		};
-		1F07C4712D729B3800755618 /* Exceptions for "macOS (Extension)" folder in "ReturnGuard Extension (macOS)" target */ = {
+		1F07C4712D729B3800755618 /* Exceptions for "macOS (Extension)" folder in "SkipTheCart Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */;
+			target = 1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */;
 		};
-		1F07C4762D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "ReturnGuard Extension (iOS)" target */ = {
+		1F07C4762D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/_locales,
@@ -116,9 +116,9 @@
 				Resources/manifest.json,
 				SafariWebExtensionHandler.swift,
 			);
-			target = 1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */;
+			target = 1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */;
 		};
-		1F07C4772D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "ReturnGuard Extension (macOS)" target */ = {
+		1F07C4772D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/_locales,
@@ -129,9 +129,9 @@
 				Resources/manifest.json,
 				SafariWebExtensionHandler.swift,
 			);
-			target = 1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */;
+			target = 1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */;
 		};
-		EF6D568B2D796FD7005FC3AE /* Exceptions for "iOS (App)" folder in "ReturnGuard (iOS)" target */ = {
+		EF6D568B2D796FD7005FC3AE /* Exceptions for "iOS (App)" folder in "SkipTheCart (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: LaunchScreen.storyboard",
@@ -154,7 +154,7 @@
 				test.swift,
 				WelcomeScreen.swift,
 			);
-			target = 1F07C4152D729B3800755618 /* ReturnGuard (iOS) */;
+			target = 1F07C4152D729B3800755618 /* SkipTheCart (iOS) */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -162,8 +162,8 @@
 		1F07C3FE2D729B3500755618 /* Shared (App) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1F07C4632D729B3800755618 /* Exceptions for "Shared (App)" folder in "ReturnGuard (iOS)" target */,
-				1F07C46D2D729B3800755618 /* Exceptions for "Shared (App)" folder in "ReturnGuard (macOS)" target */,
+				1F07C4632D729B3800755618 /* Exceptions for "Shared (App)" folder in "SkipTheCart (iOS)" target */,
+				1F07C46D2D729B3800755618 /* Exceptions for "Shared (App)" folder in "SkipTheCart (macOS)" target */,
 			);
 			path = "Shared (App)";
 			sourceTree = "<group>";
@@ -171,8 +171,8 @@
 		1F07C4072D729B3800755618 /* Shared (Extension) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1F07C4762D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "ReturnGuard Extension (iOS)" target */,
-				1F07C4772D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "ReturnGuard Extension (macOS)" target */,
+				1F07C4762D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (iOS)" target */,
+				1F07C4772D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (macOS)" target */,
 			);
 			explicitFolders = (
 				Resources/_locales,
@@ -189,7 +189,7 @@
 		1F07C4382D729B3800755618 /* iOS (Extension) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1F07C4672D729B3800755618 /* Exceptions for "iOS (Extension)" folder in "ReturnGuard Extension (iOS)" target */,
+				1F07C4672D729B3800755618 /* Exceptions for "iOS (Extension)" folder in "SkipTheCart Extension (iOS)" target */,
 			);
 			path = "iOS (Extension)";
 			sourceTree = "<group>";
@@ -197,7 +197,7 @@
 		1F07C4422D729B3800755618 /* macOS (Extension) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1F07C4712D729B3800755618 /* Exceptions for "macOS (Extension)" folder in "ReturnGuard Extension (macOS)" target */,
+				1F07C4712D729B3800755618 /* Exceptions for "macOS (Extension)" folder in "SkipTheCart Extension (macOS)" target */,
 			);
 			path = "macOS (Extension)";
 			sourceTree = "<group>";
@@ -205,7 +205,7 @@
 		EF6D56852D796FD7005FC3AE /* iOS (App) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				EF6D568B2D796FD7005FC3AE /* Exceptions for "iOS (App)" folder in "ReturnGuard (iOS)" target */,
+				EF6D568B2D796FD7005FC3AE /* Exceptions for "iOS (App)" folder in "SkipTheCart (iOS)" target */,
 			);
 			path = "iOS (App)";
 			sourceTree = "<group>";
@@ -266,10 +266,10 @@
 		1F07C4172D729B3800755618 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1F07C4162D729B3800755618 /* ReturnGuard.app */,
-				1F07C4282D729B3800755618 /* ReturnGuard.app */,
-				1F07C4342D729B3800755618 /* ReturnGuard Extension.appex */,
-				1F07C43E2D729B3800755618 /* ReturnGuard Extension.appex */,
+				1F07C4162D729B3800755618 /* SkipTheCart.app */,
+				1F07C4282D729B3800755618 /* SkipTheCart.app */,
+				1F07C4342D729B3800755618 /* SkipTheCart Extension.appex */,
+				1F07C43E2D729B3800755618 /* SkipTheCart Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -277,9 +277,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1F07C4152D729B3800755618 /* ReturnGuard (iOS) */ = {
+		1F07C4152D729B3800755618 /* SkipTheCart (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1F07C4692D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard (iOS)" */;
+			buildConfigurationList = 1F07C4692D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart (iOS)" */;
 			buildPhases = (
 				1F07C4122D729B3800755618 /* Sources */,
 				1F07C4132D729B3800755618 /* Frameworks */,
@@ -291,7 +291,7 @@
 			dependencies = (
 				1F07C4372D729B3800755618 /* PBXTargetDependency */,
 			);
-			name = "ReturnGuard (iOS)";
+			name = "SkipTheCart (iOS)";
 			packageProductDependencies = (
 				EF3E69342D7E3F570097CB17 /* Auth */,
 				EF3E69362D7E3F570097CB17 /* Functions */,
@@ -301,12 +301,12 @@
 				EF3E693E2D7E3F570097CB17 /* Supabase */,
 			);
 			productName = "ReturnGuard (iOS)";
-			productReference = 1F07C4162D729B3800755618 /* ReturnGuard.app */;
+			productReference = 1F07C4162D729B3800755618 /* SkipTheCart.app */;
 			productType = "com.apple.product-type.application";
 		};
-		1F07C4272D729B3800755618 /* ReturnGuard (macOS) */ = {
+		1F07C4272D729B3800755618 /* SkipTheCart (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1F07C4732D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard (macOS)" */;
+			buildConfigurationList = 1F07C4732D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart (macOS)" */;
 			buildPhases = (
 				1F07C4242D729B3800755618 /* Sources */,
 				1F07C4252D729B3800755618 /* Frameworks */,
@@ -321,16 +321,16 @@
 			fileSystemSynchronizedGroups = (
 				1F07C4292D729B3800755618 /* macOS (App) */,
 			);
-			name = "ReturnGuard (macOS)";
+			name = "SkipTheCart (macOS)";
 			packageProductDependencies = (
 			);
 			productName = "ReturnGuard (macOS)";
-			productReference = 1F07C4282D729B3800755618 /* ReturnGuard.app */;
+			productReference = 1F07C4282D729B3800755618 /* SkipTheCart.app */;
 			productType = "com.apple.product-type.application";
 		};
-		1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */ = {
+		1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1F07C4642D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard Extension (iOS)" */;
+			buildConfigurationList = 1F07C4642D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart Extension (iOS)" */;
 			buildPhases = (
 				1F07C4302D729B3800755618 /* Sources */,
 				1F07C4312D729B3800755618 /* Frameworks */,
@@ -343,16 +343,16 @@
 			fileSystemSynchronizedGroups = (
 				1F07C4382D729B3800755618 /* iOS (Extension) */,
 			);
-			name = "ReturnGuard Extension (iOS)";
+			name = "SkipTheCart Extension (iOS)";
 			packageProductDependencies = (
 			);
 			productName = "ReturnGuard Extension (iOS)";
-			productReference = 1F07C4342D729B3800755618 /* ReturnGuard Extension.appex */;
+			productReference = 1F07C4342D729B3800755618 /* SkipTheCart Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */ = {
+		1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1F07C46E2D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard Extension (macOS)" */;
+			buildConfigurationList = 1F07C46E2D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart Extension (macOS)" */;
 			buildPhases = (
 				1F07C43A2D729B3800755618 /* Sources */,
 				1F07C43B2D729B3800755618 /* Frameworks */,
@@ -365,11 +365,11 @@
 			fileSystemSynchronizedGroups = (
 				1F07C4422D729B3800755618 /* macOS (Extension) */,
 			);
-			name = "ReturnGuard Extension (macOS)";
+			name = "SkipTheCart Extension (macOS)";
 			packageProductDependencies = (
 			);
 			productName = "ReturnGuard Extension (macOS)";
-			productReference = 1F07C43E2D729B3800755618 /* ReturnGuard Extension.appex */;
+			productReference = 1F07C43E2D729B3800755618 /* SkipTheCart Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -396,7 +396,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1F07C3FD2D729B3500755618 /* Build configuration list for PBXProject "ReturnGuard" */;
+			buildConfigurationList = 1F07C3FD2D729B3500755618 /* Build configuration list for PBXProject "SkipTheCart" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -413,10 +413,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1F07C4152D729B3800755618 /* ReturnGuard (iOS) */,
-				1F07C4272D729B3800755618 /* ReturnGuard (macOS) */,
-				1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */,
-				1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */,
+				1F07C4152D729B3800755618 /* SkipTheCart (iOS) */,
+				1F07C4272D729B3800755618 /* SkipTheCart (macOS) */,
+				1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */,
+				1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */,
 			);
 		};
 /* End PBXProject section */
@@ -486,12 +486,12 @@
 /* Begin PBXTargetDependency section */
 		1F07C4372D729B3800755618 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1F07C4332D729B3800755618 /* ReturnGuard Extension (iOS) */;
+			target = 1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */;
 			targetProxy = 1F07C4362D729B3800755618 /* PBXContainerItemProxy */;
 		};
 		1F07C4412D729B3800755618 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1F07C43D2D729B3800755618 /* ReturnGuard Extension (macOS) */;
+			target = 1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */;
 			targetProxy = 1F07C4402D729B3800755618 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -519,7 +519,7 @@
 					SafariServices,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard.Extension;
-				PRODUCT_NAME = "ReturnGuard Extension";
+				PRODUCT_NAME = "SkipTheCart Extension";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -550,7 +550,7 @@
 					SafariServices,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard.Extension;
-				PRODUCT_NAME = "ReturnGuard Extension";
+				PRODUCT_NAME = "SkipTheCart Extension";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -570,7 +570,7 @@
 				DEVELOPMENT_TEAM = A468F6QV86;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (App)/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = ReturnGuard;
+				INFOPLIST_KEY_CFBundleDisplayName = SkipTheCart;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -589,7 +589,7 @@
 					WebKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard;
-				PRODUCT_NAME = ReturnGuard;
+				PRODUCT_NAME = SkipTheCart;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -607,7 +607,7 @@
 				DEVELOPMENT_TEAM = A468F6QV86;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (App)/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = ReturnGuard;
+				INFOPLIST_KEY_CFBundleDisplayName = SkipTheCart;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -626,7 +626,7 @@
 					WebKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard;
-				PRODUCT_NAME = ReturnGuard;
+				PRODUCT_NAME = SkipTheCart;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -659,7 +659,7 @@
 					SafariServices,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard.Extension;
-				PRODUCT_NAME = "ReturnGuard Extension";
+				PRODUCT_NAME = "SkipTheCart Extension";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -691,7 +691,7 @@
 					SafariServices,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard.Extension;
-				PRODUCT_NAME = "ReturnGuard Extension";
+				PRODUCT_NAME = "SkipTheCart Extension";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -726,7 +726,7 @@
 					WebKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard;
-				PRODUCT_NAME = ReturnGuard;
+				PRODUCT_NAME = SkipTheCart;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -760,7 +760,7 @@
 					WebKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.NealAndPrafull.ReturnGuard;
-				PRODUCT_NAME = ReturnGuard;
+				PRODUCT_NAME = SkipTheCart;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -884,7 +884,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1F07C3FD2D729B3500755618 /* Build configuration list for PBXProject "ReturnGuard" */ = {
+		1F07C3FD2D729B3500755618 /* Build configuration list for PBXProject "SkipTheCart" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1F07C4782D729B3800755618 /* Debug */,
@@ -893,7 +893,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1F07C4642D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard Extension (iOS)" */ = {
+		1F07C4642D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart Extension (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1F07C4652D729B3800755618 /* Debug */,
@@ -902,7 +902,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1F07C4692D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard (iOS)" */ = {
+		1F07C4692D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1F07C46A2D729B3800755618 /* Debug */,
@@ -911,7 +911,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1F07C46E2D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard Extension (macOS)" */ = {
+		1F07C46E2D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart Extension (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1F07C46F2D729B3800755618 /* Debug */,
@@ -920,7 +920,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1F07C4732D729B3800755618 /* Build configuration list for PBXNativeTarget "ReturnGuard (macOS)" */ = {
+		1F07C4732D729B3800755618 /* Build configuration list for PBXNativeTarget "SkipTheCart (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1F07C4742D729B3800755618 /* Debug */,
