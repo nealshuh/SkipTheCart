@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1F07C4152D729B3800755618"
-               BuildableName = "ReturnGuard.app"
-               BlueprintName = "ReturnGuard (iOS)"
-               ReferencedContainer = "container:ReturnGuard.xcodeproj">
+               BuildableName = "SkipTheCart.app"
+               BlueprintName = "SkipTheCart (iOS)"
+               ReferencedContainer = "container:SkipTheCart.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1F07C4152D729B3800755618"
-            BuildableName = "ReturnGuard.app"
-            BlueprintName = "ReturnGuard (iOS)"
-            ReferencedContainer = "container:ReturnGuard.xcodeproj">
+            BuildableName = "SkipTheCart.app"
+            BlueprintName = "SkipTheCart (iOS)"
+            ReferencedContainer = "container:SkipTheCart.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1F07C4152D729B3800755618"
-            BuildableName = "ReturnGuard.app"
-            BlueprintName = "ReturnGuard (iOS)"
-            ReferencedContainer = "container:ReturnGuard.xcodeproj">
+            BuildableName = "SkipTheCart.app"
+            BlueprintName = "SkipTheCart (iOS)"
+            ReferencedContainer = "container:SkipTheCart.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
