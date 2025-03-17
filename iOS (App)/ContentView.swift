@@ -22,6 +22,9 @@ struct ContentView: View {
     // Handle direct navigation from email verification to welcome screen
     @State private var cleanReturnToWelcome = false
     
+    // Tab selection state
+    @State private var selectedTab: Int = 0
+    
     var body: some View {
         ZStack {
             if isCheckingAuth {
@@ -54,70 +57,23 @@ struct ContentView: View {
                         checkAuthStatus() // Recheck auth status when the view disappears
                     }
             } else if isUserAuthenticated {
-                // Main app content
-                VStack(spacing: AppStyles.Spacing.large) {
-                    HStack {
-                        Text("SkipTheCart")
-                            .font(AppStyles.Typography.largeTitle)
-                            .foregroundColor(AppStyles.Colors.text)
-                        
-                        Spacer()
-                        
-                        // Settings button
-                        Button(action: {
-                            showSettings = true
-                        }) {
-                            Image(systemName: "gear")
-                                .font(.system(size: 22))
-                                .foregroundColor(AppStyles.Colors.primary)
+                // Main app content with tab view
+                TabView(selection: $selectedTab) {
+                    // Home tab
+                    homeView
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
                         }
-                        .padding(.trailing, 4)
-                    }
-                    .padding(.horizontal)
+                        .tag(0)
                     
-                    Spacer()
-                    
-                    // App explanation
-                    Text("This extension shows items in your Zara shopping cart at the bottom of the screen.")
-                        .font(AppStyles.Typography.body)
-                        .foregroundColor(AppStyles.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                    
-                    // Safari Extension instructions
-                    VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                        Text("To enable the extension:")
-                            .font(AppStyles.Typography.heading)
-                            .foregroundColor(AppStyles.Colors.text)
-                        
-                        VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
-                            Text("1. Open Safari")
-                            Text("2. Tap the 'aA' button in the address bar")
-                            Text("3. Select 'Manage Extensions'")
-                            Text("4. Enable 'SkipTheCart'")
-                            Text("5. Visit Zara.com shopping cart")
+                    // Wardrobe tab
+                    WardrobeView()
+                        .tabItem {
+                            Label("Wardrobe", systemImage: "tshirt.fill")
                         }
-                        .font(AppStyles.Typography.body)
-                        .foregroundColor(AppStyles.Colors.secondaryText)
-                    }
-                    .padding()
-                    .background(AppStyles.Colors.secondaryBackground)
-                    .cornerRadius(AppStyles.Layout.cornerRadius)
-                    
-                    Spacer()
-                    
-                    // Opens Safari Settings
-                    Button(action: {
-                        if let url = URL(string: "https://skipthecart.carrd.co/") {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        Text("Add SkipTheCart Extension")
-                    }
-                    .primaryButtonStyle()
-                    .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+                        .tag(1)
                 }
-                .padding()
+                .accentColor(AppStyles.Colors.primary)
                 .sheet(isPresented: $showSettings) {
                     SettingsView(isAuthenticated: $isUserAuthenticated)
                 }
@@ -182,6 +138,95 @@ struct ContentView: View {
                 }
             }
         }
+    }
+    
+    // Extracted home view to keep code organized
+    private var homeView: some View {
+        VStack(spacing: AppStyles.Spacing.large) {
+            HStack {
+                Text("SkipTheCart")
+                    .font(AppStyles.Typography.largeTitle)
+                    .foregroundColor(AppStyles.Colors.text)
+                
+                Spacer()
+                
+                // Settings button
+                Button(action: {
+                    showSettings = true
+                }) {
+                    Image(systemName: "gear")
+                        .font(.system(size: 22))
+                        .foregroundColor(AppStyles.Colors.primary)
+                }
+                .padding(.trailing, 4)
+            }
+            .padding(.horizontal)
+            
+            Spacer()
+            
+            // App explanation
+            Text("This extension shows items in your online shopping cart and compares them to what you already own.")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding()
+            
+            // Safari Extension instructions
+            VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                Text("To enable the extension:")
+                    .font(AppStyles.Typography.heading)
+                    .foregroundColor(AppStyles.Colors.text)
+                
+                VStack(alignment: .leading, spacing: AppStyles.Spacing.xsmall) {
+                    Text("1. Open Safari")
+                    Text("2. Tap the 'aA' button in the address bar")
+                    Text("3. Select 'Manage Extensions'")
+                    Text("4. Enable 'SkipTheCart'")
+                    Text("5. Visit shopping cart pages on your favorite stores")
+                }
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+            }
+            .padding()
+            .background(AppStyles.Colors.secondaryBackground)
+            .cornerRadius(AppStyles.Layout.cornerRadius)
+            
+            // Wardrobe prompt
+            VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                Text("Build Your Digital Wardrobe")
+                    .font(AppStyles.Typography.heading)
+                    .foregroundColor(AppStyles.Colors.text)
+                
+                Text("Add photos of your clothing to get accurate comparisons when shopping online.")
+                    .font(AppStyles.Typography.body)
+                    .foregroundColor(AppStyles.Colors.secondaryText)
+                
+                Button(action: {
+                    selectedTab = 1  // Switch to wardrobe tab
+                }) {
+                    Text("Go to My Wardrobe")
+                }
+                .primaryButtonStyle()
+                .padding(.top, AppStyles.Spacing.small)
+            }
+            .padding()
+            .background(AppStyles.Colors.secondaryBackground)
+            .cornerRadius(AppStyles.Layout.cornerRadius)
+            
+            Spacer()
+            
+            // Opens Safari Settings
+            Button(action: {
+                if let url = URL(string: "https://skipthecart.carrd.co/") {
+                    UIApplication.shared.open(url)
+                }
+            }) {
+                Text("Add SkipTheCart Extension")
+            }
+            .primaryButtonStyle()
+            .padding(.horizontal, AppStyles.Layout.horizontalPadding)
+        }
+        .padding()
     }
     
     // Check if user is already authenticated
