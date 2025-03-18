@@ -17,6 +17,13 @@ struct WardrobeView: View {
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
     
+    // Grid layout with 3 items per row
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+    
     let categories = ["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Accessories"]
     
     var body: some View {
@@ -61,50 +68,18 @@ struct WardrobeView: View {
                         .padding(.vertical, AppStyles.Spacing.small)
                     }
                     
-                    // Wardrobe Grid
+                    // Wardrobe Content
                     if wardrobeItems.isEmpty {
                         // Empty state
-                        VStack(spacing: AppStyles.Spacing.medium) {
-                            Spacer()
-                            
-                            Image(systemName: "tshirt.fill")
-                                .font(.system(size: 70))
-                                .foregroundColor(AppStyles.Colors.secondaryText.opacity(0.3))
-                            
-                            Text("Your wardrobe is empty")
-                                .font(AppStyles.Typography.heading)
-                                .foregroundColor(AppStyles.Colors.text)
-                            
-                            Text("Add items from your photo library to start comparing with your online shopping")
-                                .font(AppStyles.Typography.body)
-                                .foregroundColor(AppStyles.Colors.secondaryText)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
-                            
-                            Button(action: {
-                                showImagePicker = true
-                            }) {
-                                Label("Add Items", systemImage: "plus")
-                            }
-                            .primaryButtonStyle()
-                            .padding(.horizontal, 60)
-                            .padding(.top, AppStyles.Spacing.large)
-                            
-                            Spacer()
-                        }
+                        emptyStateView
                     } else {
-                        // Items grid
-                        ScrollView {
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppStyles.Spacing.medium) {
-                                ForEach(filteredItems) { item in
-                                    WardrobeItemView(item: item) {
-                                        // Long press action to delete
-                                        itemToDelete = item.id
-                                        showDeleteConfirmation = true
-                                    }
-                                }
-                            }
-                            .padding()
+                        // Wardrobe items with appropriate layout based on filter
+                        if selectedCategory.isEmpty {
+                            // "All" tab with categorized sections
+                            categorizedItemsView
+                        } else {
+                            // Specific category with grid layout
+                            filteredItemsGridView
                         }
                     }
                 }
@@ -152,20 +127,153 @@ struct WardrobeView: View {
         }
     }
     
-    // Use computed properties to get access to the published items
+    // MARK: - View Components
+    
+    // Empty state view when no items exist
+    private var emptyStateView: some View {
+        VStack(spacing: AppStyles.Spacing.medium) {
+            Spacer()
+            
+            Image(systemName: "tshirt.fill")
+                .font(.system(size: 70))
+                .foregroundColor(AppStyles.Colors.secondaryText.opacity(0.3))
+            
+            Text("Your wardrobe is empty")
+                .font(AppStyles.Typography.heading)
+                .foregroundColor(AppStyles.Colors.text)
+            
+            Text("Add items from your photo library to start comparing with your online shopping")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            
+            Button(action: {
+                showImagePicker = true
+            }) {
+                Label("Add Items", systemImage: "plus")
+            }
+            .primaryButtonStyle()
+            .padding(.horizontal, 60)
+            .padding(.top, AppStyles.Spacing.large)
+            
+            Spacer()
+        }
+    }
+    
+    // Grid view for a specific category
+    private var filteredItemsGridView: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(filteredItems) { item in
+                    SquareItemView(item: item) {
+                        itemToDelete = item.id
+                        showDeleteConfirmation = true
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+        }
+    }
+    
+    // Categorized view for "All" tab
+    private var categorizedItemsView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Create a section for each category that has items
+                ForEach(categoriesWithItems, id: \.self) { category in
+                    VStack(alignment: .leading, spacing: 10) {
+                        // Category header
+                        Text("\(category):")
+                            .font(AppStyles.Typography.heading)
+                            .foregroundColor(AppStyles.Colors.text)
+                            .padding(.leading, 16)
+                        
+                        // Items grid for this category
+                        LazyVGrid(columns: columns, spacing: 16) {
+                            ForEach(itemsInCategory(category)) { item in
+                                SquareItemView(item: item) {
+                                    itemToDelete = item.id
+                                    showDeleteConfirmation = true
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+            }
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+        }
+    }
+    
+    // MARK: - Data Helpers
+    
+    // Get all wardrobe items
     private var wardrobeItems: [WardrobeItem] {
         return wardrobeManager.items
     }
     
-    // Filter items based on selected category
-    var filteredItems: [WardrobeItem] {
+    // Get items filtered by selected category
+    private var filteredItems: [WardrobeItem] {
         if selectedCategory.isEmpty {
             return wardrobeItems
         } else {
             return wardrobeItems.filter { $0.categoryName == selectedCategory }
         }
     }
+    
+    // Get list of categories that contain items
+    private var categoriesWithItems: [String] {
+        // Get unique category names from items
+        let categoriesWithContent = Set(wardrobeItems.map { $0.categoryName })
+        
+        // Sort categories in predetermined order (using categories array)
+        return categories.filter { categoriesWithContent.contains($0) }
+    }
+    
+    // Get items for a specific category
+    private func itemsInCategory(_ category: String) -> [WardrobeItem] {
+        return wardrobeItems.filter { $0.categoryName == category }
+    }
 }
+
+// MARK: - Square Item View
+// Redesigned item view with square format
+struct SquareItemView: View {
+    let item: WardrobeItem
+    let onLongPress: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .center, spacing: 4) {
+            // Square image container
+            ZStack {
+                // Background for consistent square shape
+                Rectangle()
+                    .fill(Color.gray.opacity(0.1))
+                    .aspectRatio(1, contentMode: .fit) // Force square aspect ratio
+                
+                // Image centered and scaled to fill the square
+                Image(uiImage: item.image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: UIScreen.main.bounds.width / 3 - 22, height: UIScreen.main.bounds.width / 3 - 22)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .frame(width: UIScreen.main.bounds.width / 3 - 22, height: UIScreen.main.bounds.width / 3 - 22) // Fixed size
+            .cornerRadius(10)
+            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+            .contentShape(Rectangle())
+            .onLongPressGesture {
+                onLongPress()
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Views
 
 // UIViewControllerRepresentable for UIImagePickerController
 struct ImagePicker: UIViewControllerRepresentable {
@@ -227,41 +335,7 @@ struct CategoryButton: View {
     }
 }
 
-// Item view component
-struct WardrobeItemView: View {
-    let item: WardrobeItem
-    let onLongPress: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppStyles.Spacing.xxsmall) {
-            Image(uiImage: item.image)
-                .resizable()
-                .scaledToFill()
-                .frame(height: 180)
-                .clipped()
-                .cornerRadius(AppStyles.Layout.cornerRadius)
-                .contentShape(Rectangle())
-                .onLongPressGesture {
-                    onLongPress()
-                }
-            
-            HStack {
-                Text(item.categoryName)
-                    .font(AppStyles.Typography.caption)
-                    .foregroundColor(AppStyles.Colors.secondaryText)
-                
-                Spacer()
-                
-                Text(item.dateAdded.formatted(.dateTime.month().day()))
-                    .font(AppStyles.Typography.small)
-                    .foregroundColor(AppStyles.Colors.secondaryText.opacity(0.7))
-            }
-            .padding(.top, 2)
-        }
-    }
-}
-
-// Simplified Category selection view for newly uploaded photos
+// Category selection view for newly uploaded photos
 struct CategorySelectionView: View {
     let image: UIImage
     let onComplete: (String) -> Void
