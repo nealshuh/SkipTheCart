@@ -432,6 +432,8 @@ struct SquareItemView: View {
     let item: WardrobeItem
     let onLongPress: () -> Void
     
+    @State private var isShowingDeleteButton = false
+    
     var body: some View {
         VStack(alignment: .center, spacing: 4) {
             // Square image container
@@ -447,13 +449,66 @@ struct SquareItemView: View {
                     .scaledToFill()
                     .frame(width: UIScreen.main.bounds.width / 3 - 22, height: UIScreen.main.bounds.width / 3 - 22)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
+                
+                // Delete button - shows when user taps the image
+                if isShowingDeleteButton {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            
+                            Button(action: {
+                                onLongPress()
+                            }) {
+                                Image(systemName: "trash.circle.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundColor(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.red.opacity(0.8))
+                                            .frame(width: 28, height: 28)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+                            }
+                            .padding(6)
+                        }
+                        
+                        Spacer()
+                    }
+                }
             }
             .frame(width: UIScreen.main.bounds.width / 3 - 22, height: UIScreen.main.bounds.width / 3 - 22) // Fixed size
             .cornerRadius(10)
             .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
             .contentShape(Rectangle())
+            .onTapGesture {
+                // Toggle delete button visibility
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isShowingDeleteButton.toggle()
+                }
+                
+                // Auto-hide after 3 seconds if showing
+                if isShowingDeleteButton {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isShowingDeleteButton = false
+                        }
+                    }
+                }
+            }
             .onLongPressGesture {
                 onLongPress()
+            }
+            // Additional tap area below the image for deleting (optional)
+            if isShowingDeleteButton {
+                Button(action: {
+                    onLongPress()
+                }) {
+                    Text("Delete")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.red)
+                        .padding(.vertical, 2)
+                }
+                .transition(.opacity)
             }
         }
     }
