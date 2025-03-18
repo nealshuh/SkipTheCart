@@ -24,7 +24,7 @@ struct WardrobeView: View {
         GridItem(.flexible(), spacing: 12)
     ]
     
-    let categories = ["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Accessories"]
+    let categories = ["Tops", "Bottoms", "Jackets"]
     
     var body: some View {
         NavigationView {
@@ -186,7 +186,7 @@ struct WardrobeView: View {
                 ForEach(categoriesWithItems, id: \.self) { category in
                     VStack(alignment: .leading, spacing: 10) {
                         // Category header
-                        Text("\(category):")
+                        Text("\(category)")
                             .font(AppStyles.Typography.heading)
                             .foregroundColor(AppStyles.Colors.text)
                             .padding(.leading, 16)
@@ -346,7 +346,7 @@ struct CategorySelectionView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     
-    let categories = ["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Accessories"]
+    let categories = ["Tops", "Bottoms", "Jackets"]
     
     var body: some View {
         NavigationView {
