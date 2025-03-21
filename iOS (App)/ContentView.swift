@@ -142,7 +142,7 @@ struct ContentView: View {
     
     // Extracted home view to keep code organized
     private var homeView: some View {
-        VStack(spacing: AppStyles.Spacing.large) {
+        VStack(spacing: AppStyles.Spacing.medium) {
             HStack {
                 Text("SkipTheCart")
                     .font(AppStyles.Typography.largeTitle)
@@ -182,10 +182,21 @@ struct ContentView: View {
                     Text("2. Tap the 'aA' button in the address bar")
                     Text("3. Select 'Manage Extensions'")
                     Text("4. Enable 'SkipTheCart'")
-                    Text("5. Visit shopping cart pages on your favorite stores")
+                    Text("5. Visit shopping carts on your favorite stores")
                 }
                 .font(AppStyles.Typography.body)
                 .foregroundColor(AppStyles.Colors.secondaryText)
+                
+                // Add extension button moved here, right after the instructions
+                Button(action: {
+                    if let url = URL(string: "https://skipthecart.carrd.co/") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Text("Add SkipTheCart Extension")
+                }
+                .primaryButtonStyle()
+                .padding(.top, AppStyles.Spacing.medium)
             }
             .padding()
             .background(AppStyles.Colors.secondaryBackground)
@@ -214,17 +225,6 @@ struct ContentView: View {
             .cornerRadius(AppStyles.Layout.cornerRadius)
             
             Spacer()
-            
-            // Opens Safari Settings
-            Button(action: {
-                if let url = URL(string: "https://skipthecart.carrd.co/") {
-                    UIApplication.shared.open(url)
-                }
-            }) {
-                Text("Add SkipTheCart Extension")
-            }
-            .primaryButtonStyle()
-            .padding(.horizontal, AppStyles.Layout.horizontalPadding)
         }
         .padding()
     }
