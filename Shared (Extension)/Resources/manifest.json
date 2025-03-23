@@ -2,12 +2,36 @@
   "manifest_version": 2,
   "name": "SkipTheCart",
   "version": "1.0",
-  "description": "Extracts and displays images from your Zara shopping cart",
+  "description": "Extracts and displays images from your shopping cart",
   "permissions": ["activeTab"],
-  "host_permissions": ["*://www.zara.com/*"],
+  "host_permissions": [
+    "*://www.zara.com/*",
+    "*://www.hm.com/*",
+    "*://www2.hm.com/*",
+    "*://www.aritzia.com/*",
+    "*://edikted.com/*",
+    "*://www.abercrombie.com/*",
+    "*://us.princesspolly.com/*",
+    "*://www.revolve.com/*",
+    "*://tigermist.com/*",
+    "*://www.ohpolly.com/*",
+    "*://www.fashionnova.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["*://www.zara.com/*"],
+      "matches": [
+        "*://www.zara.com/*",
+        "*://www.hm.com/*",
+        "*://www2.hm.com/*",
+        "*://www.aritzia.com/*",
+        "*://edikted.com/*",
+        "*://www.abercrombie.com/*",
+        "*://us.princesspolly.com/*",
+        "*://www.revolve.com/*",
+        "*://tigermist.com/*",
+        "*://www.ohpolly.com/*",
+        "*://www.fashionnova.com/*"
+      ],
       "js": ["content.js"],
       "css": ["content.css"]
     }
