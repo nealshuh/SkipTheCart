@@ -234,7 +234,57 @@ const SITE_CONFIGS = {
         'p.gender + p.size-color'
       ]
     }
-  }
+  },
+    edikted: {
+      cartDetection: {
+        urlPatterns: ['/cart', '/checkout'], // Covers main cart page and possible checkout variations
+        domSelectors: [
+          '.cart__items',           // Main cart items container
+          '.cart__items-header',    // Header shown in your HTML
+          '[class*="cart"]',        // Broad match for cart-related elements
+          '[data-cart-items]'       // Common data attribute pattern
+        ],
+        textIndicators: ['shopping cart', 'cart', 'basket', 'items'] // Common cart-related text
+      },
+      itemSelectors: {
+        container: [
+          '.cart__items > div:not(.cart__items-header)', // Direct children of cart__items excluding header
+          '.cart__items .cart-item',                     // Common pattern for cart items
+          '.cart__items [class*="item"]',                // Broad match for item classes
+          '.cart__items article'                         // Alternative common structure
+        ],
+        image: [
+          '.cart__items img',                            // Any image within cart items
+          '[class*="item-image"] img',                  // Common class pattern
+          'img[src*="/products/"]',                     // Images with product path
+          '.cart__items .image-container img'           // Possible image container
+        ],
+        name: [
+          '.cart__items .cart-item .name',              // Specific name class
+          '.cart__items [class*="title"]',             // Common title pattern
+          '.cart__items h3',                           // Possible heading for names
+          '.cart__items [class*="product"]'            // Broad product name match
+        ],
+        price: [
+          '.cart__items .price',                        // Direct price class
+          '[class*="item-price"]',                     // Common price class pattern
+          '.cart__items [data-price]',                 // Possible data attribute
+          '.cart__items .amount'                       // Alternative price class
+        ],
+        size: [
+          '.cart__items .size',                         // Direct size class
+          '[class*="variant"]',                        // Common variant pattern
+          '.cart__items [data-size]',                  // Possible data attribute
+          '.cart__items .spec'                         // Alternative spec class
+        ],
+        color: [
+          '.cart__items .color',                        // Direct color class
+          '[class*="swatch"]',                         // Common color swatch pattern
+          '.cart__items [data-color]',                 // Possible data attribute
+          '.cart__items .variant-color'                // Alternative color class
+        ]
+      }
+    }
   // Additional sites can be added here
 };
 
@@ -334,11 +384,16 @@ function detectCurrentSite() {
     return SITE_CONFIGS.abercrombie;
   }
   
+  // Edikted detection
+  if (hostname.includes('edikted.com')) {
+    showDebugOverlay("Edikted site detected");
+    return SITE_CONFIGS.edikted;
+  }
+  
   // Default to null if no site matches
   showDebugOverlay("No supported site detected");
   return null;
 }
-
 // ==============================================
 // URL MONITORING FOR SPA NAVIGATION
 // ==============================================
