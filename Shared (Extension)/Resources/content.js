@@ -53,7 +53,7 @@
 
 const SITE_CONFIGS = {
   zara: {
-    // URL patterns to detect cart pages
+    // Existing Zara configuration
     cartDetection: {
       urlPatterns: ['/shop/cart', '/cart', '/checkout'],
       domSelectors: [
@@ -65,7 +65,6 @@ const SITE_CONFIGS = {
       ],
       textIndicators: ['shopping cart', 'basket', 'cart']
     },
-    // Selectors for cart items and their components
     itemSelectors: {
       container: [
         '.shop-cart-item',
@@ -104,9 +103,52 @@ const SITE_CONFIGS = {
         '.item-color'
       ]
     }
+  },
+  
+  // Add H&M configuration
+  hm: {
+    cartDetection: {
+      urlPatterns: ['/en_us/cart', '/cart'],
+      domSelectors: [
+        '[class*="CartItemsList"]',
+        'ul > li > article',
+        '.CartItemsList--northStarWrapper__J1Kff'
+      ],
+      textIndicators: ['shopping cart', 'basket', 'cart', 'shopping bag']
+    },
+    itemSelectors: {
+      container: [
+        'ul > li',
+        'article',
+        '[class*="CartItemsList"] li'
+      ],
+      image: [
+        'picture img',
+        'a[aria-label*="Go to product"] img',
+        'img[alt*="Fit"]'
+      ],
+      name: [
+        'h2',
+        'a[aria-label] h2',
+        'a[class] h2'
+      ],
+      price: [
+        'span[class*="aeecde"]',
+        'dl div:last-child dd span'
+      ],
+      size: [
+        'dl div:nth-child(3) dd span span',
+        'dt span:contains("Size") ~ dd span span'
+      ],
+      color: [
+        'dl div:nth-child(2) dd span span',
+        'dt span:contains("Color") ~ dd span span'
+      ]
+    }
   }
   // Additional sites can be added here
 };
+
 
 // ==============================================
 // INITIALIZATION & DEBUGGING UTILITIES
@@ -186,7 +228,11 @@ function detectCurrentSite() {
     return SITE_CONFIGS.zara;
   }
   
-  // Add additional site detections here
+  // Add H&M detection
+  if (hostname.includes('hm.com') || hostname.includes('www2.hm.com')) {
+    showDebugOverlay("H&M site detected");
+    return SITE_CONFIGS.hm;
+  }
   
   // Default to null if no site matches
   showDebugOverlay("No supported site detected");
