@@ -105,7 +105,7 @@ const SITE_CONFIGS = {
     }
   },
   
-  // Add H&M configuration
+  // H&M configuration
   hm: {
     cartDetection: {
       urlPatterns: ['/en_us/cart', '/cart'],
@@ -143,6 +143,47 @@ const SITE_CONFIGS = {
       color: [
         'dl div:nth-child(2) dd span span',
         'dt span:contains("Color") ~ dd span span'
+      ]
+    }
+  },
+  
+  // Aritzia configuration
+  aritzia: {
+    cartDetection: {
+      urlPatterns: ['/us/en/cart', '/cart'],
+      domSelectors: [
+        '[data-componentname="CartItems"]',
+        '[data-componentname="CartItem"]',
+        '[data-testid="current-bag-items"]'
+      ],
+      textIndicators: ['my bag', 'shopping bag', 'cart', 'checkout']
+    },
+    itemSelectors: {
+      container: [
+        '[data-componentname="CartItem"]',
+        'div[data-testid^="bag-product-info"]',
+        'div[title*="Aritzia"]'
+      ],
+      image: [
+        'img[srcset*="aritzia"]',
+        'img[alt]',
+        'div[class*="_1sj10sn1"] > img'
+      ],
+      name: [
+        '[data-testid^="bag-product-name-text"]',
+        'p[data-testid*="name"]'
+      ],
+      price: [
+        '[data-testid="product-list-price-text"]',
+        'div[data-testid="product-price-text"] p'
+      ],
+      size: [
+        '[data-testid^="bag-size-text"]',
+        'span[data-testid*="size"]'
+      ],
+      color: [
+        '[data-testid^="bag-product-colour-text"]',
+        'p[data-testid*="colour"]'
       ]
     }
   }
@@ -228,10 +269,16 @@ function detectCurrentSite() {
     return SITE_CONFIGS.zara;
   }
   
-  // Add H&M detection
+  // H&M detection
   if (hostname.includes('hm.com') || hostname.includes('www2.hm.com')) {
     showDebugOverlay("H&M site detected");
     return SITE_CONFIGS.hm;
+  }
+  
+  // Aritzia detection
+  if (hostname.includes('aritzia.com')) {
+    showDebugOverlay("Aritzia site detected");
+    return SITE_CONFIGS.aritzia;
   }
   
   // Default to null if no site matches
