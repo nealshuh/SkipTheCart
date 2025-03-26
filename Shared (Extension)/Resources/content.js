@@ -235,56 +235,301 @@ const SITE_CONFIGS = {
       ]
     }
   },
-    edikted: {
+  
+  // Edikted configuration
+  edikted: {
+    cartDetection: {
+      urlPatterns: ['/cart', '/checkout'], // Covers main cart page and possible checkout variations
+      domSelectors: [
+        '.cart__items',           // Main cart items container
+        '.cart__items-header',    // Header shown in your HTML
+        '[class*="cart"]',        // Broad match for cart-related elements
+        '[data-cart-items]'       // Common data attribute pattern
+      ],
+      textIndicators: ['shopping cart', 'cart', 'basket', 'items'] // Common cart-related text
+    },
+    itemSelectors: {
+      container: [
+        '.cart__items > div:not(.cart__items-header)', // Direct children of cart__items excluding header
+        '.cart__items .cart-item',                     // Common pattern for cart items
+        '.cart__items [class*="item"]',                // Broad match for item classes
+        '.cart__items article'                         // Alternative common structure
+      ],
+      image: [
+        '.cart__items img',                            // Any image within cart items
+        '[class*="item-image"] img',                  // Common class pattern
+        'img[src*="/products/"]',                     // Images with product path
+        '.cart__items .image-container img'           // Possible image container
+      ],
+      name: [
+        '.cart__items .cart-item .name',              // Specific name class
+        '.cart__items [class*="title"]',             // Common title pattern
+        '.cart__items h3',                           // Possible heading for names
+        '.cart__items [class*="product"]'            // Broad product name match
+      ],
+      price: [
+        '.cart__items .price',                        // Direct price class
+        '[class*="item-price"]',                     // Common price class pattern
+        '.cart__items [data-price]',                 // Possible data attribute
+        '.cart__items .amount'                       // Alternative price class
+      ],
+      size: [
+        '.cart__items .size',                         // Direct size class
+        '[class*="variant"]',                        // Common variant pattern
+        '.cart__items [data-size]',                  // Possible data attribute
+        '.cart__items .spec'                         // Alternative spec class
+      ],
+      color: [
+        '.cart__items .color',                        // Direct color class
+        '[class*="swatch"]',                         // Common color swatch pattern
+        '.cart__items [data-color]',                 // Possible data attribute
+        '.cart__items .variant-color'                // Alternative color class
+      ]
+    }
+  },
+  
+  // Princess Polly configuration
+  princessPolly: {
+    cartDetection: {
+      urlPatterns: ['/cart', '/checkout'],
+      domSelectors: [
+        '.shopping-cart__container',
+        '.shopping-cart__form',
+        '[data-cart-container]',
+        '[data-cart-list]',
+        '.responsive-table'
+      ],
+      textIndicators: ['shopping cart', 'bag', 'checkout', 'subtotal']
+    },
+    itemSelectors: {
+      container: [
+        '.responsive-table-row',
+        'tr[class*="responsive-table"]',
+        '[data-cart-list] > tr'
+      ],
+      image: [
+        '.shopping-cart__td--image img',
+        '.shopping-cart__image-link img',
+        'img.vue-lazy'
+      ],
+      name: [
+        '.shopping-cart__product-name-text',
+        '.shopping-cart__product-name span',
+        '.shopping-cart__product a'
+      ],
+      price: [
+        '.shopping-cart__td--price span[data-currency-conversion]',
+        '.shopping-cart__product-price span[data-currency-conversion]',
+        '[data-currency-conversion]'
+      ],
+      size: [
+        '.shopping-cart__product-variant',
+        'span.shopping-cart__product-variant'
+      ],
+      color: [
+        '.shopping-cart__product-variant',
+        'span.shopping-cart__product-variant'
+      ]
+    }
+  },
+    // Revolve configuration update
+    revolve: {
       cartDetection: {
-        urlPatterns: ['/cart', '/checkout'], // Covers main cart page and possible checkout variations
+        urlPatterns: ['/ShoppingBag.jsp', '/r/ShoppingBag.jsp', '/checkout'],
         domSelectors: [
-          '.cart__items',           // Main cart items container
-          '.cart__items-header',    // Header shown in your HTML
-          '[class*="cart"]',        // Broad match for cart-related elements
-          '[data-cart-items]'       // Common data attribute pattern
+          '.shopping-bag__container-items',
+          '#shopbag_div_id',
+          '.shopping-bag__row',
+          '.js-cart-item',
+          '.js-product-in-bag', // Add this new selector
+          'section[id^="item-"]', // Add this new selector
+          '.product--horizontal-shopping-bag' // Add this new selector
         ],
-        textIndicators: ['shopping cart', 'cart', 'basket', 'items'] // Common cart-related text
+        textIndicators: ['shopping bag', 'bag', 'checkout', 'cart', 'items in your cart']
       },
       itemSelectors: {
         container: [
-          '.cart__items > div:not(.cart__items-header)', // Direct children of cart__items excluding header
-          '.cart__items .cart-item',                     // Common pattern for cart items
-          '.cart__items [class*="item"]',                // Broad match for item classes
-          '.cart__items article'                         // Alternative common structure
+          '.shopping-bag__row',
+          '.js-cart-item',
+          '[id^="bag_item_"]',
+          'tr.shopping-bag__item-body',
+          'section[id^="item-"]', // Add this new selector
+          '.product--horizontal-shopping-bag', // Add this new selector
+          '.js-product-in-bag' // Add this new selector
         ],
         image: [
-          '.cart__items img',                            // Any image within cart items
-          '[class*="item-image"] img',                  // Common class pattern
-          'img[src*="/products/"]',                     // Images with product path
-          '.cart__items .image-container img'           // Possible image container
+          '.shopping-bag__image img',
+          '.shopping-bag__image-placeholder img',
+          'td.shopping-bag__image img',
+          '.product-image--horizontal', // Add this new selector
+          '.product__image img', // Add this new selector
+          'img.product-image' // Add this new selector
         ],
         name: [
-          '.cart__items .cart-item .name',              // Specific name class
-          '.cart__items [class*="title"]',             // Common title pattern
-          '.cart__items h3',                           // Possible heading for names
-          '.cart__items [class*="product"]'            // Broad product name match
+          '.shopping-bag__body .u-block strong',
+          '.shopping-bag__prod-info strong',
+          '.shopping-bag__body strong',
+          '.product-name--horizontal', // Add this new selector
+          '.product__title .product-name--lg', // Add this new selector
+          '.u-weight--bold.product-name--lg' // Add this new selector
         ],
         price: [
-          '.cart__items .price',                        // Direct price class
-          '[class*="item-price"]',                     // Common price class pattern
-          '.cart__items [data-price]',                 // Possible data attribute
-          '.cart__items .amount'                       // Alternative price class
+          '.shopping-bag__pri .js-price',
+          '.price__retail',
+          '.shopping-bag__price-wrap .js-price',
+          '.product__price .price--lg .price__retail' // Add this new selector
         ],
         size: [
-          '.cart__items .size',                         // Direct size class
-          '[class*="variant"]',                        // Common variant pattern
-          '.cart__items [data-size]',                  // Possible data attribute
-          '.cart__items .spec'                         // Alternative spec class
+          '.shopbag_item_size .sb_display',
+          'span[data]',
+          '.shopbag_item_size',
+          '.product__size select option[selected]', // Add this new selector
+          '.js-size-select option[selected]' // Add this new selector
         ],
         color: [
-          '.cart__items .color',                        // Direct color class
-          '[class*="swatch"]',                         // Common color swatch pattern
-          '.cart__items [data-color]',                 // Possible data attribute
-          '.cart__items .variant-color'                // Alternative color class
+          '.u-float--left:contains("Color:")',
+          '.shopping-bag__body span:contains("Color:")',
+          '.u-inline-block span:contains("Color:")',
+          '.product__detail--horizontal', // Add this new selector
+          '.u-text--lg.u-padding-b--xs.product__detail' // Add this new selector
+        ]
+      }
+    },
+  
+  // OhPolly configuration
+  ohpolly: {
+    cartDetection: {
+      urlPatterns: ['/cart', '/checkout', '/checkouts/', '/bag'],
+      domSelectors: [
+        '.crt-Cart',
+        '.crt-Cart_Products',
+        '.crt-Products_Items',
+        '[data-cart-item-external-el="cart"]',
+        '[data-section-type="cart-items"]'
+      ],
+      textIndicators: ['items in your bag', 'bag', 'checkout', 'order summary']
+    },
+    itemSelectors: {
+      container: [
+        '.crt-Products_Item',
+        'cart-item',
+        '.crt-Product'
+      ],
+      image: [
+        '.crt-Product_ImageContainer img',
+        '.rsp-Image_Image',
+        'img[loading="lazy"]'
+      ],
+      name: [
+        '.crt-Product_TitleLink',
+        '.crt-Product_Title',
+        '.crt-Product_Strapline + .crt-Product_Title'
+      ],
+      price: [
+        '.crt-Product_Price',
+        'p.crt-Product_Price',
+        'span.crt-Product_Price'
+      ],
+      size: [
+        '.crt-Product_TitleLink',
+        '.crt-Product_Title'
+      ],
+      color: [
+        '.crt-Product_TitleLink',
+        '.crt-Product_Title'
+      ]
+    }
+  },
+    fashionNova: {
+      cartDetection: {
+        urlPatterns: ['/cart', '/checkout'],
+        domSelectors: [
+          'div[data-testid="cart-lines"]',
+          'li.cart-line',
+          '.cart-line',
+          '[data-testid="cart-line-title-link"]'
+        ],
+        textIndicators: ['cart', 'bag', 'checkout', 'wishlist']
+      },
+      itemSelectors: {
+        container: [
+          'li.cart-line',
+          '.cart-line',
+          'ul.flex > li'
+        ],
+        image: [
+          'a[data-testid="cart-line-link"] img',
+          'img[data-testid="cart-line-image"]',
+          '.cart-line img'
+        ],
+        name: [
+          'a[data-testid="cart-line-title-link"]',
+          '.body-xs.overflow-hidden',
+          '.cart-line a'
+        ],
+        price: [
+          'div[data-testid="cart-line-price"] span.body-md-bold',
+          '.body-md-bold.leading-[15px]',
+          'span.body-md-bold'
+        ],
+        size: [
+          'button[data-testid="size-selector"] span',
+          '.body-xs span',
+          '[data-testid="size-selector"]'
+        ],
+        color: [
+          // Color is usually part of the product name for Fashion Nova
+          // Try to extract from product name
+          'a[data-testid="cart-line-title-link"]'
+        ]
+      }
+    },
+    urbanOutfitters: {
+      cartDetection: {
+        urlPatterns: ['/cart', '/checkout'],
+        domSelectors: [
+          '.c-pwa-cart-transactional__items',
+          '.c-pwa-cart-transactional__item',
+          '.c-pwa-cart-item',
+          'div[role="listitem"]'
+        ],
+        textIndicators: ['shopping bag', 'checkout', 'order summary']
+      },
+      itemSelectors: {
+        container: [
+          '.c-pwa-cart-transactional__item',
+          '.c-pwa-cart-item',
+          'div[role="listitem"]'
+        ],
+        image: [
+          '.o-pwa-item-thumbnail__image',
+          '.o-pwa-image__img',
+          'picture.o-pwa-image img'
+        ],
+        name: [
+          '.c-pwa-item-title__link',
+          'h2.c-pwa-item-title a',
+          '.c-pwa-item-title a'
+        ],
+        price: [
+          '.c-pwa-item-price__unit',
+          '.c-pwa-item-price__line',
+          '[data-qa-item-total-price]',
+          '[data-qa-item-unit-price]'
+        ],
+        size: [
+          'li[data-qa-item-label="cc_size_label"]',
+          '.c-pwa-item-attributes__attribute:contains("Size")',
+          '.c-pwa-item-attributes span.c-pwa-item-attributes__label:contains("Size") + *'
+        ],
+        color: [
+          'li[data-qa-item-label="cc_color_label"]',
+          '.c-pwa-item-attributes__attribute:contains("Color")',
+          '.c-pwa-item-attributes span.c-pwa-item-attributes__label:contains("Color") + *'
         ]
       }
     }
+  
   // Additional sites can be added here
 };
 
@@ -390,10 +635,41 @@ function detectCurrentSite() {
     return SITE_CONFIGS.edikted;
   }
   
+  // Princess Polly detection
+  if (hostname.includes('princesspolly.com')) {
+    showDebugOverlay("Princess Polly site detected");
+    return SITE_CONFIGS.princessPolly;
+  }
+  
+  // Revolve detection
+  if (hostname.includes('revolve.com')) {
+    showDebugOverlay("Revolve site detected");
+    return SITE_CONFIGS.revolve;
+  }
+  
+  // OhPolly detection
+  if (hostname.includes('ohpolly.com')) {
+    showDebugOverlay("OhPolly site detected");
+    return SITE_CONFIGS.ohpolly;
+  }
+    
+  if (hostname.includes('fashionnova.com')) {
+    showDebugOverlay("Fashion Nova site detected");
+    console.log("Fashion Nova site detected");
+    return SITE_CONFIGS.fashionNova;
+  }
+ 
+  if (hostname.includes('urbanoutfitters.com')) {
+    showDebugOverlay("Urban Outfitters site detected");
+    console.log("Urban Outfitters site detected");
+    return SITE_CONFIGS.urbanOutfitters;
+  }
+  
   // Default to null if no site matches
   showDebugOverlay("No supported site detected");
   return null;
 }
+
 // ==============================================
 // URL MONITORING FOR SPA NAVIGATION
 // ==============================================
@@ -574,880 +850,1159 @@ function checkForCartElements() {
     
     if (hasCartElements) {
       console.log("Cart Image Extractor: Cart elements found");
-      showDebugOverlay("Cart elements found");
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    showDebugOverlay("ERROR in checkForCartElements: " + error.message);
-    console.error("Error in checkForCartElements:", error);
-    return false;
-  }
-}
-
-// ==============================================
-// CORE INITIALIZATION - MODIFIED
-// ==============================================
-
-// Main initialization function - try to extract cart items
-function initializeExtension() {
-  try {
-    if (hasInitialized) {
-      console.log("Cart Image Extractor: Already initialized, skipping");
-      return;
-    }
-    
-    // First verify we're on a cart page
-    if (!checkForCartURL()) {
-      console.log("Cart Image Extractor: URL doesn't match cart patterns, aborting");
-      hideCartPanel();
-      return;
-    }
-    
-    // Then check for cart elements
-    if (checkForCartElements()) {
-      hasInitialized = true;
-      console.log("Cart Image Extractor: Initializing extension on cart page");
-      showDebugOverlay("Initializing extension on cart page");
-      
-      // Extract cart items immediately
-      extractAndDisplayImages();
-      
-      // Set up observation for dynamic changes
-      observeCartChanges();
-    } else {
-      console.log("Cart Image Extractor: Cart URL but no cart elements yet, waiting");
-      showDebugOverlay("Cart URL matched but elements not found yet");
-      
-      // Don't create a panel with "Looking for items" here
-      // Instead, set up a short timeout to check again
-      setTimeout(() => {
-        if (!hasInitialized && checkForCartURL()) {
-          checkForCartElements();
-        }
-      }, 1500);
-    }
-  } catch (error) {
-    showDebugOverlay("ERROR in initializeExtension: " + error.message);
-    console.error("Error in initializeExtension:", error);
-  }
-}
-
-// ==============================================
-// MODIFIED NAVIGATION EVENT LISTENERS
-// ==============================================
-
-// Make the initialization more robust
-console.log("Cart Image Extractor: Beginning immediate execution");
-showDebugOverlay("Starting URL monitoring now");
-
-// Run setup immediately instead of waiting for DOMContentLoaded
-try {
-  setupURLMonitoring();
-  // Initial URL check
-  setTimeout(() => {
-    currentSiteConfig = detectCurrentSite();
-    handleURLChange();
-  }, 500);
-} catch (error) {
-  showDebugOverlay("ERROR in immediate execution: " + error.message);
-  console.error("Error in immediate execution:", error);
-}
-
-// Also keep the event-based initialization
-document.addEventListener('DOMContentLoaded', function() {
-  try {
-    console.log("Cart Image Extractor: DOMContentLoaded fired");
-    showDebugOverlay("DOMContentLoaded fired");
-    // Call handleURLChange directly
-    handleURLChange();
-  } catch (error) {
-    showDebugOverlay("ERROR in DOMContentLoaded: " + error.message);
-    console.error("Error in DOMContentLoaded handler:", error);
-  }
-});
-
-// Monitor for History API changes - crucial for SPA navigation
-const originalPushState = history.pushState;
-history.pushState = function() {
-  try {
-    originalPushState.apply(this, arguments);
-    console.log("Cart Image Extractor: pushState detected");
-    showDebugOverlay("pushState detected");
-    handleURLChange();
-  } catch (error) {
-    showDebugOverlay("ERROR in pushState handler: " + error.message);
-    console.error("Error in pushState handler:", error);
-  }
-};
-
-const originalReplaceState = history.replaceState;
-history.replaceState = function() {
-  try {
-    originalReplaceState.apply(this, arguments);
-    console.log("Cart Image Extractor: replaceState detected");
-    showDebugOverlay("replaceState detected");
-    handleURLChange();
-  } catch (error) {
-    showDebugOverlay("ERROR in replaceState handler: " + error.message);
-    console.error("Error in replaceState handler:", error);
-  }
-};
-
-window.addEventListener('popstate', function() {
-  try {
-    console.log("Cart Image Extractor: popstate event detected");
-    showDebugOverlay("popstate event detected");
-    handleURLChange();
-  } catch (error) {
-    showDebugOverlay("ERROR in popstate handler: " + error.message);
-    console.error("Error in popstate handler:", error);
-  }
-});
-
-// ==============================================
-// EXTRACT AND DISPLAY CART ITEMS
-// ==============================================
-
-// Function to extract and display cart images
-function extractAndDisplayImages() {
-  try {
-    if (!currentSiteConfig) {
-      console.log("Cart Image Extractor: No site configuration available");
-      return;
-    }
-    
-    console.log("Cart Image Extractor: Starting to extract images");
-    showDebugOverlay("Starting to extract images");
-    
-    // First, create our bottom panel if it doesn't exist
-    let panel = document.getElementById('cart-panel');
-    if (!panel) {
-      console.log("Cart Image Extractor: Creating panel");
-      showDebugOverlay("Creating panel");
-      panel = createBottomPanel();
-    } else {
-      console.log("Cart Image Extractor: Panel already exists");
-      showDebugOverlay("Panel already exists");
-    }
-    
-    // Try selectors for cart items from the site configuration
-    const selectors = currentSiteConfig.itemSelectors.container;
-    
-    let cartItems = [];
-    let usedSelector = '';
-    
-    // Try each selector until we find cart items
-    for (const selector of selectors) {
-      const items = document.querySelectorAll(selector);
-      console.log(`Cart Image Extractor: Trying selector "${selector}" - found ${items.length} items`);
-      showDebugOverlay(`Selector "${selector}": ${items.length} items`);
-      
-      if (items.length > 0) {
-        cartItems = items;
-        usedSelector = selector;
-        break;
+        showDebugOverlay("Cart elements found");
+        return true;
       }
+      
+      return false;
+    } catch (error) {
+      showDebugOverlay("ERROR in checkForCartElements: " + error.message);
+      console.error("Error in checkForCartElements:", error);
+      return false;
     }
-    
-    // Debug logging for Abercrombie
-    if (window.location.hostname.includes('abercrombie.com')) {
-      console.log("Cart item selectors tried:", currentSiteConfig.itemSelectors.container);
-      document.querySelectorAll('.product-template-item').forEach((item, i) => {
-        console.log(`Direct DOM check: Found product-template-item ${i+1}`);
-      });
-      document.querySelectorAll('[data-testid="bag-item"]').forEach((item, i) => {
-        console.log(`Direct DOM check: Found bag-item ${i+1}`);
-      });
+  }
+
+  // ==============================================
+  // CORE INITIALIZATION - MODIFIED
+  // ==============================================
+
+  // Main initialization function - try to extract cart items
+  function initializeExtension() {
+    try {
+      if (hasInitialized) {
+        console.log("Cart Image Extractor: Already initialized, skipping");
+        return;
+      }
+      
+      // First verify we're on a cart page
+      if (!checkForCartURL()) {
+        console.log("Cart Image Extractor: URL doesn't match cart patterns, aborting");
+        hideCartPanel();
+        return;
+      }
+      
+      // Then check for cart elements
+      if (checkForCartElements()) {
+        hasInitialized = true;
+        console.log("Cart Image Extractor: Initializing extension on cart page");
+        showDebugOverlay("Initializing extension on cart page");
+        
+        // Extract cart items immediately
+        extractAndDisplayImages();
+        
+        // Set up observation for dynamic changes
+        observeCartChanges();
+      } else {
+        console.log("Cart Image Extractor: Cart URL but no cart elements yet, waiting");
+        showDebugOverlay("Cart URL matched but elements not found yet");
+        
+        // Don't create a panel with "Looking for items" here
+        // Instead, set up a short timeout to check again
+        setTimeout(() => {
+          if (!hasInitialized && checkForCartURL()) {
+            checkForCartElements();
+          }
+        }, 1500);
+      }
+    } catch (error) {
+      showDebugOverlay("ERROR in initializeExtension: " + error.message);
+      console.error("Error in initializeExtension:", error);
     }
-    
-    if (cartItems.length === 0) {
-      // Special handling for Abercrombie
+  }
+
+  // ==============================================
+  // MODIFIED NAVIGATION EVENT LISTENERS
+  // ==============================================
+
+  // Make the initialization more robust
+  console.log("Cart Image Extractor: Beginning immediate execution");
+  showDebugOverlay("Starting URL monitoring now");
+
+  // Run setup immediately instead of waiting for DOMContentLoaded
+  try {
+    setupURLMonitoring();
+    // Initial URL check
+    setTimeout(() => {
+      currentSiteConfig = detectCurrentSite();
+      handleURLChange();
+    }, 500);
+  } catch (error) {
+    showDebugOverlay("ERROR in immediate execution: " + error.message);
+    console.error("Error in immediate execution:", error);
+  }
+
+  // Also keep the event-based initialization
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      console.log("Cart Image Extractor: DOMContentLoaded fired");
+      showDebugOverlay("DOMContentLoaded fired");
+      // Call handleURLChange directly
+      handleURLChange();
+    } catch (error) {
+      showDebugOverlay("ERROR in DOMContentLoaded: " + error.message);
+      console.error("Error in DOMContentLoaded handler:", error);
+    }
+  });
+
+  // Monitor for History API changes - crucial for SPA navigation
+  const originalPushState = history.pushState;
+  history.pushState = function() {
+    try {
+      originalPushState.apply(this, arguments);
+      console.log("Cart Image Extractor: pushState detected");
+      showDebugOverlay("pushState detected");
+      handleURLChange();
+    } catch (error) {
+      showDebugOverlay("ERROR in pushState handler: " + error.message);
+      console.error("Error in pushState handler:", error);
+    }
+  };
+
+  const originalReplaceState = history.replaceState;
+  history.replaceState = function() {
+    try {
+      originalReplaceState.apply(this, arguments);
+      console.log("Cart Image Extractor: replaceState detected");
+      showDebugOverlay("replaceState detected");
+      handleURLChange();
+    } catch (error) {
+      showDebugOverlay("ERROR in replaceState handler: " + error.message);
+      console.error("Error in replaceState handler:", error);
+    }
+  };
+
+  window.addEventListener('popstate', function() {
+    try {
+      console.log("Cart Image Extractor: popstate event detected");
+      showDebugOverlay("popstate event detected");
+      handleURLChange();
+    } catch (error) {
+      showDebugOverlay("ERROR in popstate handler: " + error.message);
+      console.error("Error in popstate handler:", error);
+    }
+  });
+
+  // ==============================================
+  // EXTRACT AND DISPLAY CART ITEMS
+  // ==============================================
+
+  // Function to extract and display cart images
+  function extractAndDisplayImages() {
+    try {
+      if (!currentSiteConfig) {
+        console.log("Cart Image Extractor: No site configuration available");
+        return;
+      }
+      
+      console.log("Cart Image Extractor: Starting to extract images");
+      showDebugOverlay("Starting to extract images");
+      
+      // First, create our bottom panel if it doesn't exist
+      let panel = document.getElementById('cart-panel');
+      if (!panel) {
+        console.log("Cart Image Extractor: Creating panel");
+        showDebugOverlay("Creating panel");
+        panel = createBottomPanel();
+      } else {
+        console.log("Cart Image Extractor: Panel already exists");
+        showDebugOverlay("Panel already exists");
+      }
+      
+      // Try selectors for cart items from the site configuration
+      const selectors = currentSiteConfig.itemSelectors.container;
+      
+      let cartItems = [];
+      let usedSelector = '';
+      
+      // Try each selector until we find cart items
+      for (const selector of selectors) {
+        const items = document.querySelectorAll(selector);
+        console.log(`Cart Image Extractor: Trying selector "${selector}" - found ${items.length} items`);
+        showDebugOverlay(`Selector "${selector}": ${items.length} items`);
+        
+        if (items.length > 0) {
+          cartItems = items;
+          usedSelector = selector;
+          break;
+        }
+      }
+      
+      // Debug logging for Abercrombie
       if (window.location.hostname.includes('abercrombie.com')) {
-        console.log("No Abercrombie items found with selectors, trying direct DOM queries");
-        // Try direct DOM queries as fallback
-        const directItems = document.querySelectorAll('.product-template-item, [data-testid="bag-item"], div.product-template, ul.shopping-bag-list-mfe li');
-        if (directItems.length > 0) {
-          console.log(`Found ${directItems.length} items via direct DOM query`);
-          cartItems = directItems;
-          usedSelector = 'direct-dom-query';
-        } else {
-          // Set up more aggressive retry
-          console.log("Still no items, setting up aggressive retry");
+        console.log("Cart item selectors tried:", currentSiteConfig.itemSelectors.container);
+        document.querySelectorAll('.product-template-item').forEach((item, i) => {
+          console.log(`Direct DOM check: Found product-template-item ${i+1}`);
+        });
+        document.querySelectorAll('[data-testid="bag-item"]').forEach((item, i) => {
+          console.log(`Direct DOM check: Found bag-item ${i+1}`);
+        });
+      }
+      
+      if (cartItems.length === 0) {
+        // Special handling for Abercrombie
+        if (window.location.hostname.includes('abercrombie.com')) {
+          console.log("No Abercrombie items found with selectors, trying direct DOM queries");
+          // Try direct DOM queries as fallback
+          const directItems = document.querySelectorAll('.product-template-item, [data-testid="bag-item"], div.product-template, ul.shopping-bag-list-mfe li');
+          if (directItems.length > 0) {
+            console.log(`Found ${directItems.length} items via direct DOM query`);
+            cartItems = directItems;
+            usedSelector = 'direct-dom-query';
+          } else {
+            // Set up more aggressive retry
+            console.log("Still no items, setting up aggressive retry");
+            setTimeout(() => {
+              if (!hasInitialized && checkForCartURL()) {
+                extractAndDisplayImages();
+              }
+            }, 3000); // Try again after 3 seconds
+          }
+        }
+        
+        // If still no items, don't show the panel
+        if (cartItems.length === 0) {
+          console.log("Cart Image Extractor: No cart items found, hiding panel");
+          hideCartPanel();
+          
+          // Set up to check again soon but don't show the panel yet
           setTimeout(() => {
             if (!hasInitialized && checkForCartURL()) {
               extractAndDisplayImages();
             }
-          }, 3000); // Try again after 3 seconds
+          }, 1000);
+          return;
         }
       }
       
-      // If still no items, don't show the panel
-      if (cartItems.length === 0) {
-        console.log("Cart Image Extractor: No cart items found, hiding panel");
-        hideCartPanel();
-        
-        // Set up to check again soon but don't show the panel yet
-        setTimeout(() => {
-          if (!hasInitialized && checkForCartURL()) {
+      // Process the cart items
+      processCartItems(cartItems, panel, usedSelector);
+    } catch (error) {
+      showDebugOverlay("ERROR in extractAndDisplayImages: " + error.message);
+      console.error("Error in extractAndDisplayImages:", error);
+    }
+  }
+
+  // More aggressive observation strategy
+  function setupAggressiveCartObserver() {
+    try {
+      if (!currentSiteConfig) return;
+      
+      console.log("Cart Image Extractor: Setting up aggressive observer");
+      showDebugOverlay("Setting up aggressive observer");
+      
+      const observer = new MutationObserver(function(mutations) {
+        try {
+          // Check if any cart items have appeared using all our selectors
+          const selectors = currentSiteConfig.itemSelectors.container.join(', ');
+          
+          const anyCartItems = document.querySelectorAll(selectors).length > 0;
+          
+          if (anyCartItems) {
+            console.log("Cart Image Extractor: Items detected via aggressive observer");
+            showDebugOverlay("Items detected via aggressive observer");
+            observer.disconnect();
             extractAndDisplayImages();
           }
-        }, 1000);
-        return;
-      }
-    }
-    
-    // Process the cart items
-    processCartItems(cartItems, panel, usedSelector);
-  } catch (error) {
-    showDebugOverlay("ERROR in extractAndDisplayImages: " + error.message);
-    console.error("Error in extractAndDisplayImages:", error);
-  }
-}
-
-// More aggressive observation strategy
-function setupAggressiveCartObserver() {
-  try {
-    if (!currentSiteConfig) return;
-    
-    console.log("Cart Image Extractor: Setting up aggressive observer");
-    showDebugOverlay("Setting up aggressive observer");
-    
-    const observer = new MutationObserver(function(mutations) {
-      try {
-        // Check if any cart items have appeared using all our selectors
-        const selectors = currentSiteConfig.itemSelectors.container.join(', ');
-        
-        const anyCartItems = document.querySelectorAll(selectors).length > 0;
-        
-        if (anyCartItems) {
-          console.log("Cart Image Extractor: Items detected via aggressive observer");
-          showDebugOverlay("Items detected via aggressive observer");
-          observer.disconnect();
-          extractAndDisplayImages();
+        } catch (error) {
+          showDebugOverlay("ERROR in aggressive observer: " + error.message);
+          console.error("Error in aggressive observer:", error);
         }
-      } catch (error) {
-        showDebugOverlay("ERROR in aggressive observer: " + error.message);
-        console.error("Error in aggressive observer:", error);
-      }
-    });
-    
-    // Observe the entire document
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      characterData: false
-    });
-    
-    // Safety timeout to avoid observing forever
-    setTimeout(() => {
-      observer.disconnect();
-      console.log("Cart Image Extractor: Disconnected aggressive observer after timeout");
-      showDebugOverlay("Disconnected aggressive observer after timeout");
-    }, 10000);
-  } catch (error) {
-    showDebugOverlay("ERROR in setupAggressiveCartObserver: " + error.message);
-    console.error("Error in setupAggressiveCartObserver:", error);
-  }
-}
-
-// Function to process Abercrombie items specifically
-function processAbercrombieItem(item, index) {
-  console.log(`Processing Abercrombie item ${index}`);
-  
-  // Find image directly
-  let imageUrl = '';
-  const imgEl = item.querySelector('button.product-image-button img');
-  if (imgEl && imgEl.src) {
-    imageUrl = imgEl.src;
-    console.log(`Found image: ${imageUrl}`);
-  }
-  
-  // Find product name directly
-  let productName = '';
-  const nameEl = item.querySelector('.product-name h2 button');
-  if (nameEl) {
-    productName = nameEl.textContent.trim();
-    console.log(`Found name: ${productName}`);
-  }
-  
-  // Find price directly
-  let price = '';
-  const priceEl = item.querySelector('.product-price-text');
-  if (priceEl) {
-    price = priceEl.textContent.trim();
-    console.log(`Found price: ${price}`);
-  }
-  
-  // Find size and color directly
-  let sizeColor = '';
-  const sizeColorEl = item.querySelector('p.size-color');
-  if (sizeColorEl) {
-    sizeColor = sizeColorEl.textContent.trim();
-    console.log(`Found size/color: ${sizeColor}`);
-  }
-  
-  // Extract size and color
-  let size = '';
-  let color = '';
-  if (sizeColor.includes(',')) {
-    const parts = sizeColor.split(',');
-    size = parts[0].trim();
-    color = parts.length > 1 ? parts[1].trim() : '';
-  }
-  
-  return {
-    imageUrl,
-    productName: productName || 'Product',
-    price: price || '',
-    size: size || '',
-    color: color || ''
-  };
-}
-
-// Helper function to try multiple selectors with special handling for Abercrombie
-function getTextFromSelectors(selectorType, item) {
-  const selectors = currentSiteConfig.itemSelectors[selectorType];
-  
-  // Special handling for Abercrombie - check if we're on Abercrombie site
-  if (window.location.hostname.includes('abercrombie.com') &&
-      (selectorType === 'size' || selectorType === 'color')) {
-    // Look for the combined size-color element
-    const sizeColorEl = item.querySelector('.size-color');
-    if (sizeColorEl && sizeColorEl.textContent.includes(',')) {
-      const parts = sizeColorEl.textContent.split(',');
-      if (selectorType === 'size' && parts.length >= 1) {
-        return parts[0].trim();
-      } else if (selectorType === 'color' && parts.length >= 2) {
-        return parts[1].trim();
-      }
+      });
+      
+      // Observe the entire document
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: false
+      });
+      
+      // Safety timeout to avoid observing forever
+      setTimeout(() => {
+        observer.disconnect();
+        console.log("Cart Image Extractor: Disconnected aggressive observer after timeout");
+        showDebugOverlay("Disconnected aggressive observer after timeout");
+      }, 10000);
+    } catch (error) {
+      showDebugOverlay("ERROR in setupAggressiveCartObserver: " + error.message);
+      console.error("Error in setupAggressiveCartObserver:", error);
     }
   }
-  
-  // First, try direct selectors
-  for (const selector of selectors) {
-    const elements = item.querySelectorAll(selector);
-    for (let i = 0; i < elements.length; i++) {
-      if (elements[i] && elements[i].textContent) {
-        return elements[i].textContent.trim();
-      }
-    }
-  }
-  
-  // Special case for Zara (their links contain the product names)
-  if (selectorType === 'name') {
-    // Look for a product link with text content
-    const links = item.querySelectorAll('a');
-    for (const link of links) {
-      if (link.textContent && link.textContent.trim().length > 2 &&
-          !link.textContent.includes('Delete') && !link.textContent.includes('Remove')) {
-        return link.textContent.trim();
-      }
+
+  // Function to process Abercrombie items specifically
+  function processAbercrombieItem(item, index) {
+    console.log(`Processing Abercrombie item ${index}`);
+    
+    // Find image directly
+    let imageUrl = '';
+    const imgEl = item.querySelector('button.product-image-button img');
+    if (imgEl && imgEl.src) {
+      imageUrl = imgEl.src;
+      console.log(`Found image: ${imageUrl}`);
     }
     
-    // Alternative fallback - check for alt text in images
-    const images = item.querySelectorAll('img');
-    for (const img of images) {
-      if (img.alt && img.alt.trim().length > 2) {
-        return img.alt.trim();
+    // Find product name directly
+    let productName = '';
+    const nameEl = item.querySelector('.product-name h2 button');
+    if (nameEl) {
+      productName = nameEl.textContent.trim();
+      console.log(`Found name: ${productName}`);
+    }
+    
+    // Find price directly
+    let price = '';
+    const priceEl = item.querySelector('.product-price-text');
+    if (priceEl) {
+      price = priceEl.textContent.trim();
+      console.log(`Found price: ${price}`);
+    }
+    
+    // Find size and color directly
+    let sizeColor = '';
+    const sizeColorEl = item.querySelector('p.size-color');
+    if (sizeColorEl) {
+      sizeColor = sizeColorEl.textContent.trim();
+      console.log(`Found size/color: ${sizeColor}`);
+    }
+    
+    // Extract size and color
+    let size = '';
+    let color = '';
+    if (sizeColor.includes(',')) {
+      const parts = sizeColor.split(',');
+      size = parts[0].trim();
+      color = parts.length > 1 ? parts[1].trim() : '';
+    }
+    
+    return {
+      imageUrl,
+      productName: productName || 'Product',
+      price: price || '',
+      size: size || '',
+      color: color || ''
+    };
+  }
+
+  // Function to process OhPolly items specifically
+  function processOhPollyItem(item, index) {
+    console.log(`Processing OhPolly item ${index}`);
+    
+    // Find image directly
+    let imageUrl = '';
+    const imgEl = item.querySelector('.rsp-Image_Image');
+    if (imgEl && imgEl.src) {
+      imageUrl = imgEl.src;
+      console.log(`Found image: ${imageUrl}`);
+    }
+    
+    // Find product name directly - OhPolly has a strapline (brand/collection) and a title
+    let strapline = '';
+    const straplineEl = item.querySelector('.crt-Product_Strapline');
+    if (straplineEl) {
+      strapline = straplineEl.textContent.trim();
+      console.log(`Found strapline: ${strapline}`);
+    }
+    
+    // Find product title - this contains name, color and size
+    let fullTitle = '';
+    const titleEl = item.querySelector('.crt-Product_TitleLink, .crt-Product_Title');
+    if (titleEl) {
+      fullTitle = titleEl.textContent.trim();
+      console.log(`Found full title: ${fullTitle}`);
+    }
+    
+    // Extract product name, color and size from the title
+    // Format is typically "Product Name in Color - Size"
+    let productName = fullTitle;
+    let color = '';
+    let size = '';
+    
+    // Extract color if format "in Color" is present
+    if (fullTitle.includes(' in ')) {
+      const parts = fullTitle.split(' in ');
+      productName = parts[0].trim();
+      
+      // Extract size if format "Color - Size" is present
+      if (parts[1] && parts[1].includes(' - ')) {
+        const colorSizeParts = parts[1].split(' - ');
+        color = colorSizeParts[0].trim();
+        size = colorSizeParts[1].trim();
+      } else {
+        color = parts[1].trim();
       }
     }
+    // If "in Color" format isn't present but "- Size" is
+    else if (fullTitle.includes(' - ')) {
+      const parts = fullTitle.split(' - ');
+      productName = parts[0].trim();
+      size = parts[1].trim();
+    }
+    
+    // Find price directly
+    let price = '';
+    const priceEl = item.querySelector('.crt-Product_Price');
+    if (priceEl) {
+      price = priceEl.textContent.trim();
+      console.log(`Found price: ${price}`);
+    }
+    
+    return {
+      imageUrl,
+      strapline,
+      productName: productName || 'Product',
+      price: price || '',
+      size: size || '',
+      color: color || ''
+    };
   }
-  
-  return '';
-}
 
-          // Process the cart items
-          function processCartItems(cartItems, panel, usedSelector) {
-            try {
-              if (!currentSiteConfig) return;
-              
-              // Clear existing content
-              panel.innerHTML = '';
-              
-              // Title for the panel
-              const panelTitle = document.createElement('div');
-              panelTitle.className = 'panel-title';
-              panelTitle.textContent = 'Items in Your Cart';
-              panel.appendChild(panelTitle);
-              
-              // Container for the images
-              const imageContainer = document.createElement('div');
-              imageContainer.className = 'image-container';
-              panel.appendChild(imageContainer);
-              
-              // Special handling for Abercrombie items
-              if (window.location.hostname.includes('abercrombie.com')) {
-                cartItems.forEach((item, index) => {
-                  try {
-                    const productInfo = processAbercrombieItem(item, index);
-                    
-                    // Build the panel item using productInfo
-                    // Create item container
-                    const itemElement = document.createElement('div');
-                    itemElement.className = 'cart-item';
-                    
-                    // Create image container
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = 'item-image-container';
-                    
-                    // Create item image
-                    const itemImg = document.createElement('img');
-                    itemImg.src = productInfo.imageUrl;
-                    itemImg.alt = productInfo.productName;
-                    itemImg.className = 'item-image';
-                    itemImg.onerror = function() {
-                      // If image fails to load, try to fix common URL issues
-                      if (productInfo.imageUrl.includes('?')) {
-                        // Try removing query parameters
-                        this.src = productInfo.imageUrl.split('?')[0];
-                      } else if (!productInfo.imageUrl.startsWith('http')) {
-                        // Try adding protocol if missing
-                        this.src = 'https:' + productInfo.imageUrl;
-                      }
-                    };
-                    
-                    imgContainer.appendChild(itemImg);
-                    
-                    // Create item details
-                    const detailsElement = document.createElement('div');
-                    detailsElement.className = 'item-details';
-                    
-                    // Add product name
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'item-name';
-                    nameDiv.textContent = productInfo.productName;
-                    detailsElement.appendChild(nameDiv);
-                    
-                    // Add price
-                    const priceDiv = document.createElement('div');
-                    priceDiv.className = 'item-price';
-                    priceDiv.textContent = productInfo.price;
-                    detailsElement.appendChild(priceDiv);
-                    
-                    // Add size and color
-                    const specDiv = document.createElement('div');
-                    specDiv.className = 'item-specs';
-                    specDiv.textContent = `${productInfo.size} | ${productInfo.color}`;
-                    detailsElement.appendChild(specDiv);
-                    
-                    // Add all elements to item container
-                    itemElement.appendChild(imgContainer);
-                    itemElement.appendChild(detailsElement);
-                    
-                    // Add item to the image container
-                    imageContainer.appendChild(itemElement);
-                  } catch (error) {
-                    console.error('Cart Image Extractor: Error processing Abercrombie item:', error);
-                    showDebugOverlay('Error processing Abercrombie item: ' + error.message);
-                  }
-                });
-              } else {
-                // Regular processing for other sites
-                // Extract all product information and images
-                cartItems.forEach((item, index) => {
-                  try {
-                    console.log(`Cart Image Extractor: Processing item ${index+1}`);
-                    showDebugOverlay(`Processing item ${index+1}`);
-                    
-                    // Get image selectors from site config
-                    let imageSelectors = currentSiteConfig.itemSelectors.image;
-                    
-                    let imgElement = null;
-                    let imageUrl = '';
-                    
-                    // Try each image selector
-                    for (const selector of imageSelectors) {
-                      imgElement = item.querySelector(selector);
-                      if (imgElement) {
-                        // Handle both img elements and background images
-                        if (imgElement.tagName === 'IMG' && imgElement.src) {
-                          imageUrl = imgElement.src;
-                          break;
-                        } else if (imgElement.style && imgElement.style.backgroundImage) {
-                          // Extract URL from background-image style
-                          const bgImg = imgElement.style.backgroundImage;
-                          imageUrl = bgImg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
-                          break;
-                        }
-                      }
-                    }
-                    
-                    // Last resort - look for any image URL in the attributes or styles
-                    if (!imageUrl) {
-                      const elementsWithUrl = item.querySelectorAll('[src], [style*="url"]');
-                      for (const el of elementsWithUrl) {
-                        if (el.src && el.src.includes('/images/')) {
-                          imageUrl = el.src;
-                          break;
-                        } else if (el.style && el.style.backgroundImage) {
-                          const bgImg = el.style.backgroundImage;
-                          if (bgImg.includes('/images/')) {
-                            imageUrl = bgImg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
-                            break;
-                          }
-                        }
-                      }
-                    }
-                    
-                    if (!imageUrl) {
-                      console.log(`Cart Image Extractor: No image found for item ${index+1}`);
-                      showDebugOverlay(`No image found for item ${index+1}`);
-                      return;
-                    }
-                    
-                    console.log(`Cart Image Extractor: Found image for item ${index+1}: ${imageUrl}`);
-                    showDebugOverlay(`Found image for item ${index+1}`);
-                    
-                    // Extract product details using getTextFromSelectors function
-                    const productName = getTextFromSelectors('name', item) || 'Product';
-                    const price = getTextFromSelectors('price', item) || '';
-                    const size = getTextFromSelectors('size', item) || '';
-                    const color = getTextFromSelectors('color', item) || '';
-                    
-                    // Create item container
-                    const itemElement = document.createElement('div');
-                    itemElement.className = 'cart-item';
-                    
-                    // Create image container to maintain aspect ratio
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = 'item-image-container';
-                    
-                    // Create item image
-                    const itemImg = document.createElement('img');
-                    itemImg.src = imageUrl;
-                    itemImg.alt = productName;
-                    itemImg.className = 'item-image';
-                    itemImg.onerror = function() {
-                      // If image fails to load, try to fix common URL issues
-                      if (imageUrl.includes('?')) {
-                        // Try removing query parameters
-                        this.src = imageUrl.split('?')[0];
-                      } else if (!imageUrl.startsWith('http')) {
-                        // Try adding protocol if missing
-                        this.src = 'https:' + imageUrl;
-                      }
-                    };
-                    
-                    imgContainer.appendChild(itemImg);
-                    
-                    // Create item details
-                    const detailsElement = document.createElement('div');
-                    detailsElement.className = 'item-details';
-                    
-                    // Add product name
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'item-name';
-                    nameDiv.textContent = productName;
-                    detailsElement.appendChild(nameDiv);
-                    
-                    // Add price
-                    const priceDiv = document.createElement('div');
-                    priceDiv.className = 'item-price';
-                    priceDiv.textContent = price;
-                    detailsElement.appendChild(priceDiv);
-                    
-                    // Add size and color
-                    const specDiv = document.createElement('div');
-                    specDiv.className = 'item-specs';
-                    specDiv.textContent = `${size} | ${color}`;
-                    detailsElement.appendChild(specDiv);
-                    
-                    // Add all elements to item container
-                    itemElement.appendChild(imgContainer);
-                    itemElement.appendChild(detailsElement);
-                    
-                    // Add item to the image container
-                    imageContainer.appendChild(itemElement);
-                  } catch (error) {
-                    console.error('Cart Image Extractor: Error extracting item details:', error);
-                    showDebugOverlay('Error extracting item details: ' + error.message);
-                  }
-                });
-              }
-              
-              // Add close button
-              const closeButton = document.createElement('button');
-              closeButton.className = 'close-button';
-              closeButton.textContent = '×';
-              closeButton.addEventListener('click', function() {
-                panel.classList.add('hidden');
-                
-                // Create toggle button to reopen panel
-                createToggleButton();
-              });
-              panel.appendChild(closeButton);
-              
-              // Show panel
-              panel.classList.remove('hidden');
-              
-              console.log("Cart Image Extractor: Panel populated and displayed");
-              showDebugOverlay("Panel populated and displayed");
-            } catch (error) {
-              showDebugOverlay("ERROR in processCartItems: " + error.message);
-              console.error("Error in processCartItems:", error);
-            }
+  // Helper function to try multiple selectors with special handling for Abercrombie
+  function getTextFromSelectors(selectorType, item) {
+    const selectors = currentSiteConfig.itemSelectors[selectorType];
+    
+    // Special handling for Abercrombie - check if we're on Abercrombie site
+    if (window.location.hostname.includes('abercrombie.com') &&
+        (selectorType === 'size' || selectorType === 'color')) {
+      // Look for the combined size-color element
+      const sizeColorEl = item.querySelector('.size-color');
+      if (sizeColorEl && sizeColorEl.textContent.includes(',')) {
+        const parts = sizeColorEl.textContent.split(',');
+        if (selectorType === 'size' && parts.length >= 1) {
+          return parts[0].trim();
+        } else if (selectorType === 'color' && parts.length >= 2) {
+            return parts[1].trim();
           }
-
-          // Create a toggle button to reopen the panel
-          function createToggleButton() {
-            try {
-              let toggleBtn = document.getElementById('panel-toggle-button');
-              
-              if (!toggleBtn) {
-                toggleBtn = document.createElement('button');
-                toggleBtn.id = 'panel-toggle-button';
-                toggleBtn.textContent = 'Show Cart Items';
-                toggleBtn.className = 'panel-toggle-button';
-                
-                // Style the toggle button
-                toggleBtn.style.position = 'fixed';
-                toggleBtn.style.bottom = '20px';
-                toggleBtn.style.right = '20px';
-                toggleBtn.style.zIndex = '9998';
-                toggleBtn.style.padding = '10px 15px';
-                toggleBtn.style.backgroundColor = '#000';
-                toggleBtn.style.color = '#fff';
-                toggleBtn.style.border = 'none';
-                toggleBtn.style.borderRadius = '5px';
-                toggleBtn.style.cursor = 'pointer';
-                toggleBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-                
-                // Add event listener
-                toggleBtn.addEventListener('click', function() {
-                  const panel = document.getElementById('cart-panel');
-                  if (panel) {
-                    panel.classList.remove('hidden');
-                    toggleBtn.style.display = 'none';
-                  }
-                });
-                
-                document.body.appendChild(toggleBtn);
-              }
-              
-              toggleBtn.style.display = 'block';
-            } catch (error) {
-              showDebugOverlay("ERROR in createToggleButton: " + error.message);
-              console.error("Error in createToggleButton:", error);
-            }
+        }
+      }
+      
+      // First, try direct selectors
+      for (const selector of selectors) {
+        const elements = item.querySelectorAll(selector);
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i] && elements[i].textContent) {
+            return elements[i].textContent.trim();
           }
+        }
+      }
+      
+      // Special case for Zara (their links contain the product names)
+      if (selectorType === 'name') {
+        // Look for a product link with text content
+        const links = item.querySelectorAll('a');
+        for (const link of links) {
+          if (link.textContent && link.textContent.trim().length > 2 &&
+              !link.textContent.includes('Delete') && !link.textContent.includes('Remove')) {
+            return link.textContent.trim();
+          }
+        }
+        
+        // Alternative fallback - check for alt text in images
+        const images = item.querySelectorAll('img');
+        for (const img of images) {
+          if (img.alt && img.alt.trim().length > 2) {
+            return img.alt.trim();
+          }
+        }
+      }
+      
+      return '';
+    }
 
-          // Function to create the bottom panel
-          function createBottomPanel() {
-            try {
-              // Add our CSS to the page
-              const style = document.createElement('style');
-              style.textContent = `
-                #cart-panel {
-                  position: fixed;
-                  bottom: 0;
-                  left: 0;
-                  width: 100%;
-                  background-color: white;
-                  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-                  z-index: 9999;
-                  padding: 15px;
-                  transition: transform 0.3s ease;
-                  max-height: 300px; /* Increased from 220px */
-                  overflow-y: auto;
-                }
-                
-                #cart-panel.hidden {
-                  transform: translateY(100%);
-                }
-                
-                .panel-title {
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                  font-size: 16px;
-                }
-                
-                .image-container {
-                  display: flex;
-                  overflow-x: auto;
-                  gap: 15px;
-                  padding-bottom: 10px;
-                }
-                
-                .cart-item {
-                  display: flex;
-                  flex-direction: column;
-                  min-width: 140px;
-                  max-width: 140px;
-                }
-                
-                .item-image-container {
-                        width: 100%;
-                        height: 180px; /* Fixed height container */
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        overflow: hidden;
-                        position: relative;
-                        margin-bottom: 5px;
-                      }
-                      
-                      .item-image {
-                        max-height: 100%;
-                        max-width: 100%;
-                        object-fit: contain; /* Contains the image fully within the container */
-                        position: absolute;
-                      }
-                      
-                      .item-details {
-                        padding: 5px 0;
-                      }
-                      
-                      .item-name {
-                        font-size: 12px;
-                        font-weight: bold;
-                        white-space: normal; /* Allow text to wrap */
-                        overflow: hidden;
-                        display: -webkit-box;
-                        -webkit-line-clamp: 2; /* Limit to 2 lines */
-                        -webkit-box-orient: vertical;
-                        line-height: 1.2;
-                        max-height: 2.4em; /* 2 lines */
-                      }
-                      
-                      .item-price {
-                        font-size: 12px;
-                        color: #777;
-                        margin-top: 3px;
-                      }
-                      
-                      .item-specs {
-                        font-size: 10px;
-                        color: #999;
-                        margin-top: 2px;
-                      }
-                      
-                      .close-button {
-                        position: absolute;
-                        top: 10px;
-                        right: 10px;
-                        background: none;
-                        border: none;
-                        font-size: 24px;
-                        cursor: pointer;
-                        color: #444;
-                      }
-                      
-                      .panel-message {
-                        padding: 20px;
-                        text-align: center;
-                        color: #777;
-                      }
-                    `;
-                    document.head.appendChild(style);
-                    
-                    // Create the panel
-                    const panel = document.createElement('div');
-                    panel.id = 'cart-panel';
-                    panel.className = 'cart-panel';
-                    document.body.appendChild(panel);
-                    
-                    console.log("Cart Image Extractor: Bottom panel created");
-                    showDebugOverlay("Bottom panel created");
-                    
-                    return panel;
-                  } catch (error) {
-                    showDebugOverlay("ERROR in createBottomPanel: " + error.message);
-                    console.error("Error in createBottomPanel:", error);
-                    // Create a simple fallback panel in case of error
-                    const fallbackPanel = document.createElement('div');
-                    fallbackPanel.id = 'cart-panel';
-                    document.body.appendChild(fallbackPanel);
-                    return fallbackPanel;
-                  }
-                }
-
-                // Observe changes to the cart to update our panel
-function observeCartChanges() {
-    try {
+    // Process the cart items
+    function processCartItems(cartItems, panel, usedSelector) {
+      try {
         if (!currentSiteConfig) return;
         
-        console.log("Cart Image Extractor: Setting up observer");
-        showDebugOverlay("Setting up observer");
+        // Clear existing content
+        panel.innerHTML = '';
         
-        // Look for the cart container using configured selectors
-        const possibleCartContainers = currentSiteConfig.cartDetection.domSelectors;
+        // Title for the panel
+        const panelTitle = document.createElement('div');
+        panelTitle.className = 'panel-title';
+        panelTitle.textContent = 'Items in Your Cart';
+        panel.appendChild(panelTitle);
         
-        let cartContainer = null;
+        // Container for the images
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'image-container';
+        panel.appendChild(imageContainer);
         
-        // Try each possible container selector
-        for (const selector of possibleCartContainers) {
+        // Special handling for OhPolly items
+        if (window.location.hostname.includes('ohpolly.com')) {
+          cartItems.forEach((item, index) => {
+            try {
+              console.log(`Cart Image Extractor: Processing OhPolly item ${index+1}`);
+              showDebugOverlay(`Processing OhPolly item ${index+1}`);
+              
+              const productInfo = processOhPollyItem(item, index);
+              
+              // Create item container
+              const itemElement = document.createElement('div');
+              itemElement.className = 'cart-item';
+              
+              // Create image container
+              const imgContainer = document.createElement('div');
+              imgContainer.className = 'item-image-container';
+              
+              // Create item image
+              const itemImg = document.createElement('img');
+              itemImg.src = productInfo.imageUrl;
+              itemImg.alt = productInfo.productName;
+              itemImg.className = 'item-image';
+              itemImg.onerror = function() {
+                // If image fails to load, try to fix common URL issues
+                if (productInfo.imageUrl.includes('?')) {
+                  // Try removing query parameters
+                  this.src = productInfo.imageUrl.split('?')[0];
+                } else if (!productInfo.imageUrl.startsWith('http')) {
+                  // Try adding protocol if missing
+                  this.src = 'https:' + productInfo.imageUrl;
+                }
+              };
+              
+              imgContainer.appendChild(itemImg);
+              
+              // Create item details
+              const detailsElement = document.createElement('div');
+              detailsElement.className = 'item-details';
+              
+              // Add strapline/collection if available
+              if (productInfo.strapline) {
+                const straplineDiv = document.createElement('div');
+                straplineDiv.className = 'item-brand';
+                straplineDiv.style.fontSize = '10px';
+                straplineDiv.style.color = '#666';
+                straplineDiv.textContent = productInfo.strapline;
+                detailsElement.appendChild(straplineDiv);
+              }
+              
+              // Add product name
+              const nameDiv = document.createElement('div');
+              nameDiv.className = 'item-name';
+              nameDiv.textContent = productInfo.productName;
+              detailsElement.appendChild(nameDiv);
+              
+              // Add price
+              const priceDiv = document.createElement('div');
+              priceDiv.className = 'item-price';
+              priceDiv.textContent = productInfo.price;
+              detailsElement.appendChild(priceDiv);
+              
+              // Add size and color
+              const specDiv = document.createElement('div');
+              specDiv.className = 'item-specs';
+              specDiv.textContent = `${productInfo.size} | ${productInfo.color}`;
+              detailsElement.appendChild(specDiv);
+              
+              // Add all elements to item container
+              itemElement.appendChild(imgContainer);
+              itemElement.appendChild(detailsElement);
+              
+              // Add item to the image container
+              imageContainer.appendChild(itemElement);
+            } catch (error) {
+              console.error('Cart Image Extractor: Error processing OhPolly item:', error);
+              showDebugOverlay('Error processing OhPolly item: ' + error.message);
+            }
+          });
+        }
+        // Special handling for Revolve items
+        else if (window.location.hostname.includes('revolve.com')) {
+          cartItems.forEach((item, index) => {
+            try {
+              console.log(`Cart Image Extractor: Processing Revolve item ${index+1}`);
+              showDebugOverlay(`Processing Revolve item ${index+1}`);
+              
+              // Find image directly
+              let imageUrl = '';
+              const imgEl = item.querySelector('.shopping-bag__image img');
+              if (imgEl && imgEl.src) {
+                imageUrl = imgEl.src;
+                console.log(`Found image: ${imageUrl}`);
+              }
+              
+              // Find product name directly
+              let productName = '';
+              const nameEl = item.querySelector('.shopping-bag__body .u-block strong');
+              if (nameEl) {
+                productName = nameEl.textContent.trim();
+                console.log(`Found name: ${productName}`);
+              }
+              
+              // Find brand directly
+              let brand = '';
+              const brandEl = item.querySelector('.shopping-bag__body .u-block div:not(:first-child)');
+              if (brandEl) {
+                brand = brandEl.textContent.trim();
+                console.log(`Found brand: ${brand}`);
+              }
+              
+              // Find price directly
+              let price = '';
+              const priceEl = item.querySelector('.shopping-bag__pri .js-price');
+              if (priceEl) {
+                price = priceEl.textContent.trim();
+                console.log(`Found price: ${price}`);
+              }
+              
+              // Find size directly
+              let size = '';
+              const sizeEl = item.querySelector('.shopbag_item_size .sb_display');
+              if (sizeEl) {
+                size = sizeEl.textContent.trim();
+                console.log(`Found size: ${size}`);
+              }
+              
+              // Find color directly
+              let color = '';
+              const colorElements = item.querySelectorAll('.u-float--left');
+              for (const el of colorElements) {
+                if (el.textContent.includes('Color:')) {
+                  color = el.textContent.replace('Color:', '').trim();
+                  console.log(`Found color: ${color}`);
+                  break;
+                }
+              }
+              
+              // Create item container
+              const itemElement = document.createElement('div');
+              itemElement.className = 'cart-item';
+              
+              // Create image container
+              const imgContainer = document.createElement('div');
+              imgContainer.className = 'item-image-container';
+              
+              // Create item image
+              const itemImg = document.createElement('img');
+              itemImg.src = imageUrl;
+              itemImg.alt = productName;
+              itemImg.className = 'item-image';
+              itemImg.onerror = function() {
+                // If image fails to load, try to fix common URL issues
+                if (imageUrl.includes('?')) {
+                  // Try removing query parameters
+                  this.src = imageUrl.split('?')[0];
+                } else if (!imageUrl.startsWith('http')) {
+                  // Try adding protocol if missing
+                  this.src = 'https:' + imageUrl;
+                }
+              };
+              
+              imgContainer.appendChild(itemImg);
+              
+              // Create item details
+              const detailsElement = document.createElement('div');
+              detailsElement.className = 'item-details';
+              
+              // Add brand if available
+              if (brand) {
+                const brandDiv = document.createElement('div');
+                brandDiv.className = 'item-brand';
+                brandDiv.style.fontSize = '10px';
+                brandDiv.style.color = '#666';
+                brandDiv.textContent = brand;
+                detailsElement.appendChild(brandDiv);
+              }
+              
+              // Add product name
+              const nameDiv = document.createElement('div');
+              nameDiv.className = 'item-name';
+              nameDiv.textContent = productName;
+              detailsElement.appendChild(nameDiv);
+              
+              // Add price
+              const priceDiv = document.createElement('div');
+              priceDiv.className = 'item-price';
+              priceDiv.textContent = price;
+              detailsElement.appendChild(priceDiv);
+              
+              // Add size and color
+              const specDiv = document.createElement('div');
+              specDiv.className = 'item-specs';
+              specDiv.textContent = `${size} | ${color}`;
+              detailsElement.appendChild(specDiv);
+              
+              // Add all elements to item container
+              itemElement.appendChild(imgContainer);
+              itemElement.appendChild(detailsElement);
+              
+              // Add item to the image container
+              imageContainer.appendChild(itemElement);
+            } catch (error) {
+              console.error('Cart Image Extractor: Error processing Revolve item:', error);
+              showDebugOverlay('Error processing Revolve item: ' + error.message);
+            }
+          });
+        }
+        // Special handling for Abercrombie items
+        else if (window.location.hostname.includes('abercrombie.com')) {
+          cartItems.forEach((item, index) => {
+            try {
+              const productInfo = processAbercrombieItem(item, index);
+              
+              // Build the panel item using productInfo
+              // Create item container
+              const itemElement = document.createElement('div');
+              itemElement.className = 'cart-item';
+              
+              // Create image container
+              const imgContainer = document.createElement('div');
+              imgContainer.className = 'item-image-container';
+              
+              // Create item image
+              const itemImg = document.createElement('img');
+              itemImg.src = productInfo.imageUrl;
+              itemImg.alt = productInfo.productName;
+              itemImg.className = 'item-image';
+              itemImg.onerror = function() {
+                // If image fails to load, try to fix common URL issues
+                if (productInfo.imageUrl.includes('?')) {
+                  // Try removing query parameters
+                  this.src = productInfo.imageUrl.split('?')[0];
+                } else if (!productInfo.imageUrl.startsWith('http')) {
+                  // Try adding protocol if missing
+                  this.src = 'https:' + productInfo.imageUrl;
+                }
+              };
+              
+              imgContainer.appendChild(itemImg);
+              
+              // Create item details
+              const detailsElement = document.createElement('div');
+              detailsElement.className = 'item-details';
+              
+              // Add product name
+              const nameDiv = document.createElement('div');
+              nameDiv.className = 'item-name';
+              nameDiv.textContent = productInfo.productName;
+              detailsElement.appendChild(nameDiv);
+              
+              // Add price
+              const priceDiv = document.createElement('div');
+              priceDiv.className = 'item-price';
+              priceDiv.textContent = productInfo.price;
+              detailsElement.appendChild(priceDiv);
+              
+              // Add size and color
+              const specDiv = document.createElement('div');
+              specDiv.className = 'item-specs';
+              specDiv.textContent = `${productInfo.size} | ${productInfo.color}`;
+              detailsElement.appendChild(specDiv);
+              
+              // Add all elements to item container
+              itemElement.appendChild(imgContainer);
+              itemElement.appendChild(detailsElement);
+              
+              // Add item to the image container
+              imageContainer.appendChild(itemElement);
+            } catch (error) {
+              console.error('Cart Image Extractor: Error processing Abercrombie item:', error);
+              showDebugOverlay('Error processing Abercrombie item: ' + error.message);
+            }
+          });
+        } else {
+          // Regular processing for other sites
+          // Extract all product information and images
+          cartItems.forEach((item, index) => {
+            try {
+              console.log(`Cart Image Extractor: Processing item ${index+1}`);
+              showDebugOverlay(`Processing item ${index+1}`);
+              
+              // Get image selectors from site config
+              let imageSelectors = currentSiteConfig.itemSelectors.image;
+              
+              let imgElement = null;
+              let imageUrl = '';
+              
+              // Try each image selector
+              for (const selector of imageSelectors) {
+                imgElement = item.querySelector(selector);
+                if (imgElement) {
+                  // Handle both img elements and background images
+                  if (imgElement.tagName === 'IMG' && imgElement.src) {
+                    imageUrl = imgElement.src;
+                    break;
+                  } else if (imgElement.style && imgElement.style.backgroundImage) {
+                    // Extract URL from background-image style
+                    const bgImg = imgElement.style.backgroundImage;
+                    imageUrl = bgImg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+                    break;
+                  }
+                }
+              }
+              
+              // Last resort - look for any image URL in the attributes or styles
+              if (!imageUrl) {
+                const elementsWithUrl = item.querySelectorAll('[src], [style*="url"]');
+                for (const el of elementsWithUrl) {
+                  if (el.src && el.src.includes('/images/')) {
+                    imageUrl = el.src;
+                    break;
+                  } else if (el.style && el.style.backgroundImage) {
+                    const bgImg = el.style.backgroundImage;
+                    if (bgImg.includes('/images/')) {
+                      imageUrl = bgImg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              if (!imageUrl) {
+                console.log(`Cart Image Extractor: No image found for item ${index+1}`);
+                showDebugOverlay(`No image found for item ${index+1}`);
+                return;
+              }
+              
+              console.log(`Cart Image Extractor: Found image for item ${index+1}: ${imageUrl}`);
+              showDebugOverlay(`Found image for item ${index+1}`);
+              
+              // Extract product details using getTextFromSelectors function
+              const productName = getTextFromSelectors('name', item) || 'Product';
+              const price = getTextFromSelectors('price', item) || '';
+              const size = getTextFromSelectors('size', item) || '';
+              const color = getTextFromSelectors('color', item) || '';
+              
+              // Create item container
+              const itemElement = document.createElement('div');
+              itemElement.className = 'cart-item';
+              
+              // Create image container to maintain aspect ratio
+              const imgContainer = document.createElement('div');
+              imgContainer.className = 'item-image-container';
+              
+              // Create item image
+              const itemImg = document.createElement('img');
+                itemImg.src = imageUrl;
+                itemImg.alt = productName;
+                itemImg.className = 'item-image';
+                itemImg.onerror = function() {
+                  // If image fails to load, try to fix common URL issues
+                  if (imageUrl.includes('?')) {
+                    // Try removing query parameters
+                    this.src = imageUrl.split('?')[0];
+                  } else if (!imageUrl.startsWith('http')) {
+                    // Try adding protocol if missing
+                    this.src = 'https:' + imageUrl;
+                  }
+                };
+                
+                imgContainer.appendChild(itemImg);
+                
+                // Create item details
+                const detailsElement = document.createElement('div');
+                detailsElement.className = 'item-details';
+                
+                // Add product name
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'item-name';
+                nameDiv.textContent = productName;
+                detailsElement.appendChild(nameDiv);
+                
+                // Add price
+                const priceDiv = document.createElement('div');
+                priceDiv.className = 'item-price';
+                priceDiv.textContent = price;
+                detailsElement.appendChild(priceDiv);
+                
+                // Add size and color
+                const specDiv = document.createElement('div');
+                specDiv.className = 'item-specs';
+                specDiv.textContent = `${size} | ${color}`;
+                detailsElement.appendChild(specDiv);
+                
+                // Add all elements to item container
+                itemElement.appendChild(imgContainer);
+                itemElement.appendChild(detailsElement);
+                
+                // Add item to the image container
+                imageContainer.appendChild(itemElement);
+              } catch (error) {
+                console.error('Cart Image Extractor: Error extracting item details:', error);
+                showDebugOverlay('Error extracting item details: ' + error.message);
+              }
+            });
+          }
+          
+          // Add close button
+          const closeButton = document.createElement('button');
+          closeButton.className = 'close-button';
+          closeButton.textContent = '×';
+          closeButton.addEventListener('click', function() {
+            panel.classList.add('hidden');
+            
+            // Create toggle button to reopen panel
+            createToggleButton();
+          });
+          panel.appendChild(closeButton);
+          
+          // Show panel
+          panel.classList.remove('hidden');
+          
+          console.log("Cart Image Extractor: Panel populated and displayed");
+          showDebugOverlay("Panel populated and displayed");
+        } catch (error) {
+          showDebugOverlay("ERROR in processCartItems: " + error.message);
+          console.error("Error in processCartItems:", error);
+        }
+      }
+
+      // Create a toggle button to reopen the panel
+      function createToggleButton() {
+        try {
+          let toggleBtn = document.getElementById('panel-toggle-button');
+          
+          if (!toggleBtn) {
+            toggleBtn = document.createElement('button');
+            toggleBtn.id = 'panel-toggle-button';
+            toggleBtn.textContent = 'Show Cart Items';
+            toggleBtn.className = 'panel-toggle-button';
+            
+            // Style the toggle button
+            toggleBtn.style.position = 'fixed';
+            toggleBtn.style.bottom = '20px';
+            toggleBtn.style.right = '20px';
+            toggleBtn.style.zIndex = '9998';
+            toggleBtn.style.padding = '10px 15px';
+            toggleBtn.style.backgroundColor = '#000';
+            toggleBtn.style.color = '#fff';
+            toggleBtn.style.border = 'none';
+            toggleBtn.style.borderRadius = '5px';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+            
+            // Add event listener
+            toggleBtn.addEventListener('click', function() {
+              const panel = document.getElementById('cart-panel');
+              if (panel) {
+                panel.classList.remove('hidden');
+                toggleBtn.style.display = 'none';
+              }
+            });
+            
+            document.body.appendChild(toggleBtn);
+          }
+          
+          toggleBtn.style.display = 'block';
+        } catch (error) {
+          showDebugOverlay("ERROR in createToggleButton: " + error.message);
+          console.error("Error in createToggleButton:", error);
+        }
+      }
+
+      // Function to create the bottom panel
+      function createBottomPanel() {
+        try {
+          // Add our CSS to the page
+          const style = document.createElement('style');
+          style.textContent = `
+            #cart-panel {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              width: 100%;
+              background-color: white;
+              box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+              z-index: 9999;
+              padding: 15px;
+              transition: transform 0.3s ease;
+              max-height: 300px; /* Increased from 220px */
+              overflow-y: auto;
+            }
+            
+            #cart-panel.hidden {
+              transform: translateY(100%);
+            }
+            
+            .panel-title {
+              font-weight: bold;
+              margin-bottom: 10px;
+              font-size: 16px;
+            }
+            
+            .image-container {
+              display: flex;
+              overflow-x: auto;
+              gap: 15px;
+              padding-bottom: 10px;
+            }
+            
+            .cart-item {
+              display: flex;
+              flex-direction: column;
+              min-width: 140px;
+              max-width: 140px;
+            }
+            
+            .item-image-container {
+              width: 100%;
+              height: 180px; /* Fixed height container */
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              position: relative;
+              margin-bottom: 5px;
+            }
+            
+            .item-image {
+              max-height: 100%;
+              max-width: 100%;
+              object-fit: contain; /* Contains the image fully within the container */
+              position: absolute;
+            }
+            
+            .item-details {
+              padding: 5px 0;
+            }
+            
+            .item-name {
+              font-size: 12px;
+              font-weight: bold;
+              white-space: normal; /* Allow text to wrap */
+              overflow: hidden;
+              display: -webkit-box;
+              -webkit-line-clamp: 2; /* Limit to 2 lines */
+              -webkit-box-orient: vertical;
+              line-height: 1.2;
+              max-height: 2.4em; /* 2 lines */
+            }
+            
+            .item-price {
+              font-size: 12px;
+              color: #777;
+              margin-top: 3px;
+            }
+            
+            .item-specs {
+              font-size: 10px;
+              color: #999;
+              margin-top: 2px;
+            }
+            
+            .close-button {
+              position: absolute;
+              top: 10px;
+              right: 10px;
+              background: none;
+              border: none;
+              font-size: 24px;
+              cursor: pointer;
+              color: #444;
+            }
+            
+            .panel-message {
+              padding: 20px;
+              text-align: center;
+              color: #777;
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // Create the panel
+          const panel = document.createElement('div');
+          panel.id = 'cart-panel';
+          panel.className = 'cart-panel';
+          document.body.appendChild(panel);
+          
+          console.log("Cart Image Extractor: Bottom panel created");
+          showDebugOverlay("Bottom panel created");
+          
+          return panel;
+        } catch (error) {
+          showDebugOverlay("ERROR in createBottomPanel: " + error.message);
+          console.error("Error in createBottomPanel:", error);
+          // Create a simple fallback panel in case of error
+          const fallbackPanel = document.createElement('div');
+          fallbackPanel.id = 'cart-panel';
+          document.body.appendChild(fallbackPanel);
+          return fallbackPanel;
+        }
+      }
+
+      // Observe changes to the cart to update our panel
+      function observeCartChanges() {
+        try {
+          if (!currentSiteConfig) return;
+          
+          console.log("Cart Image Extractor: Setting up observer");
+          showDebugOverlay("Setting up observer");
+          
+          // Look for the cart container using configured selectors
+          const possibleCartContainers = currentSiteConfig.cartDetection.domSelectors;
+          
+          let cartContainer = null;
+          
+          // Try each possible container selector
+          for (const selector of possibleCartContainers) {
             cartContainer = document.querySelector(selector);
             if (cartContainer) {
-                console.log(`Cart Image Extractor: Found cart container "${selector}" to observe`);
-                showDebugOverlay(`Found cart container "${selector}" to observe`);
-                break;
+              console.log(`Cart Image Extractor: Found cart container "${selector}" to observe`);
+              showDebugOverlay(`Found cart container "${selector}" to observe`);
+              break;
             }
-        }
-        
-        if (cartContainer) {
+          }
+          
+          if (cartContainer) {
             const observer = new MutationObserver(function(mutations) {
-                try {
-                    console.log("Cart Image Extractor: Cart content changed, updating panel");
-                    showDebugOverlay("Cart content changed, updating panel");
-                    extractAndDisplayImages();
-                } catch (error) {
-                    showDebugOverlay("ERROR in cart observer callback: " + error.message);
-                    console.error("Error in cart observer callback:", error);
-                }
+              try {
+                console.log("Cart Image Extractor: Cart content changed, updating panel");
+                showDebugOverlay("Cart content changed, updating panel");
+                extractAndDisplayImages();
+              } catch (error) {
+                showDebugOverlay("ERROR in cart observer callback: " + error.message);
+                console.error("Error in cart observer callback:", error);
+              }
             });
             
             observer.observe(cartContainer, {
-                subtree: true,
-                childList: true,
-                attributes: true
+              subtree: true,
+              childList: true,
+              attributes: true
             });
-        } else {
+          } else {
             console.log("Cart Image Extractor: Couldn't find cart container to observe");
             showDebugOverlay("Couldn't find cart container to observe");
             
             // Fallback to body observation with more focused checking
             const observer = new MutationObserver(function(mutations) {
-                try {
-                    // Look for mutations that might indicate cart items loading
-                    const cartRelatedMutation = mutations.some(mutation => {
-                        const cartIndicators = currentSiteConfig.cartDetection.textIndicators;
-                        
-                        // Check if mutation target or its parent has cart-related class/id
-                        const isCartRelated = cartIndicators.some(indicator => {
-                            return (mutation.target.className && mutation.target.className.toString().toLowerCase().includes(indicator)) ||
-                            (mutation.target.id && mutation.target.id.toLowerCase().includes(indicator)) ||
-                            (mutation.target.parentElement &&
-                             mutation.target.parentElement.className &&
-                             mutation.target.parentElement.className.toString().toLowerCase().includes(indicator));
-                        });
-                        
-                        return isCartRelated;
-                    });
-                    
-                    if (cartRelatedMutation) {
-                        console.log("Cart Image Extractor: Cart-related DOM change detected");
-                        showDebugOverlay("Cart-related DOM change detected");
-                        extractAndDisplayImages();
-                    }
-                } catch (error) {
-                    showDebugOverlay("ERROR in fallback observer callback: " + error.message);
-                    console.error("Error in fallback observer callback:", error);
+              try {
+                // Look for mutations that might indicate cart items loading
+                const cartRelatedMutation = mutations.some(mutation => {
+                  const cartIndicators = currentSiteConfig.cartDetection.textIndicators;
+                  
+                  // Check if mutation target or its parent has cart-related class/id
+                  const isCartRelated = cartIndicators.some(indicator => {
+                    return (mutation.target.className && mutation.target.className.toString().toLowerCase().includes(indicator)) ||
+                    (mutation.target.id && mutation.target.id.toLowerCase().includes(indicator)) ||
+                    (mutation.target.parentElement &&
+                     mutation.target.parentElement.className &&
+                     mutation.target.parentElement.className.toString().toLowerCase().includes(indicator));
+                  });
+                  
+                  return isCartRelated;
+                });
+                
+                if (cartRelatedMutation) {
+                  console.log("Cart Image Extractor: Cart-related DOM change detected");
+                  showDebugOverlay("Cart-related DOM change detected");
+                  extractAndDisplayImages();
                 }
+              } catch (error) {
+                showDebugOverlay("ERROR in fallback observer callback: " + error.message);
+                console.error("Error in fallback observer callback:", error);
+              }
             });
             
             observer.observe(document.body, {
-                subtree: true,
-                childList: true,
-                attributes: true,
-                attributeFilter: ['class', 'style', 'id']
+              subtree: true,
+              childList: true,
+              attributes: true,
+              attributeFilter: ['class', 'style', 'id']
             });
+          }
+        } catch (error) {
+          showDebugOverlay("ERROR in observeCartChanges: " + error.message);
+          console.error("Error in observeCartChanges:", error);
         }
-    } catch (error) {
-        showDebugOverlay("ERROR in observeCartChanges: " + error.message);
-        console.error("Error in observeCartChanges:", error);
-    }
-}
-                
+      }

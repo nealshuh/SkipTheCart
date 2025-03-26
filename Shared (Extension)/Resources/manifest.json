@@ -14,8 +14,9 @@
     "*://us.princesspolly.com/*",
     "*://www.revolve.com/*",
     "*://tigermist.com/*",
-    "*://www.ohpolly.com/*",
-    "*://www.fashionnova.com/*"
+    "*://us.ohpolly.com/*",
+    "*://www.fashionnova.com/*",
+    "*://www.urbanoutfitters.com/*"
   ],
   "content_scripts": [
     {
@@ -29,8 +30,9 @@
         "*://us.princesspolly.com/*",
         "*://www.revolve.com/*",
         "*://tigermist.com/*",
-        "*://www.ohpolly.com/*",
-        "*://www.fashionnova.com/*"
+        "*://us.ohpolly.com/*",
+        "*://www.fashionnova.com/*",
+        "*://www.urbanoutfitters.com/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"]
