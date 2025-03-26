@@ -337,61 +337,46 @@ const SITE_CONFIGS = {
       cartDetection: {
         urlPatterns: ['/ShoppingBag.jsp', '/r/ShoppingBag.jsp', '/checkout'],
         domSelectors: [
-          '.shopping-bag__container-items',
-          '#shopbag_div_id',
-          '.shopping-bag__row',
-          '.js-cart-item',
-          '.js-product-in-bag', // Add this new selector
-          'section[id^="item-"]', // Add this new selector
-          '.product--horizontal-shopping-bag' // Add this new selector
+          '.product--horizontal-shopping-bag',
+          'section[id^="item-"]',
+          '.js-product-in-bag',
+          '.product__image--horizontal'
         ],
         textIndicators: ['shopping bag', 'bag', 'checkout', 'cart', 'items in your cart']
       },
       itemSelectors: {
         container: [
-          '.shopping-bag__row',
-          '.js-cart-item',
-          '[id^="bag_item_"]',
-          'tr.shopping-bag__item-body',
-          'section[id^="item-"]', // Add this new selector
-          '.product--horizontal-shopping-bag', // Add this new selector
-          '.js-product-in-bag' // Add this new selector
+          'section[id^="item-"]',
+          '.product--horizontal-shopping-bag',
+          '.js-product-in-bag',
+          '.vanish.js-product-in-bag'
         ],
         image: [
-          '.shopping-bag__image img',
-          '.shopping-bag__image-placeholder img',
-          'td.shopping-bag__image img',
-          '.product-image--horizontal', // Add this new selector
-          '.product__image img', // Add this new selector
-          'img.product-image' // Add this new selector
+          '.product-image--horizontal',
+          'img.product-image',
+          '.product__image a img',
+          '.product-link img'
         ],
         name: [
-          '.shopping-bag__body .u-block strong',
-          '.shopping-bag__prod-info strong',
-          '.shopping-bag__body strong',
-          '.product-name--horizontal', // Add this new selector
-          '.product__title .product-name--lg', // Add this new selector
-          '.u-weight--bold.product-name--lg' // Add this new selector
+          '.product-name--lg',
+          '.product__title .u-weight--bold',
+          '.product-name--horizontal',
+          '.product__title div.u-padding-b--xs'
         ],
         price: [
-          '.shopping-bag__pri .js-price',
-          '.price__retail',
-          '.shopping-bag__price-wrap .js-price',
-          '.product__price .price--lg .price__retail' // Add this new selector
+          'span.price__retail',
+          '.product__price .price__retail',
+          '.price.price--lg span'
         ],
         size: [
-          '.shopbag_item_size .sb_display',
-          'span[data]',
-          '.shopbag_item_size',
-          '.product__size select option[selected]', // Add this new selector
-          '.js-size-select option[selected]' // Add this new selector
+          '.js-size-select option[selected]',
+          'select.js-size-select option[selected]',
+          '.product__size select option[selected]'
         ],
         color: [
-          '.u-float--left:contains("Color:")',
-          '.shopping-bag__body span:contains("Color:")',
-          '.u-inline-block span:contains("Color:")',
-          '.product__detail--horizontal', // Add this new selector
-          '.u-text--lg.u-padding-b--xs.product__detail' // Add this new selector
+          '.product__detail--horizontal',
+          '.u-text--lg.u-padding-b--xs.product__detail',
+          'div.u-text--lg:contains("Color")'
         ]
       }
     },
