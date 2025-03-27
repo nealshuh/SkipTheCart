@@ -148,6 +148,7 @@
 				ContentView.swift,
 				EmailConfirmationSuccessView.swift,
 				EmailConfirmationView.swift,
+				ModelTestView.swift,
 				SceneDelegate.swift,
 				SettingsView.swift,
 				SupabaseManager.swift,
