@@ -58,6 +58,8 @@ struct ContentView: View {
                     }
             } else if isUserAuthenticated {
                 // Main app content with tab view
+                // Update the TabView section in ContentView.swift to include the new ModelTestView tab:
+
                 TabView(selection: $selectedTab) {
                     // Home tab
                     homeView
@@ -72,6 +74,13 @@ struct ContentView: View {
                             Label("Wardrobe", systemImage: "tshirt.fill")
                         }
                         .tag(1)
+                    
+                    // Model Test tab
+                    ModelTestView()
+                        .tabItem {
+                            Label("Test Model", systemImage: "camera.viewfinder")
+                        }
+                        .tag(2)
                 }
                 .accentColor(AppStyles.Colors.primary)
                 .sheet(isPresented: $showSettings) {
