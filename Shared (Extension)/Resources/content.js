@@ -539,6 +539,8 @@ let lastDebugMessages = {};
 
 // Update showDebugOverlay function
 function showDebugOverlay(message) {
+  return;
+    
   let overlay = document.getElementById('debug-overlay');
   if (!overlay) {
     overlay = document.createElement('div');
