@@ -513,10 +513,53 @@ const SITE_CONFIGS = {
           '.c-pwa-item-attributes span.c-pwa-item-attributes__label:contains("Color") + *'
         ]
       }
+    },
+    brandyMelville: {
+      cartDetection: {
+        urlPatterns: ['/cart', '/checkout'],
+        domSelectors: [
+          '.cart-items',
+          '.cart-item',
+          'table.cart-items',
+          '[id^="CartItem-"]',
+          'cart-items-wrapper'
+        ],
+        textIndicators: ['shopping cart', 'cart', 'bag', 'items in your cart']
+      },
+      itemSelectors: {
+        container: [
+          '.cart-item',
+          'tr.cart-item',
+          '[id^="CartItem-"]'
+        ],
+        image: [
+          '.cart-item__image',
+          '.cart-item__media img',
+          'img[class*="cart-item"]'
+        ],
+        name: [
+          '.cart-item__name',
+          'a.cart-item__name',
+          '.cart-item__details a'
+        ],
+        price: [
+          '.price.price--end',
+          '.cart-item__price-wrapper .price',
+          'span[data-uw-rm-sr]'
+        ],
+        size: [
+          '.product-option dt:contains("Size") + dd',
+          'dl .product-option:contains("Size") dd',
+          'dl div[class*="product-option"]:nth-child(2) dd'
+        ],
+        color: [
+          '.product-option dt:contains("Color") + dd',
+          'dl .product-option:contains("Color") dd',
+          'dl div[class*="product-option"]:nth-child(1) dd'
+        ]
+      }
     }
-  
-  // Additional sites can be added here
-};
+  };
 
 // ==============================================
 // INITIALIZATION & DEBUGGING UTILITIES
@@ -650,6 +693,12 @@ function detectCurrentSite() {
     showDebugOverlay("Urban Outfitters site detected");
     console.log("Urban Outfitters site detected");
     return SITE_CONFIGS.urbanOutfitters;
+  }
+  
+  if (hostname.includes('brandymelville.com')) {
+    showDebugOverlay("Brandy Melville site detected");
+    console.log("Brandy Melville site detected");
+    return SITE_CONFIGS.brandyMelville;
   }
   
   // Default to null if no site matches

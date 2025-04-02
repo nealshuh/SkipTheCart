@@ -32,7 +32,8 @@
         "*://tigermist.com/*",
         "*://us.ohpolly.com/*",
         "*://www.fashionnova.com/*",
-        "*://www.urbanoutfitters.com/*"
+        "*://www.urbanoutfitters.com/*",
+        "*://www.brandymelville.com/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"]
