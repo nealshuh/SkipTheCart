@@ -85,10 +85,6 @@ struct ModelTestView: View {
             if let results = request.results as? [VNCoreMLFeatureValueObservation],
                let firstResult = results.first,
                let multiArray = firstResult.featureValue.multiArrayValue {
-                // Debug the shape and data type
-                print("MultiArray shape: \(multiArray.shape)")
-                print("MultiArray data type: \(multiArray.dataType)")
-                
                 // Extract dimensions (assuming shape is [1, numClasses, height, width])
                 let numClasses = multiArray.shape[1].intValue // e.g., 20
                 let height = multiArray.shape[2].intValue     // e.g., 473
@@ -113,7 +109,7 @@ struct ModelTestView: View {
                     }
                 }
                 
-                // Generate the highlighted image with bounds checking
+                // Generate the highlighted image
                 let highlightedImage = self.createHighlightedImage(labels: labels, width: width, height: height)
                 
                 // Update the UI on the main thread
@@ -136,19 +132,33 @@ struct ModelTestView: View {
     
     /// Creates a highlighted image based on the segmentation labels
     func createHighlightedImage(labels: [[Int]], width: Int, height: Int) -> UIImage {
-        // Define clothing class labels based on the model's expected output
-        let clothingLabels: Set<Int> = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 19]
+        // Define the clothing labels to highlight
+        let clothingLabels = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 19]
         
+        // Generate distinct, bright colors for each clothing label
+        let numColors = clothingLabels.count
+        let colors: [UIColor] = (0..<numColors).map { i in
+            let hue = CGFloat(i) / CGFloat(numColors)
+            return UIColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 0.5)
+        }
+        
+        // Create an array mapping each label (0-19) to a color; default to clear
+        var labelColors = [CGColor](repeating: UIColor.clear.cgColor, count: 20)
+        for (index, label) in clothingLabels.enumerated() {
+            labelColors[label] = colors[index].cgColor
+        }
+        
+        // Render the highlighted image
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
         return renderer.image { context in
             let cgContext = context.cgContext
-            // Set the highlight color (red with 50% opacity)
-            cgContext.setFillColor(UIColor.red.withAlphaComponent(0.5).cgColor)
-            // Draw a 1x1 rectangle for each pixel with a clothing label
             for i in 0..<height {
                 for j in 0..<width {
-                    // Ensure the index is within bounds before accessing
-                    if i < labels.count && j < labels[i].count && clothingLabels.contains(labels[i][j]) {
+                    // Ensure the index is within bounds
+                    if i < labels.count && j < labels[i].count {
+                        let label = labels[i][j]
+                        let color = labelColors[label]
+                        cgContext.setFillColor(color)
                         cgContext.fill(CGRect(x: j, y: i, width: 1, height: 1))
                     }
                 }
