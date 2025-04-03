@@ -39,3 +39,4 @@ playground.xcworkspace
 # Provisioning
 *.mobileprovision
 *.
+iOS (App)/ClothingSegmentation.mlpackage/Data/com.apple.CoreML/HumanParsingModel.mlmodel
