@@ -11,9 +11,9 @@ struct ModelTestView: View {
     @State private var isProcessing: Bool = false
     @State private var segmentationColors: [String: UIColor] = [:]
 
-    // Modified labelNames dictionary - removed Gloves, Sunglasses, Socks, Jumpsuits, and Scarf
+    // Modified labelNames dictionary - removed Hat, Gloves, Sunglasses, Socks, Jumpsuits, and Scarf
     let labelNames: [Int: String] = [
-        1: "Hat", 5: "Upper Clothes", 6: "Dress",
+        5: "Upper Clothes", 6: "Dress",
         7: "Coat", 9: "Pants", 12: "Skirt",
         18: "Left Shoe", 19: "Right Shoe"
     ]
@@ -104,36 +104,44 @@ struct ModelTestView: View {
                                                     .foregroundColor(AppStyles.Colors.text)
                                                     .fontWeight(.medium)
                                                 
-                                                // Legend Grid
-                                                LazyVGrid(columns: [
-                                                    GridItem(.flexible()),
-                                                    GridItem(.flexible())
-                                                ], spacing: AppStyles.Spacing.small) {
-                                                    ForEach(Array(getLegendColors().enumerated()), id: \.element.0) { index, legendItem in
-                                                        HStack {
-                                                            RoundedRectangle(cornerRadius: 4)
-                                                                .fill(Color(legendItem.1))
-                                                                .frame(width: 20, height: 20)
-                                                                .overlay(
-                                                                    RoundedRectangle(cornerRadius: 4)
-                                                                        .stroke(Color.black.opacity(0.2), lineWidth: 1)
-                                                                )
-                                                            Text(legendItem.0)
-                                                                .font(AppStyles.Typography.caption)
-                                                                .foregroundColor(AppStyles.Colors.text)
+                                                if detectedItems.isEmpty {
+                                                    Text("No items detected")
+                                                        .font(AppStyles.Typography.caption)
+                                                        .foregroundColor(AppStyles.Colors.secondaryText)
+                                                        .padding(.top, AppStyles.Spacing.small)
+                                                } else {
+                                                    // Legend Grid - only shows detected items
+                                                    LazyVGrid(columns: [
+                                                        GridItem(.flexible()),
+                                                        GridItem(.flexible())
+                                                    ], spacing: AppStyles.Spacing.small) {
+                                                        ForEach(detectedItems, id: \.name) { item in
+                                                            HStack {
+                                                                RoundedRectangle(cornerRadius: 4)
+                                                                    .fill(Color(segmentationColors[item.name] ?? .clear))
+                                                                    .frame(width: 20, height: 20)
+                                                                    .overlay(
+                                                                        RoundedRectangle(cornerRadius: 4)
+                                                                            .stroke(Color.black.opacity(0.2), lineWidth: 1)
+                                                                    )
+                                                                Text(item.name)
+                                                                    .font(AppStyles.Typography.caption)
+                                                                    .foregroundColor(AppStyles.Colors.text)
+                                                            }
+                                                            .padding(.vertical, 2)
                                                         }
-                                                        .padding(.vertical, 2)
                                                     }
                                                 }
                                             }
                                             
+                                            // Divider
                                             Divider()
                                                 .background(AppStyles.Colors.formBorder)
                                                 .padding(.vertical, AppStyles.Spacing.small)
                                             
-                                            // Detected Items Section
+                                            // Detected Items Section with Actual Colors
                                             VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                                                Text("Found Items:")
+                                                Text("Actual Colors:")
                                                     .font(AppStyles.Typography.body)
                                                     .foregroundColor(AppStyles.Colors.text)
                                                     .fontWeight(.medium)
@@ -307,8 +315,8 @@ struct ModelTestView: View {
 
     /// Creates a highlighted image from the segmentation labels
     func createHighlightedImage(labels: [[Int]], width: Int, height: Int) -> (UIImage, [String: UIColor]) {
-        // Modified clothingLabels array - removed IDs 3, 4, 8, 10, 11 (Gloves, Sunglasses, Socks, Jumpsuits, Scarf)
-        let clothingLabels = [1, 5, 6, 7, 9, 12, 18, 19]
+        // Modified clothingLabels array - removed ID 1 (Hat), 3, 4, 8, 10, 11 (Gloves, Sunglasses, Socks, Jumpsuits, Scarf)
+        let clothingLabels = [5, 6, 7, 9, 12, 18, 19]
         let numColors = clothingLabels.count
         let colors: [UIColor] = (0..<numColors).map { i in
             let hue = CGFloat(i) / CGFloat(numColors)
@@ -412,9 +420,16 @@ struct ModelTestView: View {
         return colorSpace.model == .monochrome
     }
     
-    /// Returns array of clothing item names and their associated colors for the legend
+    /// Returns only the clothing items that were detected in the current image
     func getLegendColors() -> [(String, UIColor)] {
-        let items = segmentationColors.map { ($0.key, $0.value) }
+        // Get only the detected item names
+        let detectedItemNames = Set(detectedItems.map { $0.name })
+        
+        // Filter segmentationColors to only include detected items
+        let filteredColors = segmentationColors.filter { detectedItemNames.contains($0.key) }
+        
+        // Convert to array and sort
+        let items = filteredColors.map { ($0.key, $0.value) }
         return items.sorted { $0.0 < $1.0 } // Sort by clothing item name
     }
 }
