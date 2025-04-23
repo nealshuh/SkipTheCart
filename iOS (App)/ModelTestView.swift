@@ -18,6 +18,16 @@ struct ModelTestView: View {
         18: "Left Shoe", 19: "Right Shoe"
     ]
 
+    // Mapping from SegFormer class indices to labelNames indices
+    let segFormerToLabel: [Int: Int] = [
+        4: 5,   // Upper-clothes to Upper Clothes
+        7: 6,   // Dress to Dress
+        6: 9,   // Pants to Pants
+        5: 12,  // Skirt to Skirt
+        9: 18,  // Left-shoe to Left Shoe
+        10: 19  // Right-shoe to Right Shoe
+    ]
+
     var body: some View {
         ZStack {
             // Background
@@ -61,7 +71,7 @@ struct ModelTestView: View {
                                 .frame(height: 300)
                                 .frame(maxWidth: .infinity)
                                 .cardStyle()
-                            } else if let resizedImage = resizeImage(selectedImage, to: CGSize(width: 473, height: 473)),
+                            } else if let resizedImage = resizeImage(selectedImage, to: CGSize(width: 512, height: 512)),
                                       let highlightedImage = highlightedImage {
                                 // Result View
                                 VStack(spacing: AppStyles.Spacing.medium) {
@@ -86,7 +96,7 @@ struct ModelTestView: View {
 
                                     // Color Legend
                                     if !detectedItems.isEmpty {
-                                        // Results Card
+                                        // Results Card uder
                                         VStack(alignment: .leading, spacing: AppStyles.Spacing.medium) {
                                             // Title
                                             Text("Detection Results")
@@ -225,7 +235,7 @@ struct ModelTestView: View {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
                    let uiImage = UIImage(data: data) {
                     selectedImage = uiImage
-                    if let resizedImage = resizeImage(uiImage, to: CGSize(width: 473, height: 473)) {
+                    if let resizedImage = resizeImage(uiImage, to: CGSize(width: 512, height: 512)) {
                         processImage(resizedImage)
                     }
                 } else {
@@ -245,71 +255,78 @@ struct ModelTestView: View {
 
     /// Processes the image with the CoreML model
     func processImage(_ image: UIImage) {
-        guard let model = try? ClothingSegmentation(configuration: MLModelConfiguration()),
-              let vnModel = try? VNCoreMLModel(for: model.model),
-              let cgImage = image.cgImage else {
-            print("Failed to load model or convert image")
-            isProcessing = false
-            return
-        }
-
-        let request = VNCoreMLRequest(model: vnModel) { request, error in
-            if let error = error {
-                print("Error processing image: \(error)")
-                DispatchQueue.main.async {
-                    self.isProcessing = false
-                }
-                return
-            }
+        do {
+            let model = try SegFormerClothes(configuration: MLModelConfiguration())
+            print("Model loaded successfully")
             
-            if let results = request.results as? [VNCoreMLFeatureValueObservation],
-               let firstResult = results.first,
-               let multiArray = firstResult.featureValue.multiArrayValue {
-                let numClasses = multiArray.shape[1].intValue
-                let height = multiArray.shape[2].intValue
-                let width = multiArray.shape[3].intValue
+            do {
+                let vnModel = try VNCoreMLModel(for: model.model)
+                print("VNCoreMLModel created successfully")
+                
+                guard let cgImage = image.cgImage else {
+                    print("Failed to convert image to CGImage")
+                    isProcessing = false
+                    return
+                }
+                
+                let request = VNCoreMLRequest(model: vnModel) { request, error in
+                    if let error = error {
+                        print("Error processing image: \(error.localizedDescription)")
+                        DispatchQueue.main.async {
+                            self.isProcessing = false
+                        }
+                        return
+                    }
+                    
+                    if let results = request.results as? [VNCoreMLFeatureValueObservation],
+                       let firstResult = results.first,
+                       let multiArray = firstResult.featureValue.multiArrayValue {
+                        let height = multiArray.shape[1].intValue
+                        let width = multiArray.shape[2].intValue
 
-                var labels = [[Int]](repeating: [Int](repeating: 0, count: width), count: height)
-                for i in 0..<height {
-                    for j in 0..<width {
-                        var maxScore: Float = -Float.greatestFiniteMagnitude
-                        var maxClass = 0
-                        for c in 0..<numClasses {
-                            let score = multiArray[[0, c, i, j] as [NSNumber]].floatValue
-                            if score > maxScore {
-                                maxScore = score
-                                maxClass = c
+                        var labels = [[Int]](repeating: [Int](repeating: 0, count: width), count: height)
+                        for i in 0..<height {
+                            for j in 0..<width {
+                                let classIndex = multiArray[[0, i, j] as [NSNumber]].intValue
+                                labels[i][j] = self.segFormerToLabel[classIndex] ?? 0
                             }
                         }
-                        labels[i][j] = maxClass
+
+                        let (highlightedImage, colorMap) = self.createHighlightedImage(labels: labels, width: width, height: height)
+                        let detectedItemsWithColors = self.extractDetectedItemsWithColors(labels: labels, image: image)
+
+                        // Add slight delay to make loading animation visible even for fast processing
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.highlightedImage = highlightedImage
+                            self.segmentationColors = colorMap
+                            self.detectedItems = detectedItemsWithColors
+                            self.isProcessing = false
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self.isProcessing = false
+                        }
                     }
                 }
 
-                let (highlightedImage, colorMap) = self.createHighlightedImage(labels: labels, width: width, height: height)
-                let detectedItemsWithColors = self.extractDetectedItemsWithColors(labels: labels, image: image)
-
-                // Add slight delay to make loading animation visible even for fast processing
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self.highlightedImage = highlightedImage
-                    self.segmentationColors = colorMap
-                    self.detectedItems = detectedItemsWithColors
-                    self.isProcessing = false
+                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                do {
+                    try handler.perform([request])
+                } catch {
+                    print("Failed to perform request: \(error.localizedDescription)")
+                    DispatchQueue.main.async {
+                        self.isProcessing = false
+                    }
                 }
-            } else {
-                DispatchQueue.main.async {
-                    self.isProcessing = false
-                }
+            } catch {
+                print("Error creating VNCoreMLModel: \(error.localizedDescription)")
+                isProcessing = false
+                return
             }
-        }
-
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        do {
-            try handler.perform([request])
         } catch {
-            print("Failed to perform request: \(error)")
-            DispatchQueue.main.async {
-                self.isProcessing = false
-            }
+            print("Error loading model: \(error.localizedDescription)")
+            isProcessing = false
+            return
         }
     }
 
