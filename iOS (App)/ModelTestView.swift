@@ -14,8 +14,8 @@ struct ModelTestView: View {
     @State private var showingIndividualItems = false
 
     let labelNames: [Int: String] = [
-        5: "Upper Clothes", 6: "Dress",
-        7: "Coat", 9: "Pants", 12: "Skirt",
+        5: "Tops", 6: "Dress",
+        7: "Coat", 9: "Bottoms", 12: "Skirt",
         18: "Left Shoe", 19: "Right Shoe"
     ]
 
@@ -29,10 +29,10 @@ struct ModelTestView: View {
     ]
 
     let nameToLabel: [String: Int] = [
-        "Upper Clothes": 5,
+        "Tops": 5,
         "Dress": 6,
         "Coat": 7,
-        "Pants": 9,
+        "Bottoms": 9,
         "Skirt": 12,
         "Left Shoe": 18,
         "Right Shoe": 19

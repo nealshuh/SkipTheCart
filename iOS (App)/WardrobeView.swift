@@ -25,7 +25,7 @@ struct WardrobeView: View {
         GridItem(.flexible(), spacing: 12)
     ]
     
-    let categories = ["Tops", "Bottoms", "Jackets"]
+    let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
     
     var body: some View {
         NavigationView {
@@ -237,7 +237,7 @@ struct ImagePickerWithCategory: View {
     @State private var showError = false
     @State private var errorMessage = ""
     
-    let categories = ["Tops", "Bottoms", "Jackets"]
+    let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
     let onComplete: (UIImage?, String) -> Void
     
     var body: some View {
