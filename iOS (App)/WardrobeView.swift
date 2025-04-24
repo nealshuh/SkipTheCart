@@ -14,9 +14,8 @@ struct WardrobeView: View {
     @State private var showingCategoryPicker = false
     @State private var showDeleteConfirmation = false
     @State private var itemToDelete: UUID? = nil
-    @State private var showImagePicker = false
-    @State private var selectedImage: UIImage?
-    @State private var isImagePickerCompleted = false // Track if picker completed
+    @State private var showActionSheet = false
+    @State private var showModelTestView = false
     
     // Grid layout with 3 items per row
     private let columns = [
@@ -42,7 +41,7 @@ struct WardrobeView: View {
                         Spacer()
                         
                         Button(action: {
-                            showImagePicker = true
+                            showActionSheet = true
                         }) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 24))
@@ -86,19 +85,23 @@ struct WardrobeView: View {
                 }
             }
             .navigationBarHidden(true)
-            .fullScreenCover(isPresented: $showImagePicker) {
-                ImagePickerWithCategory(
-                    onComplete: { image, category in
-                        if let image = image, !category.isEmpty {
-                            // Create and add new wardrobe item
-                            let newItem = WardrobeItem(
-                                image: image,
-                                categoryName: category
-                            )
-                            wardrobeManager.addItems([newItem])
-                        }
-                    }
+            .actionSheet(isPresented: $showActionSheet) {
+                ActionSheet(
+                    title: Text("Add Item"),
+                    buttons: [
+                        .default(Text("Select from library")) {
+                            showModelTestView = true
+                        },
+                        .default(Text("Use camera")) {
+                            print("Camera option selected")
+                        },
+                        .cancel()
+                    ]
                 )
+            }
+            .sheet(isPresented: $showModelTestView) {
+                ModelTestView()
+                    .environmentObject(wardrobeManager)
             }
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
@@ -137,7 +140,7 @@ struct WardrobeView: View {
                 .padding(.horizontal, 40)
             
             Button(action: {
-                showImagePicker = true
+                showActionSheet = true
             }) {
                 Label("Add Items", systemImage: "plus")
             }
@@ -225,204 +228,6 @@ struct WardrobeView: View {
     // Get items for a specific category
     private func itemsInCategory(_ category: String) -> [WardrobeItem] {
         return wardrobeItems.filter { $0.categoryName == category }
-    }
-}
-
-// MARK: - Combined ImagePicker and Category Selection
-struct ImagePickerWithCategory: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedImage: UIImage?
-    @State private var selectedCategory: String = ""
-    @State private var showImagePicker = true
-    @State private var showError = false
-    @State private var errorMessage = ""
-    
-    let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
-    let onComplete: (UIImage?, String) -> Void
-    
-    var body: some View {
-        ZStack {
-            // Background
-            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
-            
-            if selectedImage == nil {
-                // Show nothing while image picker is active
-                Color.clear
-                    .sheet(isPresented: $showImagePicker) {
-                        StandardImagePicker(selectedImage: $selectedImage)
-                            .onDisappear {
-                                if selectedImage == nil {
-                                    // If user cancelled image picker, dismiss the entire view
-                                    dismiss()
-                                }
-                            }
-                    }
-            } else {
-                // Show category selection once we have an image
-                categorySelectionView
-            }
-        }
-    }
-    
-    // Category selection view
-    private var categorySelectionView: some View {
-        VStack(spacing: AppStyles.Spacing.large) {
-            // Title
-            Text("Categorize Your Item")
-                .font(AppStyles.Typography.heading)
-                .foregroundColor(AppStyles.Colors.text)
-                .padding(.top)
-            
-            // Image preview
-            if let image = selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 200)
-                    .cornerRadius(AppStyles.Layout.cornerRadius)
-                    .padding()
-            }
-            
-            // Instruction text
-            Text("Select a category for this item")
-                .font(AppStyles.Typography.body)
-                .foregroundColor(AppStyles.Colors.secondaryText)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
-            // Category selection
-            VStack(alignment: .leading, spacing: AppStyles.Spacing.medium) {
-                ForEach(categories, id: \.self) { category in
-                    Button(action: {
-                        selectedCategory = category
-                    }) {
-                        HStack {
-                            Text(category)
-                                .font(AppStyles.Typography.body)
-                                .foregroundColor(AppStyles.Colors.text)
-                            
-                            Spacer()
-                            
-                            if selectedCategory == category {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(AppStyles.Colors.primary)
-                            }
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
-                                .fill(AppStyles.Colors.secondaryBackground)
-                        )
-                    }
-                }
-            }
-            .padding(.horizontal)
-            
-            Spacer()
-            
-            // Action buttons
-            HStack(spacing: AppStyles.Spacing.medium) {
-                Button(action: {
-                    // Cancel
-                    onComplete(nil, "")
-                    dismiss()
-                }) {
-                    Text("Cancel")
-                }
-                .secondaryButtonStyle()
-                
-                Button(action: {
-                    if !selectedCategory.isEmpty {
-                        // Complete with selected image and category
-                        onComplete(selectedImage, selectedCategory)
-                        dismiss()
-                    } else {
-                        // Show error if no category selected
-                        showErrorMessage("Please select a category")
-                    }
-                }) {
-                    Text("Add to Wardrobe")
-                }
-                .primaryButtonStyle()
-                .disabled(selectedCategory.isEmpty)
-            }
-            .padding()
-        }
-        .navigationBarHidden(true)
-        .background(AppStyles.Colors.background.edgesIgnoringSafeArea(.all))
-        // Error message
-        .overlay(
-            Group {
-                if showError {
-                    VStack {
-                        Spacer()
-                        
-                        Text(errorMessage)
-                            .font(AppStyles.Typography.body)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
-                                    .fill(AppStyles.Colors.error)
-                            )
-                            .padding()
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .onAppear {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                    withAnimation {
-                                        showError = false
-                                    }
-                                }
-                            }
-                    }
-                }
-            }
-        )
-    }
-    
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
-        withAnimation {
-            showError = true
-        }
-    }
-}
-
-// MARK: - Standard UIKit Image Picker
-struct StandardImagePicker: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
-    @Environment(\.dismiss) private var dismiss
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let parent: StandardImagePicker
-        
-        init(_ parent: StandardImagePicker) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.selectedImage = image
-            }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
-        }
     }
 }
 
