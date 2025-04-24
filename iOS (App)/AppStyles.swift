@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Central style system for consistent design across the app
 struct AppStyles {
+    
     // MARK: - Colors
     struct Colors {
         // Brand colors
