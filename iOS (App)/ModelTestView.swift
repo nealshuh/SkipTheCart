@@ -38,6 +38,9 @@ struct ModelTestView: View {
         "Right Shoe": 19
     ]
 
+    // Excluding shoes (labels 18 and 19)
+    let includedLabels: Set<Int> = [5, 6, 7, 9, 12]
+
     var body: some View {
         ZStack {
             AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
@@ -298,7 +301,7 @@ struct ModelTestView: View {
     }
 
     func createHighlightedImage(labels: [[Int]], width: Int, height: Int) -> (UIImage, [String: UIColor]) {
-        let clothingLabels = [5, 6, 7, 9, 12, 18, 19]
+        let clothingLabels = Array(includedLabels) // Only included labels, excluding shoes
         let numColors = clothingLabels.count
         let colors: [UIColor] = (0..<numColors).map { i in
             let hue = CGFloat(i) / CGFloat(numColors)
@@ -335,7 +338,7 @@ struct ModelTestView: View {
         guard let cgImage = image.cgImage else { return [] }
         if isGrayscale(cgImage) {
             print("Image is grayscale, cannot extract colors.")
-            let uniqueLabels = Set(labels.flatMap { $0 }).filter { labelNames.keys.contains($0) }
+            let uniqueLabels = Set(labels.flatMap { $0 }).intersection(includedLabels)
             return uniqueLabels.map { label in
                 (name: labelNames[label] ?? "Unknown", color: UIColor.gray)
             }
@@ -349,13 +352,13 @@ struct ModelTestView: View {
         }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
         guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return [] }
-        let uniqueLabels = Set(labels.flatMap { $0 }).filter { labelNames.keys.contains($0) }
+        let uniqueLabels = Set(labels.flatMap { $0 }).intersection(includedLabels)
         var labelPixelColors: [Int: [(r: Float, g: Float, b: Float)]] = [:]
         for i in 0..<height {
             for j in 0..<width {
                 if i < labels.count && j < labels[i].count {
                     let label = labels[i][j]
-                    if labelNames.keys.contains(label) {
+                    if includedLabels.contains(label) {
                         let pixelOffset = (i * width * 4) + (j * 4)
                         let r = Float(data[pixelOffset]) / 255.0
                         let g = Float(data[pixelOffset + 1]) / 255.0
