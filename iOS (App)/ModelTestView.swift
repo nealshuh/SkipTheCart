@@ -4,6 +4,8 @@ import CoreML
 import Vision
 
 struct ModelTestView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var wardrobeManager: WardrobeManager
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var highlightedImage: UIImage?
@@ -42,158 +44,182 @@ struct ModelTestView: View {
     let includedLabels: Set<Int> = [5, 6, 7, 9, 12]
 
     var body: some View {
-        ZStack {
-            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
-            ScrollView {
-                VStack(spacing: AppStyles.Spacing.large) {
-                    Text("Clothing Detection")
-                        .font(AppStyles.Typography.title)
-                        .foregroundColor(AppStyles.Colors.text)
-                        .padding(.top, AppStyles.Spacing.large)
-                    PhotosPicker(selection: $selectedItem, matching: .images) {
-                        HStack {
-                            Image(systemName: "photo.fill")
-                                .font(.system(size: 18))
-                            Text("Select Image")
-                                .font(AppStyles.Typography.heading)
+        NavigationView {
+            ZStack {
+                AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
+                ScrollView {
+                    VStack(spacing: AppStyles.Spacing.large) {
+                        Text("Clothing Detection")
+                            .font(AppStyles.Typography.title)
+                            .foregroundColor(AppStyles.Colors.text)
+                            .padding(.top, AppStyles.Spacing.large)
+                        PhotosPicker(selection: $selectedItem, matching: .images) {
+                            HStack {
+                                Image(systemName: "photo.fill")
+                                    .font(.system(size: 18))
+                                Text("Select Image")
+                                    .font(AppStyles.Typography.heading)
+                            }
+                            .padding(.horizontal, AppStyles.Spacing.large)
                         }
-                        .padding(.horizontal, AppStyles.Spacing.large)
-                    }
-                    .primaryButtonStyle()
-                    .padding(.horizontal, AppStyles.Spacing.xlarge)
-                    if let selectedImage = selectedImage {
-                        VStack(spacing: AppStyles.Spacing.medium) {
-                            if isProcessing {
-                                VStack(spacing: AppStyles.Spacing.medium) {
-                                    ProgressView()
-                                        .scaleEffect(1.5)
-                                        .padding()
-                                    Text("Analyzing clothing...")
-                                        .font(AppStyles.Typography.body)
-                                        .foregroundColor(AppStyles.Colors.secondaryText)
-                                }
-                                .frame(height: 300)
-                                .frame(maxWidth: .infinity)
-                                .cardStyle()
-                            } else if let resizedImage = resizeImage(selectedImage, to: CGSize(width: 512, height: 512)),
-                                      let highlightedImage = highlightedImage {
-                                VStack(spacing: AppStyles.Spacing.medium) {
-                                    ZStack {
-                                        Image(uiImage: resizedImage)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .cornerRadius(AppStyles.Layout.smallCornerRadius)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
-                                                    .stroke(AppStyles.Colors.formBorder, lineWidth: 1)
-                                            )
-                                        Image(uiImage: highlightedImage)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .cornerRadius(AppStyles.Layout.smallCornerRadius)
+                        .primaryButtonStyle()
+                        .padding(.horizontal, AppStyles.Spacing.xlarge)
+                        if let selectedImage = selectedImage {
+                            VStack(spacing: AppStyles.Spacing.medium) {
+                                if isProcessing {
+                                    VStack(spacing: AppStyles.Spacing.medium) {
+                                        ProgressView()
+                                            .scaleEffect(1.5)
+                                            .padding()
+                                        Text("Analyzing clothing...")
+                                            .font(AppStyles.Typography.body)
+                                            .foregroundColor(AppStyles.Colors.secondaryText)
                                     }
-                                    .padding(.horizontal, AppStyles.Spacing.medium)
-                                    .frame(maxHeight: 350)
-                                    if !detectedItems.isEmpty {
-                                        VStack(alignment: .leading, spacing: AppStyles.Spacing.medium) {
-                                            Text("Detection Results")
-                                                .font(AppStyles.Typography.heading)
-                                                .foregroundColor(AppStyles.Colors.text)
-                                                .padding(.bottom, AppStyles.Spacing.small)
-                                            Divider()
-                                                .background(AppStyles.Colors.formBorder)
-                                            VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                                                Text("Color Legend:")
-                                                    .font(AppStyles.Typography.body)
-                                                    .foregroundColor(AppStyles.Colors.text)
-                                                    .fontWeight(.medium)
-                                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppStyles.Spacing.small) {
-                                                    ForEach(detectedItems, id: \.name) { item in
-                                                        HStack {
-                                                            RoundedRectangle(cornerRadius: 4)
-                                                                .fill(Color(segmentationColors[item.name] ?? .clear))
-                                                                .frame(width: 20, height: 20)
-                                                                .overlay(
-                                                                    RoundedRectangle(cornerRadius: 4)
-                                                                        .stroke(Color.black.opacity(0.2), lineWidth: 1)
-                                                                )
-                                                            Text(item.name)
-                                                                .font(AppStyles.Typography.caption)
-                                                                .foregroundColor(AppStyles.Colors.text)
-                                                        }
-                                                        .padding(.vertical, 2)
-                                                    }
-                                                }
-                                            }
-                                            Divider()
-                                                .background(AppStyles.Colors.formBorder)
-                                                .padding(.vertical, AppStyles.Spacing.small)
-                                            VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                                                Text("Actual Colors:")
-                                                    .font(AppStyles.Typography.body)
-                                                    .foregroundColor(AppStyles.Colors.text)
-                                                    .fontWeight(.medium)
-                                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppStyles.Spacing.small) {
-                                                    ForEach(detectedItems, id: \.name) { item in
-                                                        HStack {
-                                                            RoundedRectangle(cornerRadius: 4)
-                                                                .fill(Color(item.color))
-                                                                .frame(width: 20, height: 20)
-                                                                .overlay(
-                                                                    RoundedRectangle(cornerRadius: 4)
-                                                                        .stroke(Color.black.opacity(0.2), lineWidth: 1)
-                                                                )
-                                                            Text(item.name)
-                                                                .font(AppStyles.Typography.caption)
-                                                                .foregroundColor(AppStyles.Colors.text)
-                                                        }
-                                                        .padding(.vertical, 2)
-                                                    }
-                                                }
-                                            }
-                                            Button(action: {
-                                                showingIndividualItems = true
-                                            }) {
-                                                Text("View Individual Items")
-                                                    .font(AppStyles.Typography.heading)
-                                                    .frame(maxWidth: .infinity)
-                                            }
-                                            .primaryButtonStyle()
-                                            .padding(.top, AppStyles.Spacing.medium)
+                                    .frame(height: 300)
+                                    .frame(maxWidth: .infinity)
+                                    .cardStyle()
+                                } else if let resizedImage = resizeImage(selectedImage, to: CGSize(width: 512, height: 512)),
+                                          let highlightedImage = highlightedImage {
+                                    VStack(spacing: AppStyles.Spacing.medium) {
+                                        ZStack {
+                                            Image(uiImage: resizedImage)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .cornerRadius(AppStyles.Layout.smallCornerRadius)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
+                                                        .stroke(AppStyles.Colors.formBorder, lineWidth: 1)
+                                                )
+                                            Image(uiImage: highlightedImage)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .cornerRadius(AppStyles.Layout.smallCornerRadius)
                                         }
-                                        .padding(AppStyles.Spacing.medium)
-                                        .background(AppStyles.Colors.secondaryBackground)
-                                        .cornerRadius(AppStyles.Layout.cornerRadius)
                                         .padding(.horizontal, AppStyles.Spacing.medium)
+                                        .frame(maxHeight: 350)
+                                        if !detectedItems.isEmpty {
+                                            VStack(alignment: .leading, spacing: AppStyles.Spacing.medium) {
+                                                Text("Detection Results")
+                                                    .font(AppStyles.Typography.heading)
+                                                    .foregroundColor(AppStyles.Colors.text)
+                                                    .padding(.bottom, AppStyles.Spacing.small)
+                                                Divider()
+                                                    .background(AppStyles.Colors.formBorder)
+                                                VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                                                    Text("Color Legend:")
+                                                        .font(AppStyles.Typography.body)
+                                                        .foregroundColor(AppStyles.Colors.text)
+                                                        .fontWeight(.medium)
+                                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppStyles.Spacing.small) {
+                                                        ForEach(detectedItems, id: \.name) { item in
+                                                            HStack {
+                                                                RoundedRectangle(cornerRadius: 4)
+                                                                    .fill(Color(segmentationColors[item.name] ?? .clear))
+                                                                    .frame(width: 20, height: 20)
+                                                                    .overlay(
+                                                                        RoundedRectangle(cornerRadius: 4)
+                                                                            .stroke(Color.black.opacity(0.2), lineWidth: 1)
+                                                                    )
+                                                                Text(item.name)
+                                                                    .font(AppStyles.Typography.caption)
+                                                                    .foregroundColor(AppStyles.Colors.text)
+                                                            }
+                                                            .padding(.vertical, 2)
+                                                        }
+                                                    }
+                                                }
+                                                Divider()
+                                                    .background(AppStyles.Colors.formBorder)
+                                                    .padding(.vertical, AppStyles.Spacing.small)
+                                                VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                                                    Text("Actual Colors:")
+                                                        .font(AppStyles.Typography.body)
+                                                        .foregroundColor(AppStyles.Colors.text)
+                                                        .fontWeight(.medium)
+                                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppStyles.Spacing.small) {
+                                                        ForEach(detectedItems, id: \.name) { item in
+                                                            HStack {
+                                                                RoundedRectangle(cornerRadius: 4)
+                                                                    .fill(Color(item.color))
+                                                                    .frame(width: 20, height: 20)
+                                                                    .overlay(
+                                                                        RoundedRectangle(cornerRadius: 4)
+                                                                            .stroke(Color.black.opacity(0.2), lineWidth: 1)
+                                                                    )
+                                                                Text(item.name)
+                                                                    .font(AppStyles.Typography.caption)
+                                                                    .foregroundColor(AppStyles.Colors.text)
+                                                            }
+                                                            .padding(.vertical, 2)
+                                                        }
+                                                    }
+                                                }
+                                                Button(action: {
+                                                    showingIndividualItems = true
+                                                }) {
+                                                    Text("View Individual Items")
+                                                        .font(AppStyles.Typography.heading)
+                                                        .frame(maxWidth: .infinity)
+                                                }
+                                                .primaryButtonStyle()
+                                                .padding(.top, AppStyles.Spacing.medium)
+                                                
+                                                Button(action: {
+                                                    for (name, image) in maskedImages {
+                                                        let newItem = WardrobeItem(image: image, categoryName: name)
+                                                        wardrobeManager.addItems([newItem])
+                                                    }
+                                                    presentationMode.wrappedValue.dismiss()
+                                                }) {
+                                                    Text("Add to Wardrobe")
+                                                        .font(AppStyles.Typography.heading)
+                                                        .frame(maxWidth: .infinity)
+                                                }
+                                                .primaryButtonStyle()
+                                                .padding(.top, AppStyles.Spacing.medium)
+                                            }
+                                            .padding(AppStyles.Spacing.medium)
+                                            .background(AppStyles.Colors.secondaryBackground)
+                                            .cornerRadius(AppStyles.Layout.cornerRadius)
+                                            .padding(.horizontal, AppStyles.Spacing.medium)
+                                        }
                                     }
                                 }
                             }
+                        } else {
+                            VStack(spacing: AppStyles.Spacing.medium) {
+                                Image(systemName: "tshirt.fill")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(AppStyles.Colors.primary.opacity(0.7))
+                                    .padding(.bottom, AppStyles.Spacing.small)
+                                Text("No Image Selected")
+                                    .font(AppStyles.Typography.heading)
+                                    .foregroundColor(AppStyles.Colors.text)
+                                Text("Select an image to analyze clothing items")
+                                    .font(AppStyles.Typography.body)
+                                    .foregroundColor(AppStyles.Colors.secondaryText)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, AppStyles.Spacing.xlarge)
+                                    .padding(.bottom, AppStyles.Spacing.medium)
+                            }
+                            .frame(height: 300)
+                            .frame(maxWidth: .infinity)
+                            .background(AppStyles.Colors.secondaryBackground)
+                            .cornerRadius(AppStyles.Layout.cornerRadius)
+                            .padding(.horizontal, AppStyles.Spacing.medium)
                         }
-                    } else {
-                        VStack(spacing: AppStyles.Spacing.medium) {
-                            Image(systemName: "tshirt.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(AppStyles.Colors.primary.opacity(0.7))
-                                .padding(.bottom, AppStyles.Spacing.small)
-                            Text("No Image Selected")
-                                .font(AppStyles.Typography.heading)
-                                .foregroundColor(AppStyles.Colors.text)
-                            Text("Select an image to analyze clothing items")
-                                .font(AppStyles.Typography.body)
-                                .foregroundColor(AppStyles.Colors.secondaryText)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, AppStyles.Spacing.xlarge)
-                                .padding(.bottom, AppStyles.Spacing.medium)
-                        }
-                        .frame(height: 300)
-                        .frame(maxWidth: .infinity)
-                        .background(AppStyles.Colors.secondaryBackground)
-                        .cornerRadius(AppStyles.Layout.cornerRadius)
-                        .padding(.horizontal, AppStyles.Spacing.medium)
+                        Spacer()
                     }
-                    Spacer()
+                    .padding(.bottom, AppStyles.Spacing.xlarge)
                 }
-                .padding(.bottom, AppStyles.Spacing.xlarge)
+            }
+            .navigationTitle("Clothing Detection")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
             }
         }
         .onChange(of: selectedItem) { newItem in
