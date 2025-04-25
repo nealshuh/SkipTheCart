@@ -1,45 +1,38 @@
-//
-//  WardrobeView.swift
-//  SkipTheCart
-//
-//  Created on 3/16/25.
-//
-
 import SwiftUI
 import UIKit
 
 struct WardrobeView: View {
     @ObservedObject private var wardrobeManager = WardrobeManager.shared
     @State private var selectedCategory: String = ""
-    @State private var showingCategoryPicker = false
     @State private var showDeleteConfirmation = false
     @State private var itemToDelete: UUID? = nil
     @State private var showActionSheet = false
     @State private var showModelTestView = false
-    
-    // Grid layout with 3 items per row
-    private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
-    
+    @State private var selectedItem: WardrobeItem? = nil
+
     let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
-    
+
+    func singularCategory(_ category: String) -> String {
+        switch category {
+        case "Tops": return "top"
+        case "Bottoms": return "bottom"
+        case "Dresses": return "dress"
+        case "Skirts": return "skirt"
+        default: return category.lowercased()
+        }
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
                 AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
-                
                 VStack(spacing: 0) {
                     // Header
                     HStack {
                         Text("My Wardrobe")
                             .font(AppStyles.Typography.title)
                             .foregroundColor(AppStyles.Colors.text)
-                        
                         Spacer()
-                        
                         Button(action: {
                             showActionSheet = true
                         }) {
@@ -50,14 +43,12 @@ struct WardrobeView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top)
-                    
                     // Category Filter
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: AppStyles.Spacing.small) {
                             CategoryButton(title: "All", isSelected: selectedCategory.isEmpty) {
                                 selectedCategory = ""
                             }
-                            
                             ForEach(categories, id: \.self) { category in
                                 CategoryButton(title: category, isSelected: selectedCategory == category) {
                                     selectedCategory = category
@@ -67,24 +58,53 @@ struct WardrobeView: View {
                         .padding(.horizontal)
                         .padding(.vertical, AppStyles.Spacing.small)
                     }
-                    
                     // Wardrobe Content
                     if wardrobeItems.isEmpty {
-                        // Empty state
                         emptyStateView
                     } else {
-                        // Wardrobe items with appropriate layout based on filter
-                        if selectedCategory.isEmpty {
-                            // "All" tab with categorized sections
-                            categorizedItemsView
-                        } else {
-                            // Specific category with grid layout
-                            filteredItemsGridView
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 0) {
+                                if selectedCategory.isEmpty {
+                                    ForEach(categories, id: \.self) { category in
+                                        SectionHeaderView(title: category)
+                                        let categoryItems = itemsInCategory(category).sorted(by: { $0.dateAdded < $1.dateAdded })
+                                        ForEach(Array(categoryItems.enumerated()), id: \.element.id) { index, item in
+                                            ItemRowView(
+                                                item: item,
+                                                label: "\(singularCategory(category)) (\(index + 1))",
+                                                onTap: { selectedItem = item },
+                                                onDelete: {
+                                                    itemToDelete = item.id
+                                                    showDeleteConfirmation = true
+                                                }
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    SectionHeaderView(title: selectedCategory)
+                                    let categoryItems = filteredItems.sorted(by: { $0.dateAdded < $1.dateAdded })
+                                    ForEach(Array(categoryItems.enumerated()), id: \.element.id) { index, item in
+                                        ItemRowView(
+                                            item: item,
+                                            label: "\(singularCategory(selectedCategory)) (\(index + 1))",
+                                            onTap: { selectedItem = item },
+                                            onDelete: {
+                                                itemToDelete = item.id
+                                                showDeleteConfirmation = true
+                                            }
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-            .navigationBarHidden(true)
+            .sheet(item: $selectedItem) { item in
+                Image(uiImage: item.image)
+                    .resizable()
+                    .scaledToFit()
+            }
             .actionSheet(isPresented: $showActionSheet) {
                 ActionSheet(
                     title: Text("Add Item"),
@@ -117,28 +137,22 @@ struct WardrobeView: View {
             }
         }
     }
-    
-    // MARK: - View Components
-    
-    // Empty state view when no items exist
+
+    // Empty state view
     private var emptyStateView: some View {
         VStack(spacing: AppStyles.Spacing.medium) {
             Spacer()
-            
             Image(systemName: "tshirt.fill")
                 .font(.system(size: 70))
                 .foregroundColor(AppStyles.Colors.secondaryText.opacity(0.3))
-            
             Text("Your wardrobe is empty")
                 .font(AppStyles.Typography.heading)
                 .foregroundColor(AppStyles.Colors.text)
-            
             Text("Add items from your photo library to start comparing with your online shopping")
                 .font(AppStyles.Typography.body)
                 .foregroundColor(AppStyles.Colors.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
-            
             Button(action: {
                 showActionSheet = true
             }) {
@@ -147,67 +161,15 @@ struct WardrobeView: View {
             .primaryButtonStyle()
             .padding(.horizontal, 60)
             .padding(.top, AppStyles.Spacing.large)
-            
             Spacer()
         }
     }
-    
-    // Grid view for a specific category
-    private var filteredItemsGridView: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(filteredItems) { item in
-                    SquareItemView(item: item) {
-                        itemToDelete = item.id
-                        showDeleteConfirmation = true
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 24)
-        }
-    }
-    
-    // Categorized view for "All" tab
-    private var categorizedItemsView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Create a section for each category that has items
-                ForEach(categoriesWithItems, id: \.self) { category in
-                    VStack(alignment: .leading, spacing: 10) {
-                        // Category header
-                        Text("\(category)")
-                            .font(AppStyles.Typography.heading)
-                            .foregroundColor(AppStyles.Colors.text)
-                            .padding(.leading, 16)
-                        
-                        // Items grid for this category
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(itemsInCategory(category)) { item in
-                                SquareItemView(item: item) {
-                                    itemToDelete = item.id
-                                    showDeleteConfirmation = true
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                    }
-                }
-            }
-            .padding(.top, 16)
-            .padding(.bottom, 24)
-        }
-    }
-    
-    // MARK: - Data Helpers
-    
-    // Get all wardrobe items
+
+    // Data Helpers
     private var wardrobeItems: [WardrobeItem] {
         return wardrobeManager.items
     }
-    
-    // Get items filtered by selected category
+
     private var filteredItems: [WardrobeItem] {
         if selectedCategory.isEmpty {
             return wardrobeItems
@@ -215,116 +177,54 @@ struct WardrobeView: View {
             return wardrobeItems.filter { $0.categoryName == selectedCategory }
         }
     }
-    
-    // Get list of categories that contain items
-    private var categoriesWithItems: [String] {
-        // Get unique category names from items
-        let categoriesWithContent = Set(wardrobeItems.map { $0.categoryName })
-        
-        // Sort categories in predetermined order (using categories array)
-        return categories.filter { categoriesWithContent.contains($0) }
-    }
-    
-    // Get items for a specific category
+
     private func itemsInCategory(_ category: String) -> [WardrobeItem] {
         return wardrobeItems.filter { $0.categoryName == category }
     }
 }
 
-// MARK: - Square Item View
-// Redesigned item view with square format
-struct SquareItemView: View {
-    let item: WardrobeItem
-    let onLongPress: () -> Void
-    
-    @State private var isShowingDeleteButton = false
-    
+// Section Header View
+struct SectionHeaderView: View {
+    let title: String
     var body: some View {
-        VStack(alignment: .center, spacing: 4) {
-            // Square image container
-            ZStack {
-                // Background for consistent square shape
-                Rectangle()
-                    .fill(Color.gray.opacity(0.1))
-                    .aspectRatio(1, contentMode: .fit) // Force square aspect ratio
-                
-                // Image centered and scaled to fill the square
-                Image(uiImage: item.image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: UIScreen.main.bounds.width / 3 - 22, height: UIScreen.main.bounds.width / 3 - 22)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                
-                // Delete button - shows when user taps the image
-                if isShowingDeleteButton {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            
-                            Button(action: {
-                                onLongPress()
-                            }) {
-                                Image(systemName: "trash.circle.fill")
-                                    .font(.system(size: 28))
-                                    .foregroundColor(.white)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.red.opacity(0.8))
-                                            .frame(width: 28, height: 28)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
-                            }
-                            .padding(6)
-                        }
-                        
-                        Spacer()
-                    }
-                }
+        Text(title)
+            .font(.headline)
+            .padding(.leading)
+            .padding(.top, 10)
+    }
+}
+
+// Item Row View
+struct ItemRowView: View {
+    let item: WardrobeItem
+    let label: String
+    let onTap: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                Text(label)
+                Spacer()
             }
-            .frame(width: UIScreen.main.bounds.width / 3 - 22, height: UIScreen.main.bounds.width / 3 - 22) // Fixed size
-            .cornerRadius(10)
-            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                // Toggle delete button visibility
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isShowingDeleteButton.toggle()
-                }
-                
-                // Auto-hide after 3 seconds if showing
-                if isShowingDeleteButton {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isShowingDeleteButton = false
-                        }
-                    }
-                }
-            }
-            .onLongPressGesture {
-                onLongPress()
-            }
-            // Additional tap area below the image for deleting (optional)
-            if isShowingDeleteButton {
-                Button(action: {
-                    onLongPress()
-                }) {
-                    Text("Delete")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.red)
-                        .padding(.vertical, 2)
-                }
-                .transition(.opacity)
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(8)
+        }
+        .contextMenu {
+            Button("Delete", role: .destructive) {
+                onDelete()
             }
         }
     }
 }
 
-// MARK: - Category Button Component
+// Category Button Component
 struct CategoryButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             Text(title)
