@@ -14,10 +14,10 @@ struct WardrobeView: View {
 
     func singularCategory(_ category: String) -> String {
         switch category {
-        case "Tops": return "top"
-        case "Bottoms": return "bottom"
-        case "Dresses": return "dress"
-        case "Skirts": return "skirt"
+        case "Tops": return "Top"
+        case "Bottoms": return "Bottom"
+        case "Dresses": return "Dress"
+        case "Skirts": return "Skirt"
         default: return category.lowercased()
         }
     }

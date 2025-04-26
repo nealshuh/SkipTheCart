@@ -16,9 +16,13 @@ struct ModelTestView: View {
     @State private var showingIndividualItems = false
 
     let labelNames: [Int: String] = [
-        5: "Tops", 6: "Dress",
-        7: "Coat", 9: "Bottoms", 12: "Skirt",
-        18: "Left Shoe", 19: "Right Shoe"
+        5: "Tops",
+        6: "Dresses",
+        7: "Coats",
+        9: "Bottoms",
+        12: "Skirts",
+        18: "Left Shoes",
+        19: "Right Shoes"
     ]
 
     let segFormerToLabel: [Int: Int] = [
@@ -32,12 +36,12 @@ struct ModelTestView: View {
 
     let nameToLabel: [String: Int] = [
         "Tops": 5,
-        "Dress": 6,
-        "Coat": 7,
+        "Dresses": 6,
+        "Coats": 7,
         "Bottoms": 9,
-        "Skirt": 12,
-        "Left Shoe": 18,
-        "Right Shoe": 19
+        "Skirts": 12,
+        "Left Shoes": 18,
+        "Right Shoes": 19
     ]
 
     // Excluding shoes (labels 18 and 19)
@@ -213,7 +217,6 @@ struct ModelTestView: View {
                     .padding(.bottom, AppStyles.Spacing.xlarge)
                 }
             }
-            .navigationTitle("Clothing Detection")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
