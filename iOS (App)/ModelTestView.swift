@@ -7,6 +7,7 @@ struct PreviewItem: Identifiable {
     let id = UUID()
     let category: String
     let image: UIImage
+    let color: UIColor
 }
 
 struct ModelTestView: View {
@@ -97,6 +98,9 @@ struct ModelTestView: View {
                                                 .border(selectedPreviewItems.contains(item.id) ? Color.blue : Color.clear, width: 2)
                                             Text(item.category)
                                                 .font(AppStyles.Typography.caption)
+                                            RoundedRectangle(cornerRadius: 4)
+                                                .fill(Color(item.color))
+                                                .frame(width: 20, height: 20)
                                         }
                                         .onTapGesture {
                                             if selectedPreviewItems.contains(item.id) {
@@ -225,19 +229,15 @@ struct ModelTestView: View {
                             labels[i][j] = self.segFormerToLabel[classIndex] ?? 0
                         }
                     }
-                    let detectedItemsWithColors = self.extractDetectedItemsWithColors(labels: labels, image: image)
-                    var maskedImagesTemp: [String: UIImage] = [:]
-                    for item in detectedItemsWithColors {
-                        if let label = self.nameToLabel[item.name] {
-                            if let maskedImage = self.createMaskedImage(labels: labels, width: width, height: height, for: label, originalImage: image) {
-                                maskedImagesTemp[item.name] = maskedImage
-                            }
-                        }
-                    }
+                    let uniqueLabels = Set(labels.flatMap { $0 }).intersection(self.includedLabels)
                     var previewItems: [PreviewItem] = []
-                    for (name, maskedImage) in maskedImagesTemp {
-                        let previewItem = PreviewItem(category: name, image: maskedImage)
-                        previewItems.append(previewItem)
+                    for label in uniqueLabels {
+                        if let name = self.labelNames[label],
+                           let maskedImage = self.createMaskedImage(labels: labels, width: width, height: height, for: label, originalImage: image) {
+                            let color = self.getDominantColorFromMaskedImage(maskedImage)
+                            let previewItem = PreviewItem(category: name, image: maskedImage, color: color)
+                            previewItems.append(previewItem)
+                        }
                     }
                     completion(previewItems)
                 } else {
@@ -257,53 +257,41 @@ struct ModelTestView: View {
         }
     }
 
-    func extractDetectedItemsWithColors(labels: [[Int]], image: UIImage) -> [(name: String, color: UIColor)] {
-        guard let cgImage = image.cgImage else { return [] }
-        if isGrayscale(cgImage) {
-            print("Image is grayscale, cannot extract colors.")
-            let uniqueLabels = Set(labels.flatMap { $0 }).intersection(includedLabels)
-            return uniqueLabels.map { label in
-                (name: labelNames[label] ?? "Unknown", color: UIColor.gray)
-            }
-        }
+    func getDominantColorFromMaskedImage(_ image: UIImage) -> UIColor {
+        guard let cgImage = image.cgImage else { return .gray }
         let width = cgImage.width
         let height = cgImage.height
         let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
-        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 4 * width, space: colorSpace, bitmapInfo: bitmapInfo.rawValue) else {
-            return []
-        }
+        let bytesPerPixel = 4
+        let bytesPerRow = bytesPerPixel * width
+        let bitsPerComponent = 8
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return .gray }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return [] }
-        let uniqueLabels = Set(labels.flatMap { $0 }).intersection(includedLabels)
-        var labelPixelColors: [Int: [(r: Float, g: Float, b: Float)]] = [:]
+        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return .gray }
+        var colorCounts: [String: Int] = [:]
+        let bins = 16 // Number of bins per RGB channel
         for i in 0..<height {
             for j in 0..<width {
-                if i < labels.count && j < labels[i].count {
-                    let label = labels[i][j]
-                    if includedLabels.contains(label) {
-                        let pixelOffset = (i * width * 4) + (j * 4)
-                        let r = Float(data[pixelOffset]) / 255.0
-                        let g = Float(data[pixelOffset + 1]) / 255.0
-                        let b = Float(data[pixelOffset + 2]) / 255.0
-                        labelPixelColors[label, default: []].append((r, g, b))
-                    }
+                let pixelOffset = (i * width * 4) + (j * 4)
+                let a = data[pixelOffset + 3]
+                if a > 0 { // Only process non-transparent pixels
+                    let r = Int(data[pixelOffset]) / (256 / bins)
+                    let g = Int(data[pixelOffset + 1]) / (256 / bins)
+                    let b = Int(data[pixelOffset + 2]) / (256 / bins)
+                    let colorKey = "\(r),\(g),\(b)"
+                    colorCounts[colorKey, default: 0] += 1
                 }
             }
         }
-        var detectedItemsWithColors: [(name: String, color: UIColor)] = []
-        for label in uniqueLabels {
-            if let pixelColors = labelPixelColors[label], !pixelColors.isEmpty,
-               let name = labelNames[label] {
-                let totalPixels = Float(pixelColors.count)
-                let avgR = pixelColors.reduce(0, { $0 + $1.r }) / totalPixels
-                let avgG = pixelColors.reduce(0, { $0 + $1.g }) / totalPixels
-                let avgB = pixelColors.reduce(0, { $0 + $1.b }) / totalPixels
-                let avgColor = UIColor(red: CGFloat(avgR), green: CGFloat(avgG), blue: CGFloat(avgB), alpha: 1.0)
-                detectedItemsWithColors.append((name: name, color: avgColor))
-            }
+        if let mostFrequent = colorCounts.max(by: { $0.value < $1.value }) {
+            let components = mostFrequent.key.split(separator: ",").map { Int($0)! }
+            let r = CGFloat(components[0] * (256 / bins)) / 255.0
+            let g = CGFloat(components[1] * (256 / bins)) / 255.0
+            let b = CGFloat(components[2] * (256 / bins)) / 255.0
+            return UIColor(red: r, green: g, blue: b, alpha: 1.0)
         }
-        return detectedItemsWithColors
+        return .gray
     }
 
     func isGrayscale(_ cgImage: CGImage) -> Bool {
