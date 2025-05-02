@@ -3,249 +3,303 @@ import PhotosUI
 import CoreML
 import Vision
 
-struct ModelTestView: View {
-    @State private var selectedItem: PhotosPickerItem?
-    @State private var selectedImage: UIImage?
-    @State private var highlightedImage: UIImage?
-    @State private var detectedItems: [(name: String, color: UIColor)] = []
-    @State private var isProcessing: Bool = false
-    @State private var segmentationColors: [String: UIColor] = [:]
+struct ColorLabel {
+    let name: String
+    let color: UIColor
+}
 
-    // Modified labelNames dictionary - removed Hat, Gloves, Sunglasses, Socks, Jumpsuits, and Scarf
+struct PreviewItem: Identifiable {
+    let id = UUID()
+    let category: String
+    let image: UIImage
+    let color: UIColor
+    var colorLabel: String // Changed to var for mutability
+}
+
+struct ModelTestView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var wardrobeManager: WardrobeManager
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var previewItems: [PreviewItem] = []
+    @State private var selectedPreviewItems: Set<UUID> = []
+    @State private var isProcessing: Bool = false
+    @State private var currentProcessingIndex: Int = 0
+    @State private var totalImages: Int = 0
+    @State private var showUnknownColorAlert = false
+
     let labelNames: [Int: String] = [
-        5: "Upper Clothes", 6: "Dress",
-        7: "Coat", 9: "Pants", 12: "Skirt",
-        18: "Left Shoe", 19: "Right Shoe"
+        5: "Tops", 6: "Dresses",
+        7: "Coats", 9: "Bottoms", 12: "Skirts",
+        18: "Left Shoes", 19: "Right Shoes"
     ]
 
-    // Mapping from SegFormer class indices to labelNames indices
     let segFormerToLabel: [Int: Int] = [
-        4: 5,   // Upper-clothes to Upper Clothes
-        7: 6,   // Dress to Dress
-        6: 9,   // Pants to Pants
-        5: 12,  // Skirt to Skirt
-        9: 18,  // Left-shoe to Left Shoe
-        10: 19  // Right-shoe to Right Shoe
+        4: 5,   // Upper-clothes to Tops
+        7: 6,   // Dress to Dresses
+        6: 9,   // Pants to Bottoms
+        5: 12,  // Skirt to Skirts
+        9: 18,  // Left-shoe to Left Shoes
+        10: 19  // Right-shoe to Right Shoes
+    ]
+
+    let nameToLabel: [String: Int] = [
+        "Tops": 5,
+        "Dresses": 6,
+        "Coats": 7,
+        "Bottoms": 9,
+        "Skirts": 12,
+        "Left Shoes": 18,
+        "Right Shoes": 19
+    ]
+
+    let includedLabels: Set<Int> = [5, 6, 7, 9, 12]
+
+    let selectableColors = ["white", "black", "gray", "yellow", "red", "blue", "green", "brown", "pink", "orange", "purple", "multicolor"]
+
+    private struct ColorRange {
+        let lowerH: CGFloat
+        let upperH: CGFloat
+        let lowerS: CGFloat
+        let upperS: CGFloat
+        let lowerV: CGFloat
+        let upperV: CGFloat
+    }
+
+    private let colorRanges: [(name: String, range: ColorRange)] = [
+        (name: "white", range: ColorRange(lowerH: 0 * 2, upperH: 179 * 2, lowerS: 0.0 / 255.0, upperS: 18.0 / 255.0, lowerV: 231.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "black", range: ColorRange(lowerH: 0 * 2, upperH: 179 * 2, lowerS: 0.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 0.0 / 255.0, upperV: 30.0 / 255.0)),
+        (name: "gray", range: ColorRange(lowerH: 0 * 2, upperH: 179 * 2, lowerS: 0.0 / 255.0, upperS: 18.0 / 255.0, lowerV: 40.0 / 255.0, upperV: 230.0 / 255.0)),
+        (name: "yellow", range: ColorRange(lowerH: 25 * 2, upperH: 35 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "red", range: ColorRange(lowerH: 0 * 2, upperH: 9 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "red", range: ColorRange(lowerH: 159 * 2, upperH: 179 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "blue", range: ColorRange(lowerH: 90 * 2, upperH: 128 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "green", range: ColorRange(lowerH: 36 * 2, upperH: 89 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "brown", range: ColorRange(lowerH: 10 * 2, upperH: 20 * 2, lowerS: 100.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 20.0 / 255.0, upperV: 200.0 / 255.0)),
+        (name: "pink", range: ColorRange(lowerH: 160 * 2, upperH: 179 * 2, lowerS: 20.0 / 255.0, upperS: 100.0 / 255.0, lowerV: 180.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "orange", range: ColorRange(lowerH: 10 * 2, upperH: 24 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0)),
+        (name: "purple", range: ColorRange(lowerH: 129 * 2, upperH: 158 * 2, lowerS: 50.0 / 255.0, upperS: 255.0 / 255.0, lowerV: 70.0 / 255.0, upperV: 255.0 / 255.0))
     ]
 
     var body: some View {
-        ZStack {
-            // Background
-            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
-            
-            ScrollView {
-                VStack(spacing: AppStyles.Spacing.large) {
-                    // Header
-                    Text("Clothing Detection")
-                        .font(AppStyles.Typography.title)
-                        .foregroundColor(AppStyles.Colors.text)
-                        .padding(.top, AppStyles.Spacing.large)
-                    
-                    // Select Image Button
-                    PhotosPicker(selection: $selectedItem, matching: .images) {
-                        HStack {
-                            Image(systemName: "photo.fill")
-                                .font(.system(size: 18))
-                            Text("Select Image")
-                                .font(AppStyles.Typography.heading)
-                        }
-                        .padding(.horizontal, AppStyles.Spacing.large)
+        NavigationView {
+            ZStack {
+                AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
+                ScrollView {
+                    VStack(spacing: AppStyles.Spacing.large) {
+                        photosPickerView
+                        contentView
+                        Spacer()
                     }
-                    .primaryButtonStyle()
-                    .padding(.horizontal, AppStyles.Spacing.xlarge)
-                    
-                    // Image and Results Section
-                    if let selectedImage = selectedImage {
-                        VStack(spacing: AppStyles.Spacing.medium) {
-                            if isProcessing {
-                                // Loading View
-                                VStack(spacing: AppStyles.Spacing.medium) {
-                                    ProgressView()
-                                        .scaleEffect(1.5)
-                                        .padding()
-                                    
-                                    Text("Analyzing clothing...")
-                                        .font(AppStyles.Typography.body)
-                                        .foregroundColor(AppStyles.Colors.secondaryText)
-                                }
-                                .frame(height: 300)
-                                .frame(maxWidth: .infinity)
-                                .cardStyle()
-                            } else if let resizedImage = resizeImage(selectedImage, to: CGSize(width: 512, height: 512)),
-                                      let highlightedImage = highlightedImage {
-                                // Result View
-                                VStack(spacing: AppStyles.Spacing.medium) {
-                                    // Image Display
-                                    ZStack {
-                                        Image(uiImage: resizedImage)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .cornerRadius(AppStyles.Layout.smallCornerRadius)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
-                                                    .stroke(AppStyles.Colors.formBorder, lineWidth: 1)
-                                            )
-                                        
-                                        Image(uiImage: highlightedImage)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .cornerRadius(AppStyles.Layout.smallCornerRadius)
-                                    }
-                                    .padding(.horizontal, AppStyles.Spacing.medium)
-                                    .frame(maxHeight: 350)
-
-                                    // Color Legend
-                                    if !detectedItems.isEmpty {
-                                        // Results Card uder
-                                        VStack(alignment: .leading, spacing: AppStyles.Spacing.medium) {
-                                            // Title
-                                            Text("Detection Results")
-                                                .font(AppStyles.Typography.heading)
-                                                .foregroundColor(AppStyles.Colors.text)
-                                                .padding(.bottom, AppStyles.Spacing.small)
-                                            
-                                            Divider()
-                                                .background(AppStyles.Colors.formBorder)
-                                            
-                                            // Color Legend Section
-                                            VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                                                Text("Color Legend:")
-                                                    .font(AppStyles.Typography.body)
-                                                    .foregroundColor(AppStyles.Colors.text)
-                                                    .fontWeight(.medium)
-                                                
-                                                if detectedItems.isEmpty {
-                                                    Text("No items detected")
-                                                        .font(AppStyles.Typography.caption)
-                                                        .foregroundColor(AppStyles.Colors.secondaryText)
-                                                        .padding(.top, AppStyles.Spacing.small)
-                                                } else {
-                                                    // Legend Grid - only shows detected items
-                                                    LazyVGrid(columns: [
-                                                        GridItem(.flexible()),
-                                                        GridItem(.flexible())
-                                                    ], spacing: AppStyles.Spacing.small) {
-                                                        ForEach(detectedItems, id: \.name) { item in
-                                                            HStack {
-                                                                RoundedRectangle(cornerRadius: 4)
-                                                                    .fill(Color(segmentationColors[item.name] ?? .clear))
-                                                                    .frame(width: 20, height: 20)
-                                                                    .overlay(
-                                                                        RoundedRectangle(cornerRadius: 4)
-                                                                            .stroke(Color.black.opacity(0.2), lineWidth: 1)
-                                                                    )
-                                                                Text(item.name)
-                                                                    .font(AppStyles.Typography.caption)
-                                                                    .foregroundColor(AppStyles.Colors.text)
-                                                            }
-                                                            .padding(.vertical, 2)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            
-                                            // Divider
-                                            Divider()
-                                                .background(AppStyles.Colors.formBorder)
-                                                .padding(.vertical, AppStyles.Spacing.small)
-                                            
-                                            // Detected Items Section with Actual Colors
-                                            VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
-                                                Text("Actual Colors:")
-                                                    .font(AppStyles.Typography.body)
-                                                    .foregroundColor(AppStyles.Colors.text)
-                                                    .fontWeight(.medium)
-                                                
-                                                if detectedItems.isEmpty {
-                                                    Text("No clothing items detected")
-                                                        .font(AppStyles.Typography.caption)
-                                                        .foregroundColor(AppStyles.Colors.secondaryText)
-                                                        .padding(.top, AppStyles.Spacing.small)
-                                                } else {
-                                                    // Detected Items Grid
-                                                    LazyVGrid(columns: [
-                                                        GridItem(.flexible()),
-                                                        GridItem(.flexible())
-                                                    ], spacing: AppStyles.Spacing.small) {
-                                                        ForEach(detectedItems, id: \.name) { item in
-                                                            HStack {
-                                                                RoundedRectangle(cornerRadius: 4)
-                                                                    .fill(Color(item.color))
-                                                                    .frame(width: 20, height: 20)
-                                                                    .overlay(
-                                                                        RoundedRectangle(cornerRadius: 4)
-                                                                            .stroke(Color.black.opacity(0.2), lineWidth: 1)
-                                                                    )
-                                                                Text(item.name)
-                                                                    .font(AppStyles.Typography.caption)
-                                                                    .foregroundColor(AppStyles.Colors.text)
-                                                            }
-                                                            .padding(.vertical, 2)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        .padding(AppStyles.Spacing.medium)
-                                        .background(AppStyles.Colors.secondaryBackground)
-                                        .cornerRadius(AppStyles.Layout.cornerRadius)
-                                        .padding(.horizontal, AppStyles.Spacing.medium)
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Empty State
-                        VStack(spacing: AppStyles.Spacing.medium) {
-                            Image(systemName: "tshirt.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(AppStyles.Colors.primary.opacity(0.7))
-                                .padding(.bottom, AppStyles.Spacing.small)
-                            
-                            Text("No Image Selected")
-                                .font(AppStyles.Typography.heading)
-                                .foregroundColor(AppStyles.Colors.text)
-                            
-                            Text("Select an image to analyze clothing items")
-                                .font(AppStyles.Typography.body)
-                                .foregroundColor(AppStyles.Colors.secondaryText)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, AppStyles.Spacing.xlarge)
-                                .padding(.bottom, AppStyles.Spacing.medium)
-                        }
-                        .frame(height: 300)
-                        .frame(maxWidth: .infinity)
-                        .background(AppStyles.Colors.secondaryBackground)
-                        .cornerRadius(AppStyles.Layout.cornerRadius)
-                        .padding(.horizontal, AppStyles.Spacing.medium)
-                    }
-                    
-                    Spacer()
+                    .padding(.bottom, AppStyles.Spacing.xlarge)
                 }
-                .padding(.bottom, AppStyles.Spacing.xlarge)
-            }
-        }
-        .onChange(of: selectedItem) { newItem in
-            if newItem != nil {
-                // Show loading immediately when item selected
-                isProcessing = true
-            }
-            
-            Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    selectedImage = uiImage
-                    if let resizedImage = resizeImage(uiImage, to: CGSize(width: 512, height: 512)) {
-                        processImage(resizedImage)
+                .navigationTitle("Upload")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }
-                } else {
-                    isProcessing = false
                 }
+            }
+            .onChange(of: selectedItems) { newItems in
+                if !newItems.isEmpty {
+                    Task {
+                        await processSelectedItems(newItems)
+                    }
+                }
+            }
+            .alert(isPresented: $showUnknownColorAlert) {
+                Alert(
+                    title: Text("Invalid Color Selection"),
+                    message: Text("Please choose a valid color for all selected items before adding to wardrobe."),
+                    dismissButton: .default(Text("OK"))
+                )
             }
         }
     }
 
-    /// Resizes an image to the specified size
+    // MARK: - Subviews
+
+    private var photosPickerView: some View {
+        PhotosPicker(selection: $selectedItems, matching: .images) {
+            HStack {
+                Image(systemName: "photo.fill")
+                    .font(.system(size: 18))
+                Text("Select Images")
+                    .font(AppStyles.Typography.heading)
+            }
+            .padding(.horizontal, AppStyles.Spacing.large)
+        }
+        .primaryButtonStyle()
+        .padding(.horizontal, AppStyles.Spacing.xlarge)
+    }
+
+    private var contentView: some View {
+        Group {
+            if isProcessing {
+                processingView
+            } else if !previewItems.isEmpty {
+                VStack(spacing: AppStyles.Spacing.medium) {
+                    instructionsView
+                    gridView
+                    if hasSelectedItemsWithUnknownColor {
+                        unknownColorWarningView
+                    }
+                    addButtonView
+                }
+            } else {
+                emptyStateView
+            }
+        }
+    }
+
+    private var processingView: some View {
+        VStack(spacing: AppStyles.Spacing.medium) {
+            ProgressView()
+                .scaleEffect(1.5)
+                .padding()
+            Text("Processing image \(currentProcessingIndex + 1) of \(totalImages)")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+        }
+        .frame(height: 300)
+        .frame(maxWidth: .infinity)
+        .cardStyle()
+    }
+
+    private var instructionsView: some View {
+        Text("• Tap to select (👆 blue border)\n• Tap color to change 🎨\n• 'Unknown color'? Pick one\n• All items need a color to save ✅")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, AppStyles.Spacing.medium)
+                .padding(.top, AppStyles.Spacing.medium)
+    }
+
+    private var gridView: some View {
+        ScrollView {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                ForEach(previewItems) { item in
+                    VStack {
+                        Image(uiImage: item.image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                            .border(selectedPreviewItems.contains(item.id) ? Color.blue : Color.clear, width: 2)
+                        Text(item.category)
+                            .font(AppStyles.Typography.caption)
+                        Menu {
+                            ForEach(selectableColors, id: \.self) { color in
+                                Button(color) {
+                                    if let index = previewItems.firstIndex(where: { $0.id == item.id }) {
+                                        previewItems[index].colorLabel = color
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label(item.colorLabel, systemImage: "paintbrush")
+                                .padding(5)
+                                .background(RoundedRectangle(cornerRadius: 5).fill(Color.gray.opacity(0.2)))
+                                .font(AppStyles.Typography.caption)
+                                .foregroundColor(item.colorLabel == "unknown color" ? .red : AppStyles.Colors.text)
+                                .accessibilityLabel("Change color for \(item.category), currently \(item.colorLabel)")
+                        }
+                    }
+                    .onTapGesture {
+                        if selectedPreviewItems.contains(item.id) {
+                            selectedPreviewItems.remove(item.id)
+                        } else {
+                            selectedPreviewItems.insert(item.id)
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+
+    private var unknownColorWarningView: some View {
+        Text("Please assign a color to all selected items.")
+            .font(.caption)
+            .foregroundColor(.red)
+            .padding(.top, 5)
+    }
+
+    private var addButtonView: some View {
+        Button(action: {
+            print("Adding \(selectedPreviewItems.count) items")
+            let selected = previewItems.filter { selectedPreviewItems.contains($0.id) }
+            for item in selected {
+                let wardrobeItem = WardrobeItem(image: item.image, categoryName: item.category, colorLabel: item.colorLabel)
+                wardrobeManager.addItems([wardrobeItem])
+            }
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            Text("Add Selected to Wardrobe")
+                .font(AppStyles.Typography.heading)
+                .frame(maxWidth: .infinity)
+        }
+        .primaryButtonStyle()
+        .padding(.top, AppStyles.Spacing.medium)
+        .padding(.horizontal, AppStyles.Spacing.medium)
+        .disabled(selectedPreviewItems.isEmpty || hasSelectedItemsWithUnknownColor)
+        .onTapGesture {
+            if hasSelectedItemsWithUnknownColor {
+                showUnknownColorAlert = true
+            }
+        }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: AppStyles.Spacing.medium) {
+            Image(systemName: "tshirt.fill")
+                .font(.system(size: 60))
+                .foregroundColor(AppStyles.Colors.primary.opacity(0.7))
+                .padding(.bottom, AppStyles.Spacing.small)
+            Text(selectedItems.isEmpty ? "Select Images" : "No Clothing Items Detected")
+                .font(AppStyles.Typography.heading)
+                .foregroundColor(AppStyles.Colors.text)
+            Text(selectedItems.isEmpty ? "Select images to analyze clothing items" : "No clothing items were detected in the selected images")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, AppStyles.Spacing.xlarge)
+                .padding(.bottom, AppStyles.Spacing.medium)
+        }
+        .frame(height: 300)
+        .frame(maxWidth: .infinity)
+        .background(AppStyles.Colors.secondaryBackground)
+        .cornerRadius(AppStyles.Layout.cornerRadius)
+        .padding(.horizontal, AppStyles.Spacing.medium)
+    }
+
+    private var hasSelectedItemsWithUnknownColor: Bool {
+        previewItems.contains { item in
+            selectedPreviewItems.contains(item.id) && item.colorLabel == "unknown color"
+        }
+    }
+
+    private func processSelectedItems(_ items: [PhotosPickerItem]) async {
+        previewItems = []
+        totalImages = items.count
+        currentProcessingIndex = 0
+        isProcessing = true
+        for item in items {
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let uiImage = UIImage(data: data),
+               let resizedImage = resizeImage(uiImage, to: CGSize(width: 512, height: 512)) {
+                let processedItems = await withCheckedContinuation { continuation in
+                    processImage(resizedImage) { previewItems in
+                        continuation.resume(returning: previewItems)
+                    }
+                }
+                self.previewItems.append(contentsOf: processedItems)
+            }
+            self.currentProcessingIndex += 1
+        }
+        isProcessing = false
+    }
+
     func resizeImage(_ image: UIImage, to size: CGSize) -> UIImage? {
         let renderer = UIGraphicsImageRenderer(size: size)
         return renderer.image { _ in
@@ -253,200 +307,149 @@ struct ModelTestView: View {
         }
     }
 
-    /// Processes the image with the CoreML model
-    func processImage(_ image: UIImage) {
+    func processImage(_ image: UIImage, completion: @escaping ([PreviewItem]) -> Void) {
         do {
             let model = try SegFormerClothes(configuration: MLModelConfiguration())
-            print("Model loaded successfully")
-            
-            do {
-                let vnModel = try VNCoreMLModel(for: model.model)
-                print("VNCoreMLModel created successfully")
-                
-                guard let cgImage = image.cgImage else {
-                    print("Failed to convert image to CGImage")
-                    isProcessing = false
-                    return
-                }
-                
-                let request = VNCoreMLRequest(model: vnModel) { request, error in
-                    if let error = error {
-                        print("Error processing image: \(error.localizedDescription)")
-                        DispatchQueue.main.async {
-                            self.isProcessing = false
-                        }
-                        return
-                    }
-                    
-                    if let results = request.results as? [VNCoreMLFeatureValueObservation],
-                       let firstResult = results.first,
-                       let multiArray = firstResult.featureValue.multiArrayValue {
-                        let height = multiArray.shape[1].intValue
-                        let width = multiArray.shape[2].intValue
-
-                        var labels = [[Int]](repeating: [Int](repeating: 0, count: width), count: height)
-                        for i in 0..<height {
-                            for j in 0..<width {
-                                let classIndex = multiArray[[0, i, j] as [NSNumber]].intValue
-                                labels[i][j] = self.segFormerToLabel[classIndex] ?? 0
-                            }
-                        }
-
-                        let (highlightedImage, colorMap) = self.createHighlightedImage(labels: labels, width: width, height: height)
-                        let detectedItemsWithColors = self.extractDetectedItemsWithColors(labels: labels, image: image)
-
-                        // Add slight delay to make loading animation visible even for fast processing
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            self.highlightedImage = highlightedImage
-                            self.segmentationColors = colorMap
-                            self.detectedItems = detectedItemsWithColors
-                            self.isProcessing = false
-                        }
-                    } else {
-                        DispatchQueue.main.async {
-                            self.isProcessing = false
-                        }
-                    }
-                }
-
-                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-                do {
-                    try handler.perform([request])
-                } catch {
-                    print("Failed to perform request: \(error.localizedDescription)")
-                    DispatchQueue.main.async {
-                        self.isProcessing = false
-                    }
-                }
-            } catch {
-                print("Error creating VNCoreMLModel: \(error.localizedDescription)")
-                isProcessing = false
+            let vnModel = try VNCoreMLModel(for: model.model)
+            guard let cgImage = image.cgImage else {
+                completion([])
                 return
             }
-        } catch {
-            print("Error loading model: \(error.localizedDescription)")
-            isProcessing = false
-            return
-        }
-    }
-
-    /// Creates a highlighted image from the segmentation labels
-    func createHighlightedImage(labels: [[Int]], width: Int, height: Int) -> (UIImage, [String: UIColor]) {
-        // Modified clothingLabels array - removed ID 1 (Hat), 3, 4, 8, 10, 11 (Gloves, Sunglasses, Socks, Jumpsuits, Scarf)
-        let clothingLabels = [5, 6, 7, 9, 12, 18, 19]
-        let numColors = clothingLabels.count
-        let colors: [UIColor] = (0..<numColors).map { i in
-            let hue = CGFloat(i) / CGFloat(numColors)
-            return UIColor(hue: hue, saturation: 1.0, brightness: 1.0, alpha: 0.5)
-        }
-
-        var labelColors = [CGColor](repeating: UIColor.clear.cgColor, count: 20)
-        for (index, label) in clothingLabels.enumerated() {
-            labelColors[label] = colors[index].cgColor
-        }
-        
-        // Create color mapping for legend display
-        var colorMap: [String: UIColor] = [:]
-        for (index, label) in clothingLabels.enumerated() {
-            if let name = labelNames[label] {
-                colorMap[name] = colors[index]
-            }
-        }
-
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
-        let image = renderer.image { context in
-            let cgContext = context.cgContext
-            for i in 0..<height {
-                for j in 0..<width {
-                    if i < labels.count && j < labels[i].count {
-                        let label = labels[i][j]
-                        let color = labelColors[label]
-                        cgContext.setFillColor(color)
-                        cgContext.fill(CGRect(x: j, y: i, width: 1, height: 1))
+            let request = VNCoreMLRequest(model: vnModel) { request, error in
+                if let error = error {
+                    print("Error processing image: \(error.localizedDescription)")
+                    completion([])
+                    return
+                }
+                if let results = request.results as? [VNCoreMLFeatureValueObservation],
+                   let firstResult = results.first,
+                   let multiArray = firstResult.featureValue.multiArrayValue {
+                    let height = multiArray.shape[1].intValue
+                    let width = multiArray.shape[2].intValue
+                    var labels = [[Int]](repeating: [Int](repeating: 0, count: width), count: height)
+                    for i in 0..<height {
+                        for j in 0..<width {
+                            let classIndex = multiArray[[0, i, j] as [NSNumber]].intValue
+                            labels[i][j] = self.segFormerToLabel[classIndex] ?? 0
+                        }
                     }
+                    let uniqueLabels = Set(labels.flatMap { $0 }).intersection(self.includedLabels)
+                    var previewItems: [PreviewItem] = []
+                    for label in uniqueLabels {
+                        if let name = self.labelNames[label],
+                           let maskedImage = self.createMaskedImage(labels: labels, width: width, height: height, for: label, originalImage: image) {
+                            let (color, colorLabel) = self.getDominantColorAndLabelFromMaskedImage(maskedImage)
+                            let previewItem = PreviewItem(category: name, image: maskedImage, color: color, colorLabel: colorLabel)
+                            previewItems.append(previewItem)
+                        }
+                    }
+                    completion(previewItems)
+                } else {
+                    completion([])
                 }
             }
+            let handler = VNImageRequestHandler(cgImage: cgImage)
+            do {
+                try handler.perform([request])
+            } catch {
+                print("Failed to perform request: \(error.localizedDescription)")
+                completion([])
+            }
+        } catch {
+            print("Error loading model or creating VNCoreMLModel: \(error.localizedDescription)")
+            completion([])
         }
-        
-        return (image, colorMap)
     }
 
-    /// Extracts detected items and their colors using segment masks
-    func extractDetectedItemsWithColors(labels: [[Int]], image: UIImage) -> [(name: String, color: UIColor)] {
-        guard let cgImage = image.cgImage else { return [] }
-
-        // Check if the image is grayscale
-        if isGrayscale(cgImage) {
-            print("Image is grayscale, cannot extract colors.")
-            let uniqueLabels = Set(labels.flatMap { $0 }).filter { labelNames.keys.contains($0) }
-            return uniqueLabels.map { label in
-                (name: labelNames[label] ?? "Unknown", color: UIColor.gray)
-            }
-        }
-
-        // Standardize pixel format
+    func getDominantColorAndLabelFromMaskedImage(_ image: UIImage) -> (color: UIColor, label: String) {
+        guard let cgImage = image.cgImage else { return (.gray, "unknown color") }
         let width = cgImage.width
         let height = cgImage.height
         let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
-        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 4 * width, space: colorSpace, bitmapInfo: bitmapInfo.rawValue) else {
-            return []
-        }
+        let bytesPerPixel = 4
+        let bytesPerRow = bytesPerPixel * width
+        let bitsPerComponent = 8
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return (.gray, "unknown color") }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return [] }
-
-        // Collect pixel colors for each label
-        let uniqueLabels = Set(labels.flatMap { $0 }).filter { labelNames.keys.contains($0) }
-        var labelPixelColors: [Int: [(r: Float, g: Float, b: Float)]] = [:]
+        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return (.gray, "unknown color") }
+        var colorCounts: [String: Int] = [:]
+        let bins = 16 // Number of bins per RGB channel
         for i in 0..<height {
             for j in 0..<width {
-                if i < labels.count && j < labels[i].count {
-                    let label = labels[i][j]
-                    if labelNames.keys.contains(label) {
-                        let pixelOffset = (i * width * 4) + (j * 4)
-                        let r = Float(data[pixelOffset]) / 255.0
-                        let g = Float(data[pixelOffset + 1]) / 255.0
-                        let b = Float(data[pixelOffset + 2]) / 255.0
-                        labelPixelColors[label, default: []].append((r, g, b))
-                    }
+                let pixelOffset = (i * width * 4) + (j * 4)
+                let a = data[pixelOffset + 3]
+                if a > 0 { // Only process non-transparent pixels
+                    let r = Int(data[pixelOffset]) / (256 / bins)
+                    let g = Int(data[pixelOffset + 1]) / (256 / bins)
+                    let b = Int(data[pixelOffset + 2]) / (256 / bins)
+                    let colorKey = "\(r),\(g),\(b)"
+                    colorCounts[colorKey, default: 0] += 1
                 }
             }
         }
-
-        // Compute average color for each label
-        var detectedItemsWithColors: [(name: String, color: UIColor)] = []
-        for label in uniqueLabels {
-            if let pixelColors = labelPixelColors[label], !pixelColors.isEmpty,
-               let name = labelNames[label] {
-                let totalPixels = Float(pixelColors.count)
-                let avgR = pixelColors.reduce(0, { $0 + $1.r }) / totalPixels
-                let avgG = pixelColors.reduce(0, { $0 + $1.g }) / totalPixels
-                let avgB = pixelColors.reduce(0, { $0 + $1.b }) / totalPixels
-                print("Label \(label) (\(name)): R=\(avgR), G=\(avgG), B=\(avgB)")
-                let avgColor = UIColor(red: CGFloat(avgR), green: CGFloat(avgG), blue: CGFloat(avgB), alpha: 1.0)
-                detectedItemsWithColors.append((name: name, color: avgColor))
-            }
+        if let mostFrequent = colorCounts.max(by: { $0.value < $1.value }) {
+            let components = mostFrequent.key.split(separator: ",").map { Int($0)! }
+            let r = CGFloat(components[0] * (256 / bins)) / 255.0
+            let g = CGFloat(components[1] * (256 / bins)) / 255.0
+            let b = CGFloat(components[2] * (256 / bins)) / 255.0
+            let dominantColor = UIColor(red: r, green: g, blue: b, alpha: 1.0)
+            let label = classifyColorHSV(dominantColor)
+            return (dominantColor, label)
+        } else {
+            return (.gray, "unknown color")
         }
-
-        return detectedItemsWithColors
     }
 
-    /// Checks if the image is grayscale
+    private func classifyColorHSV(_ color: UIColor) -> String {
+        var h: CGFloat = 0, s: CGFloat = 0, v: CGFloat = 0, a: CGFloat = 0
+        color.getHue(&h, saturation: &s, brightness: &v, alpha: &a)
+        let hue = h * 360
+
+        for (colorName, range) in colorRanges {
+            if hue >= range.lowerH && hue <= range.upperH &&
+               s >= range.lowerS && s <= range.upperS &&
+               v >= range.lowerV && v <= range.upperV {
+                return colorName
+            }
+        }
+        return "unknown color"
+    }
+
     func isGrayscale(_ cgImage: CGImage) -> Bool {
         guard let colorSpace = cgImage.colorSpace else { return false }
         return colorSpace.model == .monochrome
     }
-    
-    /// Returns only the clothing items that were detected in the current image
-    func getLegendColors() -> [(String, UIColor)] {
-        // Get only the detected item names
-        let detectedItemNames = Set(detectedItems.map { $0.name })
-        
-        // Filter segmentationColors to only include detected items
-        let filteredColors = segmentationColors.filter { detectedItemNames.contains($0.key) }
-        
-        // Convert to array and sort
-        let items = filteredColors.map { ($0.key, $0.value) }
-        return items.sorted { $0.0 < $1.0 } // Sort by clothing item name
+
+    func createMaskedImage(labels: [[Int]], width: Int, height: Int, for label: Int, originalImage: UIImage) -> UIImage? {
+        guard let cgImage = originalImage.cgImage else { return nil }
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bytesPerPixel = 4
+        let bytesPerRow = bytesPerPixel * width
+        let bitsPerComponent = 8
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let data = context.data else { return nil }
+        let buffer = data.bindMemory(to: UInt8.self, capacity: width * height * bytesPerPixel)
+        for i in 0..<height {
+            for j in 0..<width {
+                if i < labels.count && j < labels[i].count {
+                    let currentLabel = labels[i][j]
+                    if currentLabel != label {
+                        let pixelOffset = (i * width * bytesPerPixel) + (j * bytesPerPixel)
+                        buffer[pixelOffset + 3] = 0
+                    }
+                }
+            }
+        }
+        guard let outputCGImage = context.makeImage() else { return nil }
+        return UIImage(cgImage: outputCGImage)
+    }
+}
+
+struct ModelTestView_Previews: PreviewProvider {
+    static var previews: some View {
+        ModelTestView().environmentObject(WardrobeManager.shared)
     }
 }
