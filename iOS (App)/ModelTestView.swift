@@ -92,7 +92,7 @@ struct ModelTestView: View {
                     }
                     .padding(.bottom, AppStyles.Spacing.xlarge)
                 }
-                .navigationTitle("Clothing Detection")
+                .navigationTitle("Upload")
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Done") {

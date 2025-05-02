@@ -208,7 +208,7 @@ struct ContentView: View {
                     .font(AppStyles.Typography.heading)
                     .foregroundColor(AppStyles.Colors.text)
                 
-                Text("Add photos of your clothing to get accurate comparisons when shopping online.")
+                Text("Upload fitpics for your digital wardrobe!")
                     .font(AppStyles.Typography.body)
                     .foregroundColor(AppStyles.Colors.secondaryText)
                 
