@@ -68,10 +68,10 @@ struct WardrobeView: View {
                                     ForEach(categories, id: \.self) { category in
                                         SectionHeaderView(title: category)
                                         let categoryItems = itemsInCategory(category).sorted(by: { $0.dateAdded < $1.dateAdded })
-                                        ForEach(Array(categoryItems.enumerated()), id: \.element.id) { index, item in
+                                        ForEach(categoryItems, id: \.id) { item in
                                             ItemRowView(
                                                 item: item,
-                                                label: "\(singularCategory(category)) (\(index + 1))",
+                                                label: "\(item.colorLabel) \(singularCategory(item.categoryName))",
                                                 onTap: { selectedItem = item },
                                                 onDelete: {
                                                     itemToDelete = item.id
@@ -83,10 +83,10 @@ struct WardrobeView: View {
                                 } else {
                                     SectionHeaderView(title: selectedCategory)
                                     let categoryItems = filteredItems.sorted(by: { $0.dateAdded < $1.dateAdded })
-                                    ForEach(Array(categoryItems.enumerated()), id: \.element.id) { index, item in
+                                    ForEach(categoryItems, id: \.id) { item in
                                         ItemRowView(
                                             item: item,
-                                            label: "\(singularCategory(selectedCategory)) (\(index + 1))",
+                                            label: "\(item.colorLabel) \(singularCategory(item.categoryName))",
                                             onTap: { selectedItem = item },
                                             onDelete: {
                                                 itemToDelete = item.id
