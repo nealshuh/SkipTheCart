@@ -12,6 +12,7 @@ struct WardrobeView: View {
 
     let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
 
+    // Function to get the singular form of the category
     func singularCategory(_ category: String) -> String {
         switch category {
         case "Tops": return "top"
@@ -19,6 +20,32 @@ struct WardrobeView: View {
         case "Dresses": return "dress"
         case "Skirts": return "skirt"
         default: return category.lowercased()
+        }
+    }
+
+    // Computed property to generate items with unique display names
+    var itemsWithDisplayNames: [(item: WardrobeItem, displayName: String)] {
+        // Group items by their color and category
+        var groupedItems: [String: [WardrobeItem]] = [:]
+        for item in wardrobeManager.items {
+            let key = "\(item.colorLabel)-\(item.categoryName)"
+            groupedItems[key, default: []].append(item)
+        }
+        
+        // Sort each group by dateAdded and assign numbers
+        var displayNames: [UUID: String] = [:]
+        for (key, items) in groupedItems {
+            let sortedItems = items.sorted { $0.dateAdded < $1.dateAdded }
+            for (index, item) in sortedItems.enumerated() {
+                let baseName = "\(item.colorLabel) \(singularCategory(item.categoryName))"
+                let displayName = index == 0 ? baseName : "\(baseName) (\(index + 1))"
+                displayNames[item.id] = displayName
+            }
+        }
+        
+        // Create the list of (item, displayName) tuples
+        return wardrobeManager.items.map { item in
+            (item, displayNames[item.id] ?? "\(item.colorLabel) \(singularCategory(item.categoryName))")
         }
     }
 
@@ -59,7 +86,7 @@ struct WardrobeView: View {
                         .padding(.vertical, AppStyles.Spacing.small)
                     }
                     // Wardrobe Content
-                    if wardrobeItems.isEmpty {
+                    if wardrobeManager.items.isEmpty {
                         emptyStateView
                     } else {
                         ScrollView {
@@ -67,14 +94,14 @@ struct WardrobeView: View {
                                 if selectedCategory.isEmpty {
                                     ForEach(categories, id: \.self) { category in
                                         SectionHeaderView(title: category)
-                                        let categoryItems = itemsInCategory(category).sorted(by: { $0.dateAdded < $1.dateAdded })
-                                        ForEach(categoryItems, id: \.id) { item in
+                                        let categoryItems = itemsInCategory(category)
+                                        ForEach(categoryItems, id: \.item.id) { itemTuple in
                                             ItemRowView(
-                                                item: item,
-                                                label: "\(item.colorLabel) \(singularCategory(item.categoryName))",
-                                                onTap: { selectedItem = item },
+                                                item: itemTuple.item,
+                                                displayName: itemTuple.displayName,
+                                                onTap: { selectedItem = itemTuple.item },
                                                 onDelete: {
-                                                    itemToDelete = item.id
+                                                    itemToDelete = itemTuple.item.id
                                                     showDeleteConfirmation = true
                                                 }
                                             )
@@ -82,14 +109,14 @@ struct WardrobeView: View {
                                     }
                                 } else {
                                     SectionHeaderView(title: selectedCategory)
-                                    let categoryItems = filteredItems.sorted(by: { $0.dateAdded < $1.dateAdded })
-                                    ForEach(categoryItems, id: \.id) { item in
+                                    let categoryItems = filteredItems
+                                    ForEach(categoryItems, id: \.item.id) { itemTuple in
                                         ItemRowView(
-                                            item: item,
-                                            label: "\(item.colorLabel) \(singularCategory(item.categoryName))",
-                                            onTap: { selectedItem = item },
+                                            item: itemTuple.item,
+                                            displayName: itemTuple.displayName,
+                                            onTap: { selectedItem = itemTuple.item },
                                             onDelete: {
-                                                itemToDelete = item.id
+                                                itemToDelete = itemTuple.item.id
                                                 showDeleteConfirmation = true
                                             }
                                         )
@@ -166,20 +193,16 @@ struct WardrobeView: View {
     }
 
     // Data Helpers
-    private var wardrobeItems: [WardrobeItem] {
-        return wardrobeManager.items
-    }
-
-    private var filteredItems: [WardrobeItem] {
+    private var filteredItems: [(item: WardrobeItem, displayName: String)] {
         if selectedCategory.isEmpty {
-            return wardrobeItems
+            return itemsWithDisplayNames
         } else {
-            return wardrobeItems.filter { $0.categoryName == selectedCategory }
+            return itemsWithDisplayNames.filter { $0.item.categoryName == selectedCategory }
         }
     }
 
-    private func itemsInCategory(_ category: String) -> [WardrobeItem] {
-        return wardrobeItems.filter { $0.categoryName == category }
+    private func itemsInCategory(_ category: String) -> [(item: WardrobeItem, displayName: String)] {
+        return itemsWithDisplayNames.filter { $0.item.categoryName == category }
     }
 }
 
@@ -194,17 +217,17 @@ struct SectionHeaderView: View {
     }
 }
 
-// Item Row View
+// Item Row View (Updated to accept displayName)
 struct ItemRowView: View {
     let item: WardrobeItem
-    let label: String
+    let displayName: String
     let onTap: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
         Button(action: onTap) {
             HStack {
-                Text(label)
+                Text(displayName)
                 Spacer()
             }
             .padding()

@@ -86,136 +86,8 @@ struct ModelTestView: View {
                 AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
                 ScrollView {
                     VStack(spacing: AppStyles.Spacing.large) {
-                        Text("Clothing Detection")
-                            .font(AppStyles.Typography.title)
-                            .foregroundColor(AppStyles.Colors.text)
-                            .padding(.top, AppStyles.Spacing.large)
-                        PhotosPicker(selection: $selectedItems, matching: .images) {
-                            HStack {
-                                Image(systemName: "photo.fill")
-                                    .font(.system(size: 18))
-                                Text("Select Images")
-                                    .font(AppStyles.Typography.heading)
-                            }
-                            .padding(.horizontal, AppStyles.Spacing.large)
-                        }
-                        .primaryButtonStyle()
-                        .padding(.horizontal, AppStyles.Spacing.xlarge)
-                        if isProcessing {
-                            VStack(spacing: AppStyles.Spacing.medium) {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .padding()
-                                Text("Processing image \(currentProcessingIndex + 1) of \(totalImages)")
-                                    .font(AppStyles.Typography.body)
-                                    .foregroundColor(AppStyles.Colors.secondaryText)
-                            }
-                            .frame(height: 300)
-                            .frame(maxWidth: .infinity)
-                            .cardStyle()
-                        } else if !previewItems.isEmpty {
-                            Text("Tap an item to select it (blue border). Tap the color label to change it. All selected items need a valid color to add to wardrobe.")
-                                .font(AppStyles.Typography.body)
-                                .foregroundColor(AppStyles.Colors.secondaryText)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, AppStyles.Spacing.medium)
-                                .padding(.top, AppStyles.Spacing.medium)
-                            ScrollView {
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-                                    ForEach(previewItems) { item in
-                                        VStack {
-                                            Image(uiImage: item.image)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 100, height: 100)
-                                                .border(selectedPreviewItems.contains(item.id) ? Color.blue : Color.clear, width: 2)
-                                            Text(item.category)
-                                                .font(AppStyles.Typography.caption)
-                                            Menu {
-                                                ForEach(selectableColors, id: \.self) { color in
-                                                    Button(color) {
-                                                        if let index = previewItems.firstIndex(where: { $0.id == item.id }) {
-                                                            previewItems[index].colorLabel = color
-                                                        }
-                                                    }
-                                                }
-                                            } label: {
-                                                Label(item.colorLabel, systemImage: "paintbrush")
-                                                    .padding(5)
-                                                    .background(RoundedRectangle(cornerRadius: 5).fill(Color.gray.opacity(0.2)))
-                                                    .font(AppStyles.Typography.caption)
-                                                    .foregroundColor(item.colorLabel == "unknown color" ? .red : AppStyles.Colors.text)
-                                                    .accessibilityLabel("Change color for \(item.category), currently \(item.colorLabel)")
-                                            }
-                                        }
-                                        .onTapGesture {
-                                            if selectedPreviewItems.contains(item.id) {
-                                                selectedPreviewItems.remove(item.id)
-                                            } else {
-                                                selectedPreviewItems.insert(item.id)
-                                            }
-                                        }
-                                    }
-                                }
-                                .padding()
-                            }
-                            if hasSelectedItemsWithUnknownColor {
-                                Text("Please assign a color to all selected items.")
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                                    .padding(.top, 5)
-                            }
-                            Button(action: {
-                                print("Adding \(selectedPreviewItems.count) items")
-                                let selected = previewItems.filter { selectedPreviewItems.contains($0.id) }
-                                for item in selected {
-                                    let wardrobeItem = WardrobeItem(image: item.image, categoryName: item.category, colorLabel: item.colorLabel)
-                                    wardrobeManager.addItems([wardrobeItem])
-                                }
-                                presentationMode.wrappedValue.dismiss()
-                            }) {
-                                Text("Add Selected to Wardrobe")
-                                    .font(AppStyles.Typography.heading)
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .primaryButtonStyle()
-                            .padding(.top, AppStyles.Spacing.medium)
-                            .padding(.horizontal, AppStyles.Spacing.medium)
-                            .disabled(selectedPreviewItems.isEmpty || hasSelectedItemsWithUnknownColor)
-                            .onTapGesture {
-                                if hasSelectedItemsWithUnknownColor {
-                                    showUnknownColorAlert = true
-                                }
-                            }
-                            .alert(isPresented: $showUnknownColorAlert) {
-                                Alert(
-                                    title: Text("Invalid Color Selection"),
-                                    message: Text("Please choose a valid color for all selected items before adding to wardrobe."),
-                                    dismissButton: .default(Text("OK"))
-                                )
-                            }
-                        } else {
-                            VStack(spacing: AppStyles.Spacing.medium) {
-                                Image(systemName: "tshirt.fill")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(AppStyles.Colors.primary.opacity(0.7))
-                                    .padding(.bottom, AppStyles.Spacing.small)
-                                Text(selectedItems.isEmpty ? "Select Images" : "No Clothing Items Detected")
-                                    .font(AppStyles.Typography.heading)
-                                    .foregroundColor(AppStyles.Colors.text)
-                                Text(selectedItems.isEmpty ? "Select images to analyze clothing items" : "No clothing items were detected in the selected images")
-                                    .font(AppStyles.Typography.body)
-                                    .foregroundColor(AppStyles.Colors.secondaryText)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, AppStyles.Spacing.xlarge)
-                                    .padding(.bottom, AppStyles.Spacing.medium)
-                            }
-                            .frame(height: 300)
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyles.Colors.secondaryBackground)
-                            .cornerRadius(AppStyles.Layout.cornerRadius)
-                            .padding(.horizontal, AppStyles.Spacing.medium)
-                        }
+                        photosPickerView
+                        contentView
                         Spacer()
                     }
                     .padding(.bottom, AppStyles.Spacing.xlarge)
@@ -236,7 +108,169 @@ struct ModelTestView: View {
                     }
                 }
             }
+            .alert(isPresented: $showUnknownColorAlert) {
+                Alert(
+                    title: Text("Invalid Color Selection"),
+                    message: Text("Please choose a valid color for all selected items before adding to wardrobe."),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
+    }
+
+    // MARK: - Subviews
+
+    private var photosPickerView: some View {
+        PhotosPicker(selection: $selectedItems, matching: .images) {
+            HStack {
+                Image(systemName: "photo.fill")
+                    .font(.system(size: 18))
+                Text("Select Images")
+                    .font(AppStyles.Typography.heading)
+            }
+            .padding(.horizontal, AppStyles.Spacing.large)
+        }
+        .primaryButtonStyle()
+        .padding(.horizontal, AppStyles.Spacing.xlarge)
+    }
+
+    private var contentView: some View {
+        Group {
+            if isProcessing {
+                processingView
+            } else if !previewItems.isEmpty {
+                VStack(spacing: AppStyles.Spacing.medium) {
+                    instructionsView
+                    gridView
+                    if hasSelectedItemsWithUnknownColor {
+                        unknownColorWarningView
+                    }
+                    addButtonView
+                }
+            } else {
+                emptyStateView
+            }
+        }
+    }
+
+    private var processingView: some View {
+        VStack(spacing: AppStyles.Spacing.medium) {
+            ProgressView()
+                .scaleEffect(1.5)
+                .padding()
+            Text("Processing image \(currentProcessingIndex + 1) of \(totalImages)")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+        }
+        .frame(height: 300)
+        .frame(maxWidth: .infinity)
+        .cardStyle()
+    }
+
+    private var instructionsView: some View {
+        Text("• Tap to select (👆 blue border)\n• Tap color to change 🎨\n• 'Unknown color'? Pick one\n• All items need a color to save ✅")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, AppStyles.Spacing.medium)
+                .padding(.top, AppStyles.Spacing.medium)
+    }
+
+    private var gridView: some View {
+        ScrollView {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
+                ForEach(previewItems) { item in
+                    VStack {
+                        Image(uiImage: item.image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                            .border(selectedPreviewItems.contains(item.id) ? Color.blue : Color.clear, width: 2)
+                        Text(item.category)
+                            .font(AppStyles.Typography.caption)
+                        Menu {
+                            ForEach(selectableColors, id: \.self) { color in
+                                Button(color) {
+                                    if let index = previewItems.firstIndex(where: { $0.id == item.id }) {
+                                        previewItems[index].colorLabel = color
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label(item.colorLabel, systemImage: "paintbrush")
+                                .padding(5)
+                                .background(RoundedRectangle(cornerRadius: 5).fill(Color.gray.opacity(0.2)))
+                                .font(AppStyles.Typography.caption)
+                                .foregroundColor(item.colorLabel == "unknown color" ? .red : AppStyles.Colors.text)
+                                .accessibilityLabel("Change color for \(item.category), currently \(item.colorLabel)")
+                        }
+                    }
+                    .onTapGesture {
+                        if selectedPreviewItems.contains(item.id) {
+                            selectedPreviewItems.remove(item.id)
+                        } else {
+                            selectedPreviewItems.insert(item.id)
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+
+    private var unknownColorWarningView: some View {
+        Text("Please assign a color to all selected items.")
+            .font(.caption)
+            .foregroundColor(.red)
+            .padding(.top, 5)
+    }
+
+    private var addButtonView: some View {
+        Button(action: {
+            print("Adding \(selectedPreviewItems.count) items")
+            let selected = previewItems.filter { selectedPreviewItems.contains($0.id) }
+            for item in selected {
+                let wardrobeItem = WardrobeItem(image: item.image, categoryName: item.category, colorLabel: item.colorLabel)
+                wardrobeManager.addItems([wardrobeItem])
+            }
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            Text("Add Selected to Wardrobe")
+                .font(AppStyles.Typography.heading)
+                .frame(maxWidth: .infinity)
+        }
+        .primaryButtonStyle()
+        .padding(.top, AppStyles.Spacing.medium)
+        .padding(.horizontal, AppStyles.Spacing.medium)
+        .disabled(selectedPreviewItems.isEmpty || hasSelectedItemsWithUnknownColor)
+        .onTapGesture {
+            if hasSelectedItemsWithUnknownColor {
+                showUnknownColorAlert = true
+            }
+        }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: AppStyles.Spacing.medium) {
+            Image(systemName: "tshirt.fill")
+                .font(.system(size: 60))
+                .foregroundColor(AppStyles.Colors.primary.opacity(0.7))
+                .padding(.bottom, AppStyles.Spacing.small)
+            Text(selectedItems.isEmpty ? "Select Images" : "No Clothing Items Detected")
+                .font(AppStyles.Typography.heading)
+                .foregroundColor(AppStyles.Colors.text)
+            Text(selectedItems.isEmpty ? "Select images to analyze clothing items" : "No clothing items were detected in the selected images")
+                .font(AppStyles.Typography.body)
+                .foregroundColor(AppStyles.Colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, AppStyles.Spacing.xlarge)
+                .padding(.bottom, AppStyles.Spacing.medium)
+        }
+        .frame(height: 300)
+        .frame(maxWidth: .infinity)
+        .background(AppStyles.Colors.secondaryBackground)
+        .cornerRadius(AppStyles.Layout.cornerRadius)
+        .padding(.horizontal, AppStyles.Spacing.medium)
     }
 
     private var hasSelectedItemsWithUnknownColor: Bool {
@@ -328,7 +362,7 @@ struct ModelTestView: View {
     }
 
     func getDominantColorAndLabelFromMaskedImage(_ image: UIImage) -> (color: UIColor, label: String) {
-        guard let cgImage = image.cgImage else { return (.gray, "no color") }
+        guard let cgImage = image.cgImage else { return (.gray, "unknown color") }
         let width = cgImage.width
         let height = cgImage.height
         let colorSpace = CGColorSpaceCreateDeviceRGB()
@@ -336,9 +370,9 @@ struct ModelTestView: View {
         let bytesPerRow = bytesPerPixel * width
         let bitsPerComponent = 8
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
-        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return (.gray, "no color") }
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return (.gray, "unknown color") }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return (.gray, "no color") }
+        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return (.gray, "unknown color") }
         var colorCounts: [String: Int] = [:]
         let bins = 16 // Number of bins per RGB channel
         for i in 0..<height {
@@ -363,7 +397,7 @@ struct ModelTestView: View {
             let label = classifyColorHSV(dominantColor)
             return (dominantColor, label)
         } else {
-            return (.gray, "no color")
+            return (.gray, "unknown color")
         }
     }
 
