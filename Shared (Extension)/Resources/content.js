@@ -147,10 +147,15 @@ const SITE_CONFIGS = {
       color: [
         'dl div:nth-child(2) dd span span',
         'dt span:contains("Color") ~ dd span span'
+      ],
+      deleteButton: [
+        'button[aria-label*="Decrease quantity"]',  // Target by aria-label content
+        'button:has(svg[viewBox="0 0 24 24"] path[d="M2 11.25h20v1.5H2v-1.5Z"])', // Target by SVG path content
+        'button:has(span:contains("Decrease quantity"))', // Target by text content
+        '.fccc97 > button:first-child' // Target by position in cart item
       ]
     }
   },
-  
   // Aritzia configuration
   aritzia: {
     cartDetection: {
@@ -188,6 +193,11 @@ const SITE_CONFIGS = {
       color: [
         '[data-testid^="bag-product-colour-text"]',
         'p[data-testid*="colour"]'
+      ],
+      deleteButton: [
+        'button[data-testid="remove-product-item-button"]',
+        'button[aria-label="Remove"]',
+        'button._1sj10sn2 button' // This is a fallback that might find the button based on its container
       ]
     }
   },
@@ -294,6 +304,11 @@ const SITE_CONFIGS = {
         '[class*="swatch"]',                         // Common color swatch pattern
         '.cart__items [data-color]',                 // Possible data attribute
         '.cart__items .variant-color'                // Alternative color class
+      ],
+      deleteButton: [
+        '.cart-item__remove-btn',  // This is the key selector for delete buttons
+        'a[data-ajax-cart-request-button]',
+        'a[href*="/cart/change"][href*="quantity=0"]'
       ]
     }
   },
@@ -339,6 +354,11 @@ const SITE_CONFIGS = {
       color: [
         '.shopping-cart__product-variant',
         'span.shopping-cart__product-variant'
+      ],
+      deleteButton: [
+        '.cart-incrementor__button--minus',
+        'button[title="Remove one"]',
+        '.shopping-cart__td--quantity button:first-child'
       ]
     }
   },
@@ -387,6 +407,12 @@ const SITE_CONFIGS = {
           '.product__detail--horizontal',
           '.u-text--lg.u-padding-b--xs.product__detail',
           'div.u-text--lg:contains("Color")'
+        ],
+        deleteButton: [
+          'button.js-track-remove',
+          '.js-track-remove',
+          'button[onclick*="removeBagProduct"]',
+          'button:contains("remove")'
         ]
       }
     },
@@ -432,18 +458,22 @@ const SITE_CONFIGS = {
       color: [
         '.crt-Product_TitleLink',
         '.crt-Product_Title'
+      ],
+      deleteButton: [
+        '.crt-Product_Button-remove',
+        'button[data-cart-item-el="remove"]',
+        'button.crt-Product_Button-remove'
       ]
     }
   },
     fashionNova: {
       cartDetection: {
         urlPatterns: ['/cart', '/checkout'],
-        domSelectors: [
-          'div[data-testid="cart-lines"]',
-          'li.cart-line',
-          '.cart-line',
-          '[data-testid="cart-line-title-link"]'
-        ],
+          domSelectors: [
+                'div[data-testid="cart-lines"]',
+                'ul.flex',
+                '[data-testid="cart-line-item"]'
+              ],
         textIndicators: ['cart', 'bag', 'checkout', 'wishlist']
       },
       itemSelectors: {
@@ -476,6 +506,11 @@ const SITE_CONFIGS = {
           // Color is usually part of the product name for Fashion Nova
           // Try to extract from product name
           'a[data-testid="cart-line-title-link"]'
+        ],
+        deleteButton: [
+          'button[data-testid="remove-item"]',
+          'button[aria-label="Remove item"]',
+          'form input[value*="LinesRemove"] + button'
         ]
       }
     },
@@ -521,6 +556,11 @@ const SITE_CONFIGS = {
           'li[data-qa-item-label="cc_color_label"]',
           '.c-pwa-item-attributes__attribute:contains("Color")',
           '.c-pwa-item-attributes span.c-pwa-item-attributes__label:contains("Color") + *'
+        ],
+        deleteButton: [
+          'button[aria-label^="Remove"]',
+          'button[data-qa-item-remove]',
+          '.c-pwa-cart-item-actions__action button'
         ]
       }
     },
@@ -566,6 +606,12 @@ const SITE_CONFIGS = {
           '.product-option dt:contains("Color") + dd',
           'dl .product-option:contains("Color") dd',
           'dl div[class*="product-option"]:nth-child(1) dd'
+        ],
+        deleteButton: [
+            'cart-remove-button a',
+            '.button.button--tertiary[href*="quantity=0"]',
+            'a[aria-label^="Remove"]',
+            '.cart-item__quantity a[href*="quantity=0"]'
         ]
       }
     }
@@ -779,6 +825,485 @@ function setupURLMonitoring() {
     showDebugOverlay("ERROR in URL monitoring setup: " + error.message);
     console.error("Error in URL monitoring setup:", error);
   }
+}
+
+function processBrandyMelvilleItem(item, index) {
+  console.log(`Processing Brandy Melville item ${index}`);
+  
+  // Find image
+  let imageUrl = '';
+  const imgEl = item.querySelector('.cart-item__image');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name
+  let productName = '';
+  const nameEl = item.querySelector('.cart-item__name');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find price
+  let price = '';
+  const priceEl = item.querySelector('.price.price--end');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find size
+  let size = '';
+  const sizeContainer = item.querySelector('.product-option dt:contains("Size") + dd, dl .product-option:contains("Size") dd');
+  if (sizeContainer) {
+    size = sizeContainer.textContent.trim();
+    console.log(`Found size: ${size}`);
+  }
+  
+  // Find color
+  let color = '';
+  const colorContainer = item.querySelector('.product-option dt:contains("Color") + dd, dl .product-option:contains("Color") dd');
+  if (colorContainer) {
+    color = colorContainer.textContent.trim();
+    console.log(`Found color: ${color}`);
+  }
+  
+  // Find delete link - this is the key difference for Brandy Melville
+  const deleteLink = item.querySelector('cart-remove-button a, .button.button--tertiary[href*="quantity=0"]');
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    price: price || '',
+    size: size || '',
+    color: color || '',
+    deleteLink  // Store the link for use in deletion
+  };
+}
+
+function processOhPollyItem(item, index) {
+  console.log(`Processing OhPolly item ${index}`);
+  
+  // Find image directly
+  let imageUrl = '';
+  const imgEl = item.querySelector('.rsp-Image_Image');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product strapline (brand/collection)
+  let strapline = '';
+  const straplineEl = item.querySelector('.crt-Product_Strapline');
+  if (straplineEl) {
+    strapline = straplineEl.textContent.trim();
+    console.log(`Found strapline: ${strapline}`);
+  }
+  
+  // Find product title - this contains name, color and size
+  let fullTitle = '';
+  const titleEl = item.querySelector('.crt-Product_TitleLink');
+  if (titleEl) {
+    fullTitle = titleEl.textContent.trim();
+    console.log(`Found full title: ${fullTitle}`);
+  }
+  
+  // Extract product name, color and size from the title
+  // OhPolly format is typically "Product Description in Color - Size"
+  let productName = fullTitle;
+  let color = '';
+  let size = '';
+  
+  // Extract color if format "in Color" is present
+  if (fullTitle.includes(' in ')) {
+    const parts = fullTitle.split(' in ');
+    productName = parts[0].trim();
+    
+    // Extract size if format "Color - Size" is present
+    if (parts[1] && parts[1].includes(' - ')) {
+      const colorSizeParts = parts[1].split(' - ');
+      color = colorSizeParts[0].trim();
+      size = colorSizeParts[1].trim();
+    } else {
+      color = parts[1].trim();
+    }
+  }
+  // If "in Color" format isn't present but "- Size" is
+  else if (fullTitle.includes(' - ')) {
+    const parts = fullTitle.split(' - ');
+    productName = parts[0].trim();
+    size = parts[1].trim();
+  }
+  
+  // Find price directly
+  let price = '';
+  const priceEl = item.querySelector('.crt-Product_Price');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find delete button
+  const deleteButton = item.querySelector('.crt-Product_Button-remove') ||
+                       item.querySelector('button[data-cart-item-el="remove"]');
+  
+  if (deleteButton) {
+    console.log(`Found delete button for OhPolly item`);
+  }
+  
+  return {
+    imageUrl,
+    strapline,
+    productName: productName || 'Product',
+    price: price || '',
+    size: size || '',
+    color: color || '',
+    deleteButton // Include button reference for direct use
+  };
+}
+
+function processRevolveItem(item, index) {
+  console.log(`Processing Revolve item ${index}`);
+  
+  // Find image directly
+  let imageUrl = '';
+  const imgEl = item.querySelector('.shopping-bag__image img');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name directly
+  let productName = '';
+  const nameEl = item.querySelector('.shopping-bag__body .u-block strong');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find brand directly
+  let brand = '';
+  const brandEl = item.querySelector('.shopping-bag__body .u-block div:not(:first-child)');
+  if (brandEl) {
+    brand = brandEl.textContent.trim();
+    console.log(`Found brand: ${brand}`);
+  }
+  
+  // Find price directly
+  let price = '';
+  const priceEl = item.querySelector('.shopping-bag__pri .js-price');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find size directly
+  let size = '';
+  const sizeEl = item.querySelector('.shopbag_item_size .sb_display');
+  if (sizeEl) {
+    size = sizeEl.textContent.trim();
+    console.log(`Found size: ${size}`);
+  }
+  
+  // Find color directly
+  let color = '';
+  const colorElements = item.querySelectorAll('.u-float--left');
+  for (const el of colorElements) {
+    if (el.textContent.includes('Color:')) {
+      color = el.textContent.replace('Color:', '').trim();
+      console.log(`Found color: ${color}`);
+      break;
+    }
+  }
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    brand: brand || '',
+    price: price || '',
+    size: size || '',
+    color: color || ''
+  };
+}
+
+function processFashionNovaItem(item, index) {
+  console.log(`Processing Fashion Nova item ${index}`);
+  
+  // Find image
+  let imageUrl = '';
+  const imgEl = item.querySelector('img[data-testid="cart-line-image"]');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name
+  let productName = '';
+  const nameEl = item.querySelector('a[data-testid="cart-line-title-link"]');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find price
+  let price = '';
+  const priceEl = item.querySelector('div[data-testid="cart-line-price"] span.body-md-bold');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find size and color from the size selector
+  let size = '';
+  let color = '';
+  const sizeSelector = item.querySelector('button[data-testid="size-selector"]');
+  if (sizeSelector) {
+    const sizeText = sizeSelector.textContent.trim();
+    console.log(`Found size/color text: ${sizeText}`);
+    
+    // Fashion Nova typically formats as "Size: M | Color: Black"
+    if (sizeText.includes('Size:')) {
+      const sizeMatch = sizeText.match(/Size:\s*([^\s|]+)/);
+      if (sizeMatch && sizeMatch[1]) {
+        size = sizeMatch[1].trim();
+      }
+    }
+    
+    if (sizeText.includes('Color:')) {
+      const colorMatch = sizeText.match(/Color:([^$]+)/);
+      if (colorMatch && colorMatch[1]) {
+        color = colorMatch[1].trim();
+      }
+    }
+  }
+  
+  // Find delete button form
+  const removeForm = item.querySelector('form[action="/cart"] input[value*="LinesRemove"]');
+  const removeButton = item.querySelector('button[data-testid="remove-item"]');
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    price: price || '',
+    size: size || '',
+    color: color || '',
+    removeForm,   // Store the form for later use
+    removeButton  // Store the button for later use
+  };
+}
+
+function processPrincessPollyItem(item, index) {
+  console.log(`Processing Princess Polly item ${index}`);
+  
+  // Find image
+  let imageUrl = '';
+  const imgEl = item.querySelector('.shopping-cart__td--image img');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name
+  let productName = '';
+  const nameEl = item.querySelector('.shopping-cart__product-name-text');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find price
+  let price = '';
+  const priceEl = item.querySelector('[data-currency-conversion]');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find variant info (size/color)
+  let variantInfo = '';
+  let size = '';
+  let color = '';
+  const variantEl = item.querySelector('.shopping-cart__product-variant');
+  if (variantEl) {
+    variantInfo = variantEl.textContent.trim();
+    console.log(`Found variant info: ${variantInfo}`);
+    
+    // Try to extract size and color if they're in "Size / Color" format
+    if (variantInfo.includes('/')) {
+      const parts = variantInfo.split('/');
+      size = parts[0].trim();
+      color = parts[1].trim();
+    }
+  }
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    price: price || '',
+    size: size || '',
+    color: color || '',
+    variantInfo
+  };
+}
+
+// For Aritzia
+function processAritziaItem(item, index) {
+  console.log(`Processing Aritzia item ${index}`);
+  
+  // Find image
+  let imageUrl = '';
+  const imgEl = item.querySelector('div._1sj10sn1 img');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name
+  let productName = '';
+  const nameEl = item.querySelector('[data-testid^="bag-product-name-text"]');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find brand
+  let brand = '';
+  const brandEl = item.querySelector('[data-testid^="bag-product-brand-text"]');
+  if (brandEl) {
+    brand = brandEl.textContent.trim();
+    console.log(`Found brand: ${brand}`);
+  }
+  
+  // Find price
+  let price = '';
+  const priceEl = item.querySelector('[data-testid="product-list-price-text"]');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find size
+  let size = '';
+  const sizeEl = item.querySelector('[data-testid^="bag-size-text"]');
+  if (sizeEl) {
+    size = sizeEl.textContent.trim();
+    console.log(`Found size: ${size}`);
+  }
+  
+  // Find color
+  let color = '';
+  const colorEl = item.querySelector('[data-testid^="bag-product-colour-text"]');
+  if (colorEl) {
+    color = colorEl.textContent.trim();
+    console.log(`Found color: ${color}`);
+  }
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    brand: brand || '',
+    price: price || '',
+    size: size || '',
+    color: color || ''
+  };
+}
+
+function processHMItem(item, index) {
+  console.log(`Processing H&M item ${index}`);
+  
+  // Find image directly
+  let imageUrl = '';
+  const imgEl = item.querySelector('picture img');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name directly
+  let productName = '';
+  const nameEl = item.querySelector('h2');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find price directly - this will find something like "span.aeecde"
+  let price = '';
+  const priceElements = Array.from(item.querySelectorAll('span'));
+  const priceEl = priceElements.find(el => {
+    // Look for price-like content with currency symbol
+    return el.textContent.includes('$') && /\$\d+\.\d+/.test(el.textContent);
+  });
+  
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  }
+  
+  // Find size directly
+  let size = '';
+  const sizeElements = Array.from(item.querySelectorAll('dl div'));
+  const sizeContainer = sizeElements.find(el =>
+    el.textContent.includes('Size') ||
+    el.querySelector('dt span')?.textContent.includes('Size')
+  );
+  
+  if (sizeContainer) {
+    const sizeValueEl = sizeContainer.querySelector('dd span span');
+    if (sizeValueEl) {
+      size = sizeValueEl.textContent.trim();
+      console.log(`Found size: ${size}`);
+    }
+  }
+  
+  // Find color directly
+  let color = '';
+  const colorElements = Array.from(item.querySelectorAll('dl div'));
+  const colorContainer = colorElements.find(el =>
+    el.textContent.includes('Color') ||
+    el.querySelector('dt span')?.textContent.includes('Color')
+  );
+  
+  if (colorContainer) {
+    const colorValueEl = colorContainer.querySelector('dd span span');
+    if (colorValueEl) {
+      color = colorValueEl.textContent.trim();
+      console.log(`Found color: ${color}`);
+    }
+  }
+  
+  // Store references to quantity elements for deletion
+  let decreaseButton = null;
+  let quantityInput = null;
+  
+  // Find the decrease button by text content or SVG path
+  const decreaseButtons = Array.from(item.querySelectorAll('button'));
+  decreaseButton = decreaseButtons.find(btn => {
+    const hasDecreaseText = btn.textContent.includes('Decrease quantity');
+    const hasSvgPath = btn.querySelector('svg path[d="M2 11.25h20v1.5H2v-1.5Z"]');
+    return hasDecreaseText || hasSvgPath;
+  });
+  
+  if (decreaseButton) {
+    console.log('Found decrease button');
+    // Also find the quantity input for reference
+    quantityInput = item.querySelector('input[data-testid="quantity-input"]');
+    if (quantityInput) {
+      console.log(`Current quantity: ${quantityInput.value}`);
+    }
+  }
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    price: price || '',
+    size: size || '',
+    color: color || '',
+    decreaseButton, // Store the actual DOM element for later use
+    quantityInput   // Store the quantity input for reference
+  };
 }
 
 // Handle URL changes - this is the primary entry point for all checks
@@ -1229,6 +1754,74 @@ function checkForCartElements() {
     };
   }
 
+function processUrbanOutfittersItem(item, index) {
+  console.log(`Processing Urban Outfitters item ${index}`);
+  
+  // Find image
+  let imageUrl = '';
+  const imgEl = item.querySelector('.o-pwa-item-thumbnail__image');
+  if (imgEl && imgEl.src) {
+    imageUrl = imgEl.src;
+    console.log(`Found image: ${imageUrl}`);
+  }
+  
+  // Find product name
+  let productName = '';
+  const nameEl = item.querySelector('.c-pwa-item-title__link');
+  if (nameEl) {
+    productName = nameEl.textContent.trim();
+    console.log(`Found name: ${productName}`);
+  }
+  
+  // Find price
+  let price = '';
+  const priceEl = item.querySelector('[data-qa-item-total-price]');
+  if (priceEl) {
+    price = priceEl.textContent.trim();
+    console.log(`Found price: ${price}`);
+  } else {
+    // Try alternative price selector
+    const altPriceEl = item.querySelector('.c-pwa-item-price__unit');
+    if (altPriceEl) {
+      price = altPriceEl.textContent.trim().replace('Item Price', '');
+      console.log(`Found price (alternative): ${price}`);
+    }
+  }
+  
+  // Find size
+  let size = '';
+  const sizeEl = item.querySelector('li[data-qa-item-label="cc_size_label"]');
+  if (sizeEl) {
+    size = sizeEl.textContent.replace('Size', '').trim();
+    console.log(`Found size: ${size}`);
+  }
+  
+  // Find color
+  let color = '';
+  const colorEl = item.querySelector('li[data-qa-item-label="cc_color_label"]');
+  if (colorEl) {
+    color = colorEl.textContent.replace('Color', '').trim();
+    console.log(`Found color: ${color}`);
+  }
+  
+  // Find delete button
+  const deleteButton = item.querySelector('button[aria-label^="Remove"]') ||
+                       item.querySelector('button[data-qa-item-remove]');
+  
+  if (deleteButton) {
+    console.log(`Found delete button for Urban Outfitters item`);
+  }
+  
+  return {
+    imageUrl,
+    productName: productName || 'Product',
+    price: price || '',
+    size: size || '',
+    color: color || '',
+    deleteButton // Include the delete button reference
+  };
+}
+
   // Function to process OhPolly items specifically
   function processOhPollyItem(item, index) {
     console.log(`Processing OhPolly item ${index}`);
@@ -1375,157 +1968,535 @@ function processCartItems(cartItems, panel, usedSelector) {
     
     // Process all items using a unified approach
     cartItems.forEach((item, index) => {
-      try {
-        console.log(`Cart Image Extractor: Processing item ${index+1}`);
-        showDebugOverlay(`Processing item ${index+1}`);
+        try {
+            console.log(`Cart Image Extractor: Processing item ${index+1}`);
+            showDebugOverlay(`Processing item ${index+1}`);
+            
+            // Get product info - use special processing for certain sites if needed
+            let productInfo;
+            let itemData = {};
+            
+            if (window.location.hostname.includes('abercrombie.com')) {
+                productInfo = processAbercrombieItem(item, index);
+            } else if (window.location.hostname.includes('ohpolly.com')) {
+                productInfo = processOhPollyItem(item, index);
+            } else if (window.location.hostname.includes('revolve.com')){
+                productInfo = processRevolveItem(item, index);
+            } else if (window.location.hostname.includes('hm.com')) {
+                productInfo = processHMItem(item, index);  // Make sure this line is present
+            } else if (window.location.hostname.includes('princesspolly.com')) {
+                productInfo = processPrincessPollyItem(item, index);
+            } else if (window.location.hostname.includes('aritzia.com')) {
+                productInfo = processAritziaItem(item, index);
+            } else if (window.location.hostname.includes('urbanoutfitters.com')) {
+                productInfo = processUrbanOutfittersItem(item, index);
+            } else if (window.location.hostname.includes('fashionnova.com')) {
+                productInfo = processFashionNovaItem(item, index);
+            } else if (window.location.hostname.includes('brandymelville.com')) {
+                productInfo = processBrandyMelvilleItem(item, index);
+            } else {
+                // Generic processing for other sites
+                itemData.imageUrl = getImageUrl(item);
+                itemData.productName = getTextFromSelectors('name', item) || 'Product';
+                itemData.price = getTextFromSelectors('price', item) || '';
+                itemData.size = getTextFromSelectors('size', item) || '';
+                itemData.color = getTextFromSelectors('color', item) || '';
+                productInfo = itemData;
+            }
+            
+            if (!productInfo.imageUrl) {
+                console.log(`Cart Image Extractor: No image found for item ${index+1}`);
+                showDebugOverlay(`No image found for item ${index+1}`);
+                return;
+            }
+            
+            console.log(`Cart Image Extractor: Found image for item ${index+1}: ${productInfo.imageUrl}`);
+            
+            // Create item container
+            const itemElement = document.createElement('div');
+            itemElement.className = 'cart-item';
+            itemElement.setAttribute('data-item-index', index);
+            
+            // Create image container
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'item-image-container';
+            
+            // Create item image
+            const itemImg = document.createElement('img');
+            itemImg.src = productInfo.imageUrl;
+            itemImg.alt = productInfo.productName;
+            itemImg.className = 'item-image';
+            itemImg.onerror = function() {
+                // If image fails to load, try to fix common URL issues
+                if (productInfo.imageUrl.includes('?')) {
+                    // Try removing query parameters
+                    this.src = productInfo.imageUrl.split('?')[0];
+                } else if (!productInfo.imageUrl.startsWith('http')) {
+                    // Try adding protocol if missing
+                    this.src = 'https:' + productInfo.imageUrl;
+                }
+            };
+            
+            imgContainer.appendChild(itemImg);
+            
+            // Create item details
+            const detailsElement = document.createElement('div');
+            detailsElement.className = 'item-details';
+            
+            // Add product name
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'item-name';
+            nameDiv.textContent = productInfo.productName;
+            detailsElement.appendChild(nameDiv);
+            
+            if (productInfo.brand) {
+                const brandDiv = document.createElement('div');
+                brandDiv.className = 'item-brand';
+                brandDiv.style.fontSize = '10px';
+                brandDiv.style.color = '#666';
+                brandDiv.textContent = productInfo.brand;
+                detailsElement.appendChild(brandDiv);
+                
+                detailsElement.appendChild(nameDiv);
+            } else {
+                detailsElement.appendChild(nameDiv);
+            }
+            
+            // Add price
+            const priceDiv = document.createElement('div');
+            priceDiv.className = 'item-price';
+            priceDiv.textContent = productInfo.price;
+            detailsElement.appendChild(priceDiv);
+            
+            // Add size and color
+            const specDiv = document.createElement('div');
+            specDiv.className = 'item-specs';
+            specDiv.textContent = `${productInfo.size} | ${productInfo.color}`;
+            detailsElement.appendChild(specDiv);
+            
+            // Add delete button if site config has delete selectors
+            if (currentSiteConfig.itemSelectors.deleteButton &&
+                currentSiteConfig.itemSelectors.deleteButton.length > 0) {
+                
+                // Create delete button
+        const deleteItemBtn = document.createElement('button');
+        deleteItemBtn.className = 'item-delete-button';
+        deleteItemBtn.textContent = 'Delete';
         
-        // Get product info - use special processing for certain sites if needed
-        let productInfo;
-        let itemData = {};
-        
-        if (window.location.hostname.includes('abercrombie.com')) {
-          productInfo = processAbercrombieItem(item, index);
-        } else if (window.location.hostname.includes('ohpolly.com')) {
-            productInfo = processOhPollyItem(item, index);
-        } else if (window.location.hostname.includes('revolve.com')){
-            productInfo = processRevolveItem(item, index);
-        } else {
-          // Generic processing for other sites
-          itemData.imageUrl = getImageUrl(item);
-          itemData.productName = getTextFromSelectors('name', item) || 'Product';
-          itemData.price = getTextFromSelectors('price', item) || '';
-          itemData.size = getTextFromSelectors('size', item) || '';
-          itemData.color = getTextFromSelectors('color', item) || '';
-          productInfo = itemData;
-        }
-        
-        if (!productInfo.imageUrl) {
-          console.log(`Cart Image Extractor: No image found for item ${index+1}`);
-          showDebugOverlay(`No image found for item ${index+1}`);
-          return;
-        }
-        
-        console.log(`Cart Image Extractor: Found image for item ${index+1}: ${productInfo.imageUrl}`);
-        
-        // Create item container
-        const itemElement = document.createElement('div');
-        itemElement.className = 'cart-item';
-        itemElement.setAttribute('data-item-index', index);
-        
-        // Create image container
-        const imgContainer = document.createElement('div');
-        imgContainer.className = 'item-image-container';
-        
-        // Create item image
-        const itemImg = document.createElement('img');
-        itemImg.src = productInfo.imageUrl;
-        itemImg.alt = productInfo.productName;
-        itemImg.className = 'item-image';
-        itemImg.onerror = function() {
-          // If image fails to load, try to fix common URL issues
-          if (productInfo.imageUrl.includes('?')) {
-            // Try removing query parameters
-            this.src = productInfo.imageUrl.split('?')[0];
-          } else if (!productInfo.imageUrl.startsWith('http')) {
-            // Try adding protocol if missing
-            this.src = 'https:' + productInfo.imageUrl;
-          }
-        };
-        
-        imgContainer.appendChild(itemImg);
-        
-        // Create item details
-        const detailsElement = document.createElement('div');
-        detailsElement.className = 'item-details';
-        
-        // Add product name
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'item-name';
-        nameDiv.textContent = productInfo.productName;
-        detailsElement.appendChild(nameDiv);
-        
-        // Add price
-        const priceDiv = document.createElement('div');
-        priceDiv.className = 'item-price';
-        priceDiv.textContent = productInfo.price;
-        detailsElement.appendChild(priceDiv);
-        
-        // Add size and color
-        const specDiv = document.createElement('div');
-        specDiv.className = 'item-specs';
-        specDiv.textContent = `${productInfo.size} | ${productInfo.color}`;
-        detailsElement.appendChild(specDiv);
-        
-        // Add delete button if site config has delete selectors
-        if (currentSiteConfig.itemSelectors.deleteButton &&
-            currentSiteConfig.itemSelectors.deleteButton.length > 0) {
-          
-          // Create delete button
-          const deleteItemBtn = document.createElement('button');
-          deleteItemBtn.className = 'item-delete-button';
-          deleteItemBtn.textContent = 'Delete';
-          
-          // Add event listener to the delete button
-          deleteItemBtn.addEventListener('click', function() {
+        // Add event listener to the delete button
+        deleteItemBtn.addEventListener('click', function() {
             // Try to find the delete button in the original item
             let deleteButton = null;
             
-            // Try each delete button selector
+            if (window.location.hostname.includes('hm.com')) {
+                console.log(`Cart Image Extractor: Using two-step deletion for H&M item ${index+1}`);
+                
+                // Step 1: Find and click the "Decrease quantity by 1" button
+                const decreaseButton = Array.from(document.querySelectorAll('button'))
+                .find(btn => btn.textContent.includes('Decrease quantity by 1'));
+                
+                if (decreaseButton) {
+                    console.log(`Cart Image Extractor: Found decrease button for H&M, starting deletion process`);
+                    
+                    // Click the decrease button
+                    decreaseButton.click();
+                    
+                    // Step 2: Wait for the confirmation dialog and click "Remove"
+                    const interval = setInterval(() => {
+                        const removeButton = Array.from(document.querySelectorAll('button'))
+                        .find(btn => btn.textContent.includes('Remove'));
+                        
+                        if (removeButton) {
+                            console.log(`Cart Image Extractor: Found Remove confirmation button, completing deletion`);
+                            removeButton.click();
+                            clearInterval(interval);
+                            
+                            // Remove the item from our panel
+                            itemElement.remove();
+                            
+                            // Check if cart is empty
+                            setTimeout(() => {
+                                if (imageContainer.children.length === 0) {
+                                    const emptyMessage = document.createElement('div');
+                                    emptyMessage.className = 'panel-message';
+                                    emptyMessage.textContent = 'Your cart is empty';
+                                    imageContainer.appendChild(emptyMessage);
+                                }
+                            }, 100);
+                        }
+                    }, 100); // Check every 100ms
+                    
+                    // Safety timeout to prevent infinite checking
+                    setTimeout(() => {
+                        clearInterval(interval);
+                    }, 5000);
+                    
+                    return; // Exit early
+                } else {
+                    console.log(`Cart Image Extractor: Could not find decrease button for H&M item`);
+                }
+            }
+            
+            if (window.location.hostname.includes('princesspolly.com')) {
+                console.log(`Cart Image Extractor: Using special handling for Princess Polly item ${index+1}`);
+                
+                // Find the decrement button
+                const decreaseButton = item.querySelector('.cart-incrementor__button--minus') ||
+                                       item.querySelector('button[title="Remove one"]');
+                
+                // Find quantity display to check if this is the last item
+                const quantityDisplay = item.querySelector('.cart-incrementor__amount');
+                let quantity = 1;
+                
+                if (quantityDisplay) {
+                    quantity = parseInt(quantityDisplay.textContent.trim(), 10) || 1;
+                    console.log(`Cart Image Extractor: Item quantity is ${quantity}`);
+                }
+                
+                if (decreaseButton) {
+                    // Click the decrease button
+                    decreaseButton.click();
+                    console.log(`Cart Image Extractor: Clicked decrease button for Princess Polly item`);
+                    
+                    // If this was the last item (quantity=1), remove from our panel
+                    if (quantity <= 1) {
+                        itemElement.remove();
+                        
+                        // Check if cart is empty
+                        setTimeout(() => {
+                            if (imageContainer.children.length === 0) {
+                                const emptyMessage = document.createElement('div');
+                                emptyMessage.className = 'panel-message';
+                                emptyMessage.textContent = 'Your cart is empty';
+                                imageContainer.appendChild(emptyMessage);
+                            }
+                        }, 100);
+                    } else {
+                        // If quantity was > 1, show message that quantity was decreased
+                        const notification = document.createElement('div');
+                        notification.className = 'item-notification';
+                        notification.textContent = 'Quantity decreased. Click again to remove.';
+                        notification.style.fontSize = '10px';
+                        notification.style.color = '#e55';
+                        notification.style.marginTop = '5px';
+                        detailsElement.appendChild(notification);
+                        
+                        // Refresh panel after a short delay
+                        setTimeout(() => {
+                            extractAndDisplayImages();
+                        }, 2000);
+                    }
+                } else {
+                    console.log(`Cart Image Extractor: Could not find decrease button for Princess Polly item`);
+                }
+                
+                return; // Exit early
+            }
+            
+            // Special handling for Brandy Melville
+            if (window.location.hostname.includes('brandymelville.com')) {
+                console.log(`Cart Image Extractor: Using special handling for Brandy Melville item ${index+1}`);
+                
+                // Brandy Melville uses links instead of buttons for deletion
+                if (productInfo.deleteLink) {
+                    console.log(`Cart Image Extractor: Found delete link, navigating to it`);
+                    // Instead of clicking, we need to use the href since it's a navigation link
+                    window.location.href = productInfo.deleteLink.href;
+                    return; // Exit early as we're navigating away
+                } else {
+                    // Try to find any remove link directly
+                    const removeLink = item.querySelector('cart-remove-button a, a[href*="quantity=0"]');
+                    if (removeLink) {
+                        console.log(`Cart Image Extractor: Found remove link directly, navigating to it`);
+                        window.location.href = removeLink.href;
+                        return; // Exit early as we're navigating away
+                    } else {
+                        // Final attempt - look through all cart-remove-button elements
+                        const allRemoveButtons = document.querySelectorAll('cart-remove-button a');
+                        if (allRemoveButtons.length > index) {
+                            console.log(`Cart Image Extractor: Found remove link by index, navigating to it`);
+                            window.location.href = allRemoveButtons[index].href;
+                            return; // Exit early as we're navigating away
+                        }
+                        
+                        console.log(`Cart Image Extractor: Could not find any remove links for Brandy Melville`);
+                        // No navigation will happen, so we can continue with panel updates
+                    }
+                }
+                
+                // Since we're using navigation, we don't need to update the panel UI here
+                // The page will reload after deletion
+            }
+            
+            if (window.location.hostname.includes('ohpolly.com')) {
+                console.log(`Cart Image Extractor: Using special handling for OhPolly item ${index+1}`);
+                
+                // Get the delete button from productInfo if it was processed by processOhPollyItem
+                if (productInfo.deleteButton) {
+                    deleteButton = productInfo.deleteButton;
+                } else {
+                    // Otherwise try to find it directly in the item
+                    deleteButton = item.querySelector('.crt-Product_Button-remove') ||
+                                  item.querySelector('button[data-cart-item-el="remove"]');
+                }
+                
+                if (deleteButton) {
+                    console.log(`Cart Image Extractor: Found delete button for OhPolly, clicking it`);
+                    
+                    // Click the delete button
+                    deleteButton.click();
+                    
+                    // Remove the item from our panel
+                    itemElement.remove();
+                    
+                    // Check if cart is empty
+                    setTimeout(() => {
+                        if (imageContainer.children.length === 0) {
+                            const emptyMessage = document.createElement('div');
+                            emptyMessage.className = 'panel-message';
+                            emptyMessage.textContent = 'Your cart is empty';
+                            imageContainer.appendChild(emptyMessage);
+                        }
+                    }, 100);
+                    
+                    return; // Exit early
+                } else {
+                    console.log(`Cart Image Extractor: Could not find delete button for OhPolly item directly`);
+                    
+                    // Try an alternative approach - get all remove buttons and click the one at this index
+                    const allRemoveButtons = document.querySelectorAll('.crt-Product_Button-remove');
+                    if (allRemoveButtons.length > index) {
+                        console.log(`Cart Image Extractor: Found delete button by index, clicking it`);
+                        allRemoveButtons[index].click();
+                        
+                        // Remove the item from our panel
+                        itemElement.remove();
+                        return; // Exit early
+                    }
+                    
+                    console.log(`Cart Image Extractor: No matching button found for OhPolly item`);
+                    
+                    // Fallback - refresh cart panel
+                    setTimeout(() => {
+                        extractAndDisplayImages();
+                    }, 2000);
+                }
+                
+                return; // Exit early
+            }
+
+            // Special handling for Aritzia
+            if (window.location.hostname.includes('aritzia.com')) {
+                console.log(`Cart Image Extractor: Using special handling for Aritzia item ${index+1}`);
+                
+                // Try to find the remove button by data-testid
+                const removeButton = document.querySelector(`button[data-testid="remove-product-item-button"]`);
+                
+                if (removeButton) {
+                    console.log(`Cart Image Extractor: Found remove button for Aritzia, clicking it`);
+                    removeButton.click();
+                    
+                    // Remove the item from our panel
+                    itemElement.remove();
+                    
+                    // Check if cart is empty
+                    setTimeout(() => {
+                        if (imageContainer.children.length === 0) {
+                            const emptyMessage = document.createElement('div');
+                            emptyMessage.className = 'panel-message';
+                            emptyMessage.textContent = 'Your cart is empty';
+                            imageContainer.appendChild(emptyMessage);
+                        }
+                    }, 100);
+                } else {
+                    console.log(`Cart Image Extractor: Could not find remove button for Aritzia item`);
+                    
+                    // Fallback - try to find by aria-label or SVG title
+                    const removeButtonsByAriaLabel = Array.from(document.querySelectorAll('button[aria-label="Remove"]'));
+                    
+                    if (removeButtonsByAriaLabel.length > index) {
+                        console.log(`Cart Image Extractor: Found remove button by aria-label, clicking it`);
+                        removeButtonsByAriaLabel[index].click();
+                        
+                        // Remove the item from our panel
+                        itemElement.remove();
+                    } else {
+                        console.log(`Cart Image Extractor: Could not find any remove buttons for Aritzia`);
+                        
+                        // Fallback - refresh cart panel
+                        setTimeout(() => {
+                            extractAndDisplayImages();
+                        }, 2000);
+                    }
+                }
+                
+                return; // Exit early
+            }
+            
+            if (window.location.hostname.includes('urbanoutfitters.com')) {
+                console.log(`Cart Image Extractor: Using special handling for Urban Outfitters item ${index+1}`);
+                
+                // If we have the delete button from processing, use it directly
+                if (productInfo.deleteButton) {
+                    console.log(`Cart Image Extractor: Found delete button reference, clicking it`);
+                    productInfo.deleteButton.click();
+                } else {
+                    // Otherwise try to find it in the cart item
+                    const removeButton = item.querySelector('button[aria-label^="Remove"]');
+                    
+                    if (removeButton) {
+                        console.log(`Cart Image Extractor: Found remove button, clicking it`);
+                        removeButton.click();
+                    } else {
+                        console.log(`Cart Image Extractor: Trying to find remove button by direct DOM query`);
+                        
+                        // Try a more general search across the page if we can't find it in this specific item
+                        const allRemoveButtons = document.querySelectorAll('button[aria-label^="Remove"]');
+                        if (allRemoveButtons.length > index) {
+                            console.log(`Cart Image Extractor: Found remove button by index, clicking it`);
+                            allRemoveButtons[index].click();
+                        } else {
+                            console.log(`Cart Image Extractor: Could not find any remove buttons`);
+                            // Fallback - refresh cart panel
+                            setTimeout(() => {
+                                extractAndDisplayImages();
+                            }, 2000);
+                        }
+                    }
+                }
+                
+                // Remove the item from our panel
+                itemElement.remove();
+                
+                // Check if cart is empty
+                setTimeout(() => {
+                    if (imageContainer.children.length === 0) {
+                        const emptyMessage = document.createElement('div');
+                        emptyMessage.className = 'panel-message';
+                        emptyMessage.textContent = 'Your cart is empty';
+                        imageContainer.appendChild(emptyMessage);
+                    }
+                }, 100);
+                
+                return; // Exit early
+            }
+            
+            // Special handling for Fashion Nova's two-step delete process
+            if (window.location.hostname.includes('fashionnova.com')) {
+                console.log(`Cart Image Extractor: Using special handling for Fashion Nova item ${index+1}`);
+                
+                // Step 1: Click the remove button to open the confirmation dialog
+                const removeButton = item.querySelector('button[data-testid="remove-item"]') ||
+                                     item.querySelector('button[aria-label="Remove item"]');
+                
+                if (removeButton) {
+                    console.log(`Cart Image Extractor: Found remove button for Fashion Nova, clicking it to open confirmation`);
+                    removeButton.click();
+                    
+                    // Step 2: Wait for the confirmation dialog and click the "Remove" button
+                    setTimeout(() => {
+                        // Find the confirmation dialog's Remove button
+                        const confirmRemoveButton = document.querySelector('aside button.button-primary:not([disabled])');
+                        
+                        if (confirmRemoveButton) {
+                            console.log(`Cart Image Extractor: Found confirmation Remove button, completing deletion`);
+                            confirmRemoveButton.click();
+                            
+                            // Remove the item from our panel
+                            itemElement.remove();
+                            
+                            // Check if cart is empty
+                            setTimeout(() => {
+                                if (imageContainer.children.length === 0) {
+                                    const emptyMessage = document.createElement('div');
+                                    emptyMessage.className = 'panel-message';
+                                    emptyMessage.textContent = 'Your cart is empty';
+                                    imageContainer.appendChild(emptyMessage);
+                                }
+                            }, 500);
+                        } else {
+                            console.log(`Cart Image Extractor: Confirmation dialog not found or Remove button not available`);
+                            
+                            // Try an alternative approach - submit the form directly
+                            if (productInfo.removeForm && productInfo.removeForm.form) {
+                                console.log(`Cart Image Extractor: Attempting to submit remove form directly`);
+                                productInfo.removeForm.form.submit();
+                                
+                                // Remove the item from our panel
+                                itemElement.remove();
+                            } else {
+                                console.log(`Cart Image Extractor: No alternative removal method available`);
+                                // Fallback - refresh the cart panel
+                                setTimeout(() => {
+                                    extractAndDisplayImages();
+                                }, 2000);
+                            }
+                        }
+                    }, 500); // Give the dialog time to appear
+                } else {
+                    console.log(`Cart Image Extractor: Could not find remove button for Fashion Nova item`);
+                    showDebugOverlay(`Could not find remove button for Fashion Nova item ${index+1}`);
+                    
+                    // Fallback - refresh the cart panel
+                    setTimeout(() => {
+                        extractAndDisplayImages();
+                    }, 2000);
+                }
+                
+                return; // Exit early
+            }
+            
+            // Standard approach for other sites
             for (const selector of currentSiteConfig.itemSelectors.deleteButton) {
-              deleteButton = item.querySelector(selector);
-              if (deleteButton) {
-                console.log(`Cart Image Extractor: Found delete button with selector "${selector}"`);
-                break;
-              }
+                deleteButton = item.querySelector(selector);
+                if (deleteButton) {
+                    console.log(`Cart Image Extractor: Found delete button with selector "${selector}"`);
+                    break;
+                }
             }
             
             if (deleteButton) {
-              console.log(`Cart Image Extractor: Clicking delete button for item ${index+1}`);
-              showDebugOverlay(`Clicking delete button for item ${index+1}`);
-              
-              // Click the delete button
-              deleteButton.click();
-              
-              // Remove the item from our panel
-              itemElement.remove();
-              
-              // Update panel if no items left
-              setTimeout(() => {
-                if (imageContainer.children.length === 0) {
-                  const emptyMessage = document.createElement('div');
-                  emptyMessage.className = 'panel-message';
-                  emptyMessage.textContent = 'Your cart is empty';
-                  imageContainer.appendChild(emptyMessage);
-                }
-              }, 100);
+                console.log(`Cart Image Extractor: Clicking delete button for item ${index+1}`);
+                showDebugOverlay(`Clicking delete button for item ${index+1}`);
+                
+                // Click the delete button
+                deleteButton.click();
+                
+                // Remove the item from our panel
+                itemElement.remove();
+                
+                // Update panel if no items left
+                setTimeout(() => {
+                    if (imageContainer.children.length === 0) {
+                        const emptyMessage = document.createElement('div');
+                        emptyMessage.className = 'panel-message';
+                        emptyMessage.textContent = 'Your cart is empty';
+                        imageContainer.appendChild(emptyMessage);
+                    }
+                }, 100);
             } else {
-              console.log(`Cart Image Extractor: Could not find delete button for item ${index+1}`);
-              showDebugOverlay(`Could not find delete button for item ${index+1}`);
-              
-              // Fallback - refresh the cart panel to reflect server-side changes
-              setTimeout(() => {
-                extractAndDisplayImages();
-              }, 2000);
+                console.log(`Cart Image Extractor: Could not find delete button for item ${index+1}`);
+                showDebugOverlay(`Could not find delete button for item ${index+1}`);
+                
+                // Fallback - refresh the cart panel to reflect server-side changes
+                setTimeout(() => {
+                    extractAndDisplayImages();
+                }, 2000);
             }
-          });
-          
-          // Add delete button to item
-          detailsElement.appendChild(deleteItemBtn);
-        }
-        
-        // Add all elements to item container
-        itemElement.appendChild(imgContainer);
-        itemElement.appendChild(detailsElement);
-        
-        // Add item to the image container
-        imageContainer.appendChild(itemElement);
-        
-      } catch (error) {
-        console.error('Cart Image Extractor: Error processing item details:', error);
-        showDebugOverlay('Error processing item details: ' + error.message);
-      }
-    });
+        });
+        detailsElement.appendChild(deleteItemBtn);
+    }
     
+    itemElement.appendChild(imgContainer);
+    itemElement.appendChild(detailsElement);
+
+    // Add item to the image container
+    imageContainer.appendChild(itemElement);
+    } catch (error) {
+            console.error('Cart Image Extractor: Error processing item details:', error);
+            showDebugOverlay('Error processing item details: ' + error.message);
+    }
+    }); // <-- This closing brace and parenthesis is missing for the forEach
     // Add close button
     const closeButton = document.createElement('button');
     closeButton.className = 'close-button';
