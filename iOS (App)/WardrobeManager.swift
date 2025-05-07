@@ -62,6 +62,15 @@ class WardrobeManager: ObservableObject {
         }
     }
     
+    func removeItems(withIDs ids: Set<UUID>) {
+        print("Removing items with ids: \(ids)")
+        let beforeCount = items.count
+        items.removeAll { ids.contains($0.id) }
+        let afterCount = items.count
+        print("Removed \(beforeCount - afterCount) items")
+        saveItems()
+    }
+    
     private func saveItems() {
         if let encoded = try? JSONEncoder().encode(items) {
             UserDefaults.standard.set(encoded, forKey: itemsKey)
