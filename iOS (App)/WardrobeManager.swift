@@ -2,33 +2,55 @@ import SwiftUI
 import Combine
 
 struct WardrobeItem: Identifiable, Codable {
-    var id = UUID()
-    var imageFilename: String
-    var categoryName: String
-    var colorLabel: String
-    var dateAdded: Date
-    
+    let id: UUID
+    let imageFilename: String
+    let categoryName: String
+    let colorLabel: String
+    let dateAdded: Date
+    let originalImageFilename: String?
+    let boundingBoxX: CGFloat?
+    let boundingBoxY: CGFloat?
+    let boundingBoxWidth: CGFloat?
+    let boundingBoxHeight: CGFloat?
+
     var image: UIImage {
         get {
             WardrobeManager.shared.loadImage(filename: imageFilename) ?? UIImage(systemName: "photo")!
         }
     }
-    
-    init(image: UIImage, categoryName: String, colorLabel: String, dateAdded: Date = Date()) {
-        self.imageFilename = UUID().uuidString
+
+    enum CodingKeys: String, CodingKey {
+        case id, imageFilename, categoryName, colorLabel, dateAdded, originalImageFilename, boundingBoxX, boundingBoxY, boundingBoxWidth, boundingBoxHeight
+    }
+
+    init(image: UIImage, categoryName: String, colorLabel: String, dateAdded: Date = Date(),
+         originalImageFilename: String? = nil, boundingBox: CGRect? = nil) {
+        self.id = UUID()
+        self.imageFilename = "wardrobe_item_\(self.id.uuidString).jpg"
         self.categoryName = categoryName
         self.colorLabel = colorLabel
         self.dateAdded = dateAdded
-        
+        self.originalImageFilename = originalImageFilename
+        self.boundingBoxX = boundingBox?.origin.x
+        self.boundingBoxY = boundingBox?.origin.y
+        self.boundingBoxWidth = boundingBox?.size.width
+        self.boundingBoxHeight = boundingBox?.size.height
         WardrobeManager.shared.saveImage(image, filename: self.imageFilename)
     }
-    
-    init(id: UUID = UUID(), imageFilename: String, categoryName: String, colorLabel: String, dateAdded: Date) {
+
+    init(id: UUID = UUID(), imageFilename: String, categoryName: String, colorLabel: String, dateAdded: Date,
+         originalImageFilename: String? = nil, boundingBoxX: CGFloat? = nil, boundingBoxY: CGFloat? = nil,
+         boundingBoxWidth: CGFloat? = nil, boundingBoxHeight: CGFloat? = nil) {
         self.id = id
         self.imageFilename = imageFilename
         self.categoryName = categoryName
         self.colorLabel = colorLabel
         self.dateAdded = dateAdded
+        self.originalImageFilename = originalImageFilename
+        self.boundingBoxX = boundingBoxX
+        self.boundingBoxY = boundingBoxY
+        self.boundingBoxWidth = boundingBoxWidth
+        self.boundingBoxHeight = boundingBoxHeight
     }
 }
 

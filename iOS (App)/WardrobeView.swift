@@ -120,9 +120,33 @@ struct WardrobeView: View {
                 }
             }
             .sheet(item: $selectedItem) { item in
-                Image(uiImage: item.image)
-                    .resizable()
-                    .scaledToFit()
+                VStack {
+                    if let originalFilename = item.originalImageFilename,
+                       let x = item.boundingBoxX,
+                       let y = item.boundingBoxY,
+                       let width = item.boundingBoxWidth,
+                       let height = item.boundingBoxHeight,
+                       let originalImage = WardrobeManager.shared.loadImage(filename: originalFilename) {
+                        let boundingBox = CGRect(x: x, y: y, width: width, height: height)
+                        if let croppedImage = cropImage(originalImage, to: boundingBox) {
+                            Image(uiImage: croppedImage)
+                                .resizable()
+                                .scaledToFit()
+                        } else {
+                            Image(uiImage: item.image)
+                                .resizable()
+                                .scaledToFit()
+                        }
+                    } else {
+                        Image(uiImage: item.image)
+                            .resizable()
+                            .scaledToFit()
+                    }
+                    Text("\(item.colorLabel) \(item.categoryName)")
+                        .font(.headline)
+                    Spacer()
+                }
+                .padding()
             }
             .actionSheet(isPresented: $showActionSheet) {
                 ActionSheet(
@@ -197,6 +221,19 @@ struct WardrobeView: View {
 
     private func itemsInCategory(_ category: String) -> [(item: WardrobeItem, displayName: String)] {
         return itemsWithDisplayNames.filter { $0.item.categoryName == category }
+    }
+
+    func cropImage(_ image: UIImage, to rect: CGRect) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        let scale = image.scale
+        let scaledRect = CGRect(
+            x: rect.origin.x * scale,
+            y: rect.origin.y * scale,
+            width: rect.size.width * scale,
+            height: rect.size.height * scale
+        )
+        guard let croppedCGImage = cgImage.cropping(to: scaledRect) else { return nil }
+        return UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
     }
 }
 

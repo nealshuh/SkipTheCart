@@ -13,7 +13,9 @@ struct PreviewItem: Identifiable {
     let category: String
     let image: UIImage
     let color: UIColor
-    var colorLabel: String // Changed to var for mutability
+    var colorLabel: String
+    let originalImageFilename: String
+    let boundingBox: CGRect
 }
 
 struct ModelTestView: View {
@@ -117,8 +119,6 @@ struct ModelTestView: View {
             }
         }
     }
-
-    // MARK: - Subviews
 
     private var photosPickerView: some View {
         PhotosPicker(selection: $selectedItems, matching: .images) {
@@ -230,7 +230,13 @@ struct ModelTestView: View {
             print("Adding \(selectedPreviewItems.count) items")
             let selected = previewItems.filter { selectedPreviewItems.contains($0.id) }
             for item in selected {
-                let wardrobeItem = WardrobeItem(image: item.image, categoryName: item.category, colorLabel: item.colorLabel)
+                let wardrobeItem = WardrobeItem(
+                    image: item.image,
+                    categoryName: item.category,
+                    colorLabel: item.colorLabel,
+                    originalImageFilename: item.originalImageFilename,
+                    boundingBox: item.boundingBox
+                )
                 wardrobeManager.addItems([wardrobeItem])
             }
             presentationMode.wrappedValue.dismiss()
@@ -286,14 +292,20 @@ struct ModelTestView: View {
         isProcessing = true
         for item in items {
             if let data = try? await item.loadTransferable(type: Data.self),
-               let uiImage = UIImage(data: data),
-               let resizedImage = resizeImage(uiImage, to: CGSize(width: 512, height: 512)) {
-                let processedItems = await withCheckedContinuation { continuation in
-                    processImage(resizedImage) { previewItems in
-                        continuation.resume(returning: previewItems)
+               let originalImage = UIImage(data: data) {
+                let originalFilename = "original_\(UUID().uuidString).jpg"
+                let originalSize = originalImage.size
+                WardrobeManager.shared.saveImage(originalImage, filename: originalFilename)
+                
+                let resizedImage = resizeImage(originalImage, to: CGSize(width: 512, height: 512))
+                if let resizedImage = resizedImage {
+                    let processedItems = await withCheckedContinuation { continuation in
+                        processImage(resizedImage, originalFilename: originalFilename, originalSize: originalSize) { previewItems in
+                            continuation.resume(returning: previewItems)
+                        }
                     }
+                    self.previewItems.append(contentsOf: processedItems)
                 }
-                self.previewItems.append(contentsOf: processedItems)
             }
             self.currentProcessingIndex += 1
         }
@@ -307,7 +319,7 @@ struct ModelTestView: View {
         }
     }
 
-    func processImage(_ image: UIImage, completion: @escaping ([PreviewItem]) -> Void) {
+    func processImage(_ image: UIImage, originalFilename: String, originalSize: CGSize, completion: @escaping ([PreviewItem]) -> Void) {
         do {
             let model = try SegFormerClothes(configuration: MLModelConfiguration())
             let vnModel = try VNCoreMLModel(for: model.model)
@@ -335,12 +347,31 @@ struct ModelTestView: View {
                     }
                     let uniqueLabels = Set(labels.flatMap { $0 }).intersection(self.includedLabels)
                     var previewItems: [PreviewItem] = []
+                    let scaleX = originalSize.width / CGFloat(width)
+                    let scaleY = originalSize.height / CGFloat(height)
                     for label in uniqueLabels {
-                        if let name = self.labelNames[label],
-                           let maskedImage = self.createMaskedImage(labels: labels, width: width, height: height, for: label, originalImage: image) {
-                            let (color, colorLabel) = self.getDominantColorAndLabelFromMaskedImage(maskedImage)
-                            let previewItem = PreviewItem(category: name, image: maskedImage, color: color, colorLabel: colorLabel)
-                            previewItems.append(previewItem)
+                        if let name = self.labelNames[label] {
+                            var minX = width, minY = height, maxX = 0, maxY = 0
+                            for i in 0..<height {
+                                for j in 0..<width {
+                                    if labels[i][j] == label {
+                                        minX = min(minX, j)
+                                        minY = min(minY, i)
+                                        maxX = max(maxX, j)
+                                        maxY = max(maxY, i)
+                                    }
+                                }
+                            }
+                            if minX <= maxX && minY <= maxY {
+                                let boundingBoxResized = CGRect(x: CGFloat(minX), y: CGFloat(minY), width: CGFloat(maxX - minX + 1), height: CGFloat(maxY - minY + 1))
+                                let boundingBoxOriginal = CGRect(x: boundingBoxResized.origin.x * scaleX, y: boundingBoxResized.origin.y * scaleY, width: boundingBoxResized.size.width * scaleX, height: boundingBoxResized.size.height * scaleY)
+                                let maskedImage = self.createMaskedImage(labels: labels, width: width, height: height, for: label, originalImage: image)
+                                if let maskedImage = maskedImage {
+                                    let (color, colorLabel) = self.getDominantColorAndLabelFromMaskedImage(maskedImage)
+                                    let previewItem = PreviewItem(category: name, image: maskedImage, color: color, colorLabel: colorLabel, originalImageFilename: originalFilename, boundingBox: boundingBoxOriginal)
+                                    previewItems.append(previewItem)
+                                }
+                            }
                         }
                     }
                     completion(previewItems)
@@ -362,7 +393,7 @@ struct ModelTestView: View {
     }
 
     func getDominantColorAndLabelFromMaskedImage(_ image: UIImage) -> (color: UIColor, label: String) {
-        guard let cgImage = image.cgImage else { return (.gray, "unknown color") }
+        guard let cgImage = image.cgImage else { return (UIColor.gray, "unknown color") }
         let width = cgImage.width
         let height = cgImage.height
         let colorSpace = CGColorSpaceCreateDeviceRGB()
@@ -370,55 +401,50 @@ struct ModelTestView: View {
         let bytesPerRow = bytesPerPixel * width
         let bitsPerComponent = 8
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
-        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return (.gray, "unknown color") }
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo),
+              let data = context.data else {
+            return (UIColor.gray, "unknown color")
+        }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return (.gray, "unknown color") }
-        var colorCounts: [String: Int] = [:]
-        let bins = 16 // Number of bins per RGB channel
-        for i in 0..<height {
-            for j in 0..<width {
-                let pixelOffset = (i * width * 4) + (j * 4)
-                let a = data[pixelOffset + 3]
-                if a > 0 { // Only process non-transparent pixels
-                    let r = Int(data[pixelOffset]) / (256 / bins)
-                    let g = Int(data[pixelOffset + 1]) / (256 / bins)
-                    let b = Int(data[pixelOffset + 2]) / (256 / bins)
-                    let colorKey = "\(r),\(g),\(b)"
-                    colorCounts[colorKey, default: 0] += 1
+        let buffer = data.bindMemory(to: UInt8.self, capacity: width * height * bytesPerPixel)
+        var totalR: CGFloat = 0, totalG: CGFloat = 0, totalB: CGFloat = 0
+        var pixelCount = 0
+        
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = (y * width + x) * bytesPerPixel
+                let alpha = CGFloat(buffer[offset + 3]) / 255.0
+                if alpha > 0 {
+                    let r = CGFloat(buffer[offset]) / 255.0
+                    let g = CGFloat(buffer[offset + 1]) / 255.0
+                    let b = CGFloat(buffer[offset + 2]) / 255.0
+                    totalR += r
+                    totalG += g
+                    totalB += b
+                    pixelCount += 1
                 }
             }
         }
-        if let mostFrequent = colorCounts.max(by: { $0.value < $1.value }) {
-            let components = mostFrequent.key.split(separator: ",").map { Int($0)! }
-            let r = CGFloat(components[0] * (256 / bins)) / 255.0
-            let g = CGFloat(components[1] * (256 / bins)) / 255.0
-            let b = CGFloat(components[2] * (256 / bins)) / 255.0
-            let dominantColor = UIColor(red: r, green: g, blue: b, alpha: 1.0)
-            let label = classifyColorHSV(dominantColor)
-            return (dominantColor, label)
-        } else {
-            return (.gray, "unknown color")
-        }
-    }
-
-    private func classifyColorHSV(_ color: UIColor) -> String {
-        var h: CGFloat = 0, s: CGFloat = 0, v: CGFloat = 0, a: CGFloat = 0
-        color.getHue(&h, saturation: &s, brightness: &v, alpha: &a)
-        let hue = h * 360
-
-        for (colorName, range) in colorRanges {
-            if hue >= range.lowerH && hue <= range.upperH &&
-               s >= range.lowerS && s <= range.upperS &&
-               v >= range.lowerV && v <= range.upperV {
-                return colorName
+        
+        if pixelCount == 0 { return (UIColor.gray, "unknown color") }
+        
+        let avgR = totalR / CGFloat(pixelCount)
+        let avgG = totalG / CGFloat(pixelCount)
+        let avgB = totalB / CGFloat(pixelCount)
+        let color = UIColor(red: avgR, green: avgG, blue: avgB, alpha: 1.0)
+        
+        var (h, s, v): (CGFloat, CGFloat, CGFloat) = (0, 0, 0)
+        color.getHue(&h, saturation: &s, brightness: &v, alpha: nil)
+        h *= 360
+        
+        for (name, range) in colorRanges {
+            if (range.lowerH <= h && h <= range.upperH) || (range.lowerH > range.upperH && (h >= range.lowerH || h <= range.upperH)) {
+                if range.lowerS <= s && s <= range.upperS && range.lowerV <= v && v <= range.upperV {
+                    return (color, name)
+                }
             }
         }
-        return "unknown color"
-    }
-
-    func isGrayscale(_ cgImage: CGImage) -> Bool {
-        guard let colorSpace = cgImage.colorSpace else { return false }
-        return colorSpace.model == .monochrome
+        return (color, "unknown color")
     }
 
     func createMaskedImage(labels: [[Int]], width: Int, height: Int, for label: Int, originalImage: UIImage) -> UIImage? {
@@ -428,28 +454,25 @@ struct ModelTestView: View {
         let bytesPerRow = bytesPerPixel * width
         let bitsPerComponent = 8
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
-        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else { return nil }
+        
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo),
+              let data = context.data else {
+            return nil
+        }
+        
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        guard let data = context.data else { return nil }
         let buffer = data.bindMemory(to: UInt8.self, capacity: width * height * bytesPerPixel)
-        for i in 0..<height {
-            for j in 0..<width {
-                if i < labels.count && j < labels[i].count {
-                    let currentLabel = labels[i][j]
-                    if currentLabel != label {
-                        let pixelOffset = (i * width * bytesPerPixel) + (j * bytesPerPixel)
-                        buffer[pixelOffset + 3] = 0
-                    }
+        
+        for y in 0..<height {
+            for x in 0..<width {
+                if labels[y][x] != label {
+                    let offset = (y * width + x) * bytesPerPixel
+                    buffer[offset + 3] = 0
                 }
             }
         }
-        guard let outputCGImage = context.makeImage() else { return nil }
-        return UIImage(cgImage: outputCGImage)
-    }
-}
-
-struct ModelTestView_Previews: PreviewProvider {
-    static var previews: some View {
-        ModelTestView().environmentObject(WardrobeManager.shared)
+        
+        guard let maskedCGImage = context.makeImage() else { return nil }
+        return UIImage(cgImage: maskedCGImage, scale: originalImage.scale, orientation: originalImage.imageOrientation)
     }
 }
