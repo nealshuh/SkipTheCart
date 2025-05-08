@@ -219,8 +219,8 @@ struct ItemRowView: View {
                 onSelect()
             }
             
-            Image(systemName: "trash")
-                .foregroundColor(.red)
+            Image(systemName: "xmark")
+                .foregroundColor(Color(red: 0.333, green: 0.333, blue: 0.333))
                 .font(.system(size: 20))
                 .frame(width: 44, height: 44)
                 .onTapGesture {
