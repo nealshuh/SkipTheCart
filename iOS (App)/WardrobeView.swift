@@ -33,14 +33,14 @@ struct WardrobeView: View {
         for (key, items) in groupedItems {
             let sortedItems = items.sorted { $0.dateAdded < $1.dateAdded }
             for (index, item) in sortedItems.enumerated() {
-                let baseName = "\(item.colorLabel) \(singularCategory(item.categoryName))"
+                let baseName = "\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))"
                 let displayName = index == 0 ? baseName : "\(baseName) (\(index + 1))"
                 displayNames[item.id] = displayName
             }
         }
         
         return wardrobeManager.items.map { item in
-            (item, displayNames[item.id] ?? "\(item.colorLabel) \(singularCategory(item.categoryName))")
+            (item, displayNames[item.id] ?? "\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))")
         }
     }
 
@@ -120,33 +120,48 @@ struct WardrobeView: View {
                 }
             }
             .sheet(item: $selectedItem) { item in
-                VStack {
-                    if let originalFilename = item.originalImageFilename,
-                       let x = item.boundingBoxX,
-                       let y = item.boundingBoxY,
-                       let width = item.boundingBoxWidth,
-                       let height = item.boundingBoxHeight,
-                       let originalImage = WardrobeManager.shared.loadImage(filename: originalFilename) {
-                        let boundingBox = CGRect(x: x, y: y, width: width, height: height)
-                        if let croppedImage = cropImage(originalImage, to: boundingBox) {
-                            Image(uiImage: croppedImage)
-                                .resizable()
-                                .scaledToFit()
-                        } else {
-                            Image(uiImage: item.image)
-                                .resizable()
-                                .scaledToFit()
-                        }
-                    } else {
-                        Image(uiImage: item.image)
+                NavigationView {
+                    VStack(spacing: AppStyles.Spacing.medium) {
+                        Text("\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))")
+                            .font(AppStyles.Typography.heading)
+                            .foregroundColor(AppStyles.Colors.text)
+                            .padding(AppStyles.Spacing.small)
+                            .background(
+                                RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
+                                    .fill(AppStyles.Colors.secondaryBackground)
+                            )
+                            .padding(.top, AppStyles.Spacing.medium)
+                        
+                        let displayImage: UIImage = {
+                            if let originalFilename = item.originalImageFilename,
+                               let x = item.boundingBoxX,
+                               let y = item.boundingBoxY,
+                               let width = item.boundingBoxWidth,
+                               let height = item.boundingBoxHeight,
+                               let originalImage = WardrobeManager.shared.loadImage(filename: originalFilename),
+                               let croppedImage = cropImage(originalImage, to: CGRect(x: x, y: y, width: width, height: height)) {
+                                return croppedImage
+                            } else {
+                                return item.image
+                            }
+                        }()
+                        Image(uiImage: displayImage)
                             .resizable()
                             .scaledToFit()
+                            .cardStyle()
+                        Spacer()
                     }
-                    Text("\(item.colorLabel) \(item.categoryName)")
-                        .font(.headline)
-                    Spacer()
+                    .padding()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                selectedItem = nil
+                            }
+                            .font(AppStyles.Typography.body)
+                            .foregroundColor(AppStyles.Colors.primary)
+                        }
+                    }
                 }
-                .padding()
             }
             .actionSheet(isPresented: $showActionSheet) {
                 ActionSheet(
