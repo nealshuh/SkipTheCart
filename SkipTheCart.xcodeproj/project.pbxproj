@@ -145,6 +145,7 @@
 				Assets/welcome.png,
 				AuthService.swift,
 				AuthViews.swift,
+				ClothingModelAPI.swift,
 				ContentView.swift,
 				EmailConfirmationSuccessView.swift,
 				EmailConfirmationView.swift,
