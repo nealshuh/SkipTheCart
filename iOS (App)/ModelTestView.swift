@@ -12,7 +12,7 @@ struct PreviewItem: Identifiable {
 }
 
 struct ModelTestView: View {
-    @Environment(\.dismiss) var dismiss // Updated to use dismiss for navigation
+    @Environment(\.dismiss) var dismiss
     @EnvironmentObject var wardrobeManager: WardrobeManager
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var previewItems: [PreviewItem] = []
@@ -21,6 +21,7 @@ struct ModelTestView: View {
     @State private var currentProcessingIndex: Int = 0
     @State private var totalImages: Int = 0
     @State private var showUnknownColorAlert = false
+    @State private var isInstructionsExpanded = true // State for collapsible instructions
 
     private let clothingModelAPI = ClothingModelAPI()
     let selectableColors = ["white", "black", "gray", "yellow", "red", "blue", "green", "brown", "pink", "orange", "purple", "multicolor"]
@@ -30,6 +31,7 @@ struct ModelTestView: View {
             AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
             ScrollView {
                 VStack(spacing: AppStyles.Spacing.large) {
+                    instructionSection
                     photosPickerView
                     contentView
                     Spacer()
@@ -40,7 +42,7 @@ struct ModelTestView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        dismiss() // Dismiss the view
+                        dismiss()
                     }
                 }
             }
@@ -61,6 +63,36 @@ struct ModelTestView: View {
         }
     }
 
+    // MARK: - Instruction Section
+    private var instructionSection: some View {
+        DisclosureGroup(
+            isExpanded: $isInstructionsExpanded,
+            content: {
+                VStack(alignment: .leading, spacing: AppStyles.Spacing.small) {
+                    Image("uploadpic")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppStyles.Spacing.medium)
+                    Text("Follow these steps to ensure your images are processed accurately.")
+                        .font(AppStyles.Typography.body)
+                        .foregroundColor(AppStyles.Colors.secondaryText)
+                }
+            },
+            label: {
+                Text("How to Upload Pictures Correctly")
+                    .font(AppStyles.Typography.heading)
+                    .foregroundColor(AppStyles.Colors.text)
+            }
+        )
+        .padding()
+        .background(AppStyles.Colors.secondaryBackground)
+        .cornerRadius(AppStyles.Layout.cornerRadius)
+        .padding(.horizontal, AppStyles.Spacing.medium)
+        .accessibilityLabel("Instructions for uploading pictures correctly")
+    }
+
+    // MARK: - Photos Picker View
     private var photosPickerView: some View {
         PhotosPicker(selection: $selectedItems, matching: .images) {
             HStack {
@@ -75,6 +107,7 @@ struct ModelTestView: View {
         .padding(.horizontal, AppStyles.Spacing.xlarge)
     }
 
+    // MARK: - Content View
     private var contentView: some View {
         Group {
             if isProcessing {
@@ -94,6 +127,7 @@ struct ModelTestView: View {
         }
     }
 
+    // MARK: - Processing View
     private var processingView: some View {
         VStack(spacing: AppStyles.Spacing.medium) {
             ProgressView()
@@ -108,6 +142,7 @@ struct ModelTestView: View {
         .cardStyle()
     }
 
+    // MARK: - Instructions View
     private var instructionsView: some View {
         Text("• Tap to select (👆 blue border)\n• Tap color to change 🎨\n• 'Unknown color'? Pick one\n• All items need a color to save ✅")
             .font(AppStyles.Typography.body)
@@ -117,6 +152,7 @@ struct ModelTestView: View {
             .padding(.top, AppStyles.Spacing.medium)
     }
 
+    // MARK: - Grid View
     private var gridView: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
@@ -159,6 +195,7 @@ struct ModelTestView: View {
         }
     }
 
+    // MARK: - Unknown Color Warning View
     private var unknownColorWarningView: some View {
         Text("Please assign a color to all selected items.")
             .font(.caption)
@@ -166,6 +203,7 @@ struct ModelTestView: View {
             .padding(.top, 5)
     }
 
+    // MARK: - Add Button View
     private var addButtonView: some View {
         Button(action: {
             print("Adding \(selectedPreviewItems.count) items")
@@ -180,7 +218,7 @@ struct ModelTestView: View {
                 )
                 wardrobeManager.addItems([wardrobeItem])
             }
-            dismiss() // Dismiss after adding items
+            dismiss()
         }) {
             Text("Add Selected to Wardrobe")
                 .font(AppStyles.Typography.heading)
@@ -197,6 +235,7 @@ struct ModelTestView: View {
         }
     }
 
+    // MARK: - Empty State View
     private var emptyStateView: some View {
         VStack(spacing: AppStyles.Spacing.medium) {
             Image(systemName: "tshirt.fill")
@@ -220,12 +259,14 @@ struct ModelTestView: View {
         .padding(.horizontal, AppStyles.Spacing.medium)
     }
 
+    // MARK: - Helper Properties
     private var hasSelectedItemsWithUnknownColor: Bool {
         previewItems.contains { item in
             selectedPreviewItems.contains(item.id) && item.colorLabel == "unknown color"
         }
     }
 
+    // MARK: - Image Processing
     private func processSelectedItems(_ items: [PhotosPickerItem]) async {
         previewItems = []
         totalImages = items.count
@@ -243,7 +284,6 @@ struct ModelTestView: View {
                     self.previewItems.append(contentsOf: processedItems)
                 } catch {
                     print("Error processing image: \(error)")
-                    // In a production app, consider showing an alert to the user
                 }
             }
             self.currentProcessingIndex += 1
