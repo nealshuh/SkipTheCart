@@ -5,14 +5,13 @@ struct WardrobeView: View {
     @ObservedObject private var wardrobeManager = WardrobeManager.shared
     @State private var selectedCategory: String = ""
     @State private var showDeleteConfirmation = false
-    @State private var itemToDelete: UUID? = nil
-    @State private var showActionSheet = false
-    @State private var showModelTestView = false
+    @State private var deleteIDs: Set<UUID>? = nil
     @State private var selectedItem: WardrobeItem? = nil
+    @State private var showActionSheet = false
+    @State private var navigateToModelTestView = false // State to trigger navigation
 
     let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
 
-    // Function to get the singular form of the category
     func singularCategory(_ category: String) -> String {
         switch category {
         case "Tops": return "top"
@@ -23,29 +22,25 @@ struct WardrobeView: View {
         }
     }
 
-    // Computed property to generate items with unique display names
     var itemsWithDisplayNames: [(item: WardrobeItem, displayName: String)] {
-        // Group items by their color and category
         var groupedItems: [String: [WardrobeItem]] = [:]
         for item in wardrobeManager.items {
             let key = "\(item.colorLabel)-\(item.categoryName)"
             groupedItems[key, default: []].append(item)
         }
         
-        // Sort each group by dateAdded and assign numbers
         var displayNames: [UUID: String] = [:]
         for (key, items) in groupedItems {
             let sortedItems = items.sorted { $0.dateAdded < $1.dateAdded }
             for (index, item) in sortedItems.enumerated() {
-                let baseName = "\(item.colorLabel) \(singularCategory(item.categoryName))"
+                let baseName = "\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))"
                 let displayName = index == 0 ? baseName : "\(baseName) (\(index + 1))"
                 displayNames[item.id] = displayName
             }
         }
         
-        // Create the list of (item, displayName) tuples
         return wardrobeManager.items.map { item in
-            (item, displayNames[item.id] ?? "\(item.colorLabel) \(singularCategory(item.categoryName))")
+            (item, displayNames[item.id] ?? "\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))")
         }
     }
 
@@ -54,7 +49,6 @@ struct WardrobeView: View {
             ZStack {
                 AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
                 VStack(spacing: 0) {
-                    // Header
                     HStack {
                         Text("My Wardrobe")
                             .font(AppStyles.Typography.title)
@@ -70,7 +64,6 @@ struct WardrobeView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top)
-                    // Category Filter
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: AppStyles.Spacing.small) {
                             CategoryButton(title: "All", isSelected: selectedCategory.isEmpty) {
@@ -85,38 +78,37 @@ struct WardrobeView: View {
                         .padding(.horizontal)
                         .padding(.vertical, AppStyles.Spacing.small)
                     }
-                    // Wardrobe Content
                     if wardrobeManager.items.isEmpty {
                         emptyStateView
                     } else {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 0) {
-                                if selectedCategory.isEmpty {
-                                    ForEach(categories, id: \.self) { category in
-                                        SectionHeaderView(title: category)
+                        List {
+                            if selectedCategory.isEmpty {
+                                ForEach(categories, id: \.self) { category in
+                                    Section(header: Text(category)) {
                                         let categoryItems = itemsInCategory(category)
                                         ForEach(categoryItems, id: \.item.id) { itemTuple in
                                             ItemRowView(
                                                 item: itemTuple.item,
                                                 displayName: itemTuple.displayName,
-                                                onTap: { selectedItem = itemTuple.item },
+                                                onSelect: { selectedItem = itemTuple.item },
                                                 onDelete: {
-                                                    itemToDelete = itemTuple.item.id
+                                                    deleteIDs = Set([itemTuple.item.id])
                                                     showDeleteConfirmation = true
                                                 }
                                             )
                                         }
                                     }
-                                } else {
-                                    SectionHeaderView(title: selectedCategory)
+                                }
+                            } else {
+                                Section(header: Text(selectedCategory)) {
                                     let categoryItems = filteredItems
                                     ForEach(categoryItems, id: \.item.id) { itemTuple in
                                         ItemRowView(
                                             item: itemTuple.item,
                                             displayName: itemTuple.displayName,
-                                            onTap: { selectedItem = itemTuple.item },
+                                            onSelect: { selectedItem = itemTuple.item },
                                             onDelete: {
-                                                itemToDelete = itemTuple.item.id
+                                                deleteIDs = Set([itemTuple.item.id])
                                                 showDeleteConfirmation = true
                                             }
                                         )
@@ -126,18 +118,17 @@ struct WardrobeView: View {
                         }
                     }
                 }
-            }
-            .sheet(item: $selectedItem) { item in
-                Image(uiImage: item.image)
-                    .resizable()
-                    .scaledToFit()
+                // NavigationLink to ModelTestView
+                NavigationLink(destination: ModelTestView().environmentObject(wardrobeManager), isActive: $navigateToModelTestView) {
+                    EmptyView()
+                }
             }
             .actionSheet(isPresented: $showActionSheet) {
                 ActionSheet(
                     title: Text("Add Item"),
                     buttons: [
                         .default(Text("Select from library")) {
-                            showModelTestView = true
+                            navigateToModelTestView = true // Navigate to ModelTestView
                         },
                         .default(Text("Use camera")) {
                             print("Camera option selected")
@@ -146,26 +137,69 @@ struct WardrobeView: View {
                     ]
                 )
             }
-            .sheet(isPresented: $showModelTestView) {
-                ModelTestView()
-                    .environmentObject(wardrobeManager)
+            .sheet(item: $selectedItem) { item in
+                NavigationView {
+                    VStack(spacing: AppStyles.Spacing.medium) {
+                        Text("\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))")
+                            .font(AppStyles.Typography.heading)
+                            .foregroundColor(AppStyles.Colors.text)
+                            .padding(AppStyles.Spacing.small)
+                            .background(
+                                RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
+                                    .fill(AppStyles.Colors.secondaryBackground)
+                            )
+                            .padding(.top, AppStyles.Spacing.medium)
+                        
+                        let displayImage: UIImage = {
+                            if let originalFilename = item.originalImageFilename,
+                               let x = item.boundingBoxX,
+                               let y = item.boundingBoxY,
+                               let width = item.boundingBoxWidth,
+                               let height = item.boundingBoxHeight,
+                               let originalImage = WardrobeManager.shared.loadImage(filename: originalFilename),
+                               let croppedImage = cropImage(originalImage, to: CGRect(x: x, y: y, width: width, height: height)) {
+                                return croppedImage
+                            } else {
+                                return item.image
+                            }
+                        }()
+                        Image(uiImage: displayImage)
+                            .resizable()
+                            .scaledToFit()
+                            .cardStyle()
+                        Spacer()
+                    }
+                    .padding()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                selectedItem = nil
+                            }
+                            .font(AppStyles.Typography.body)
+                            .foregroundColor(AppStyles.Colors.primary)
+                        }
+                    }
+                }
             }
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
-                    title: Text("Delete Item"),
-                    message: Text("Are you sure you want to remove this item from your wardrobe?"),
+                    title: Text("Delete Item\(deleteIDs!.count > 1 ? "s" : "")"),
+                    message: Text("Are you sure you want to remove \(deleteIDs!.count > 1 ? "these items" : "this item") from your wardrobe?"),
                     primaryButton: .destructive(Text("Delete")) {
-                        if let id = itemToDelete {
-                            wardrobeManager.removeItem(withID: id)
-                        }
+                        print("Deleting items: \(deleteIDs!)")
+                        wardrobeManager.removeItems(withIDs: deleteIDs!)
+                        deleteIDs = nil
+                        showDeleteConfirmation = false
                     },
-                    secondaryButton: .cancel()
+                    secondaryButton: .cancel {
+                        deleteIDs = nil
+                        showDeleteConfirmation = false
+                    }
                 )
             }
         }
     }
 
-    // Empty state view
     private var emptyStateView: some View {
         VStack(spacing: AppStyles.Spacing.medium) {
             Spacer()
@@ -192,7 +226,6 @@ struct WardrobeView: View {
         }
     }
 
-    // Data Helpers
     private var filteredItems: [(item: WardrobeItem, displayName: String)] {
         if selectedCategory.isEmpty {
             return itemsWithDisplayNames
@@ -204,36 +237,52 @@ struct WardrobeView: View {
     private func itemsInCategory(_ category: String) -> [(item: WardrobeItem, displayName: String)] {
         return itemsWithDisplayNames.filter { $0.item.categoryName == category }
     }
-}
 
-// Section Header View
-struct SectionHeaderView: View {
-    let title: String
-    var body: some View {
-        Text(title)
-            .font(.headline)
-            .padding(.leading)
-            .padding(.top, 10)
+    func cropImage(_ image: UIImage, to rect: CGRect) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        let scale = image.scale
+        let scaledRect = CGRect(
+            x: rect.origin.x * scale,
+            y: rect.origin.y * scale,
+            width: rect.size.width * scale,
+            height: rect.size.height * scale
+        )
+        guard let croppedCGImage = cgImage.cropping(to: scaledRect) else { return nil }
+        return UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
     }
 }
 
-// Item Row View (Updated to accept displayName)
 struct ItemRowView: View {
     let item: WardrobeItem
     let displayName: String
-    let onTap: () -> Void
+    let onSelect: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Text(displayName)
-                Spacer()
+        HStack {
+            ZStack {
+                HStack {
+                    Text(displayName)
+                    Spacer()
+                }
             }
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onSelect()
+            }
+            
+            Image(systemName: "xmark")
+                .foregroundColor(Color(red: 0.333, green: 0.333, blue: 0.333))
+                .font(.system(size: 20))
+                .frame(width: 44, height: 44)
+                .onTapGesture {
+                    print("Trash icon tapped for item: \(item.id)")
+                    onDelete()
+                }
         }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
         .contextMenu {
             Button("Delete", role: .destructive) {
                 onDelete()
@@ -242,7 +291,6 @@ struct ItemRowView: View {
     }
 }
 
-// Category Button Component
 struct CategoryButton: View {
     let title: String
     let isSelected: Bool

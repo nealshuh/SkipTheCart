@@ -165,7 +165,7 @@ struct ContentView: View {
             Spacer()
             
             // App explanation
-            Text("This extension shows items in your online shopping cart and compares them to what you already own.")
+            Text("SkipTheCart compares items in your shopping carts to what  you already own.")
                 .font(AppStyles.Typography.body)
                 .foregroundColor(AppStyles.Colors.secondaryText)
                 .multilineTextAlignment(.center)
@@ -337,36 +337,62 @@ struct WelcomeView: View {
     @Binding var hasSeenWelcomePage: Bool
     
     var body: some View {
-        VStack {
-            TabView {
-                ForEach(pages) { page in
-                    VStack{
-                        Text(page.label)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                            .padding(10)
-                        
-                        Text(page.text)
-                            .fontWeight(.medium)
-                            .padding(35)
-                        
-                        Image(page.image)
-                        
-                    }
+        VStack(spacing: 20) {
+            // Header
+            HStack {
+                Text("SkipTheCart")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Spacer()
+                Button(action: { /* Show settings */ }) {
+                    Image(systemName: "gear")
+                        .font(.title)
                 }
             }
-            Button {
-                hasSeenWelcomePage.toggle()
-                
-            } label: {
-                Text("OK")
-                    .font(.title)
-                    .fontWeight(.semibold)
+            .padding(.horizontal)
+
+            // App Explanation
+            Text("Shop smarter with wardrobe insights.")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
+            // Safari Extension Button
+            Button(action: { /* Show instructions modal */ }) {
+                Label("Set Up Safari Extension", systemImage: "safari")
+                    .font(.headline)
+                    .padding()
                     .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
             }
-            .buttonStyle(.borderedProminent)
+            .padding(.horizontal)
+
+            // Wardrobe Prompt
+            VStack(spacing: 10) {
+                Image(systemName: "tshirt.fill")
+                    .font(.largeTitle)
+                    .foregroundColor(.green)
+                Text("Start building your digital wardrobe!")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                Button(action: { /* Go to Wardrobe tab */ }) {
+                    Text("Go to My Wardrobe")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+            }
             .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            .padding(.horizontal)
+
+            Spacer()
         }
         .interactiveDismissDisabled()
         .tabViewStyle(.page)
