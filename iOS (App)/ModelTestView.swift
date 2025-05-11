@@ -12,7 +12,7 @@ struct PreviewItem: Identifiable {
 }
 
 struct ModelTestView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss // Updated to use dismiss for navigation
     @EnvironmentObject var wardrobeManager: WardrobeManager
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var previewItems: [PreviewItem] = []
@@ -26,23 +26,21 @@ struct ModelTestView: View {
     let selectableColors = ["white", "black", "gray", "yellow", "red", "blue", "green", "brown", "pink", "orange", "purple", "multicolor"]
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
-                ScrollView {
-                    VStack(spacing: AppStyles.Spacing.large) {
-                        photosPickerView
-                        contentView
-                        Spacer()
-                    }
-                    .padding(.bottom, AppStyles.Spacing.xlarge)
+        ZStack {
+            AppStyles.Colors.background.edgesIgnoringSafeArea(.all)
+            ScrollView {
+                VStack(spacing: AppStyles.Spacing.large) {
+                    photosPickerView
+                    contentView
+                    Spacer()
                 }
-                .navigationTitle("Upload")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            presentationMode.wrappedValue.dismiss()
-                        }
+                .padding(.bottom, AppStyles.Spacing.xlarge)
+            }
+            .navigationTitle("Upload")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss() // Dismiss the view
                     }
                 }
             }
@@ -112,11 +110,11 @@ struct ModelTestView: View {
 
     private var instructionsView: some View {
         Text("• Tap to select (👆 blue border)\n• Tap color to change 🎨\n• 'Unknown color'? Pick one\n• All items need a color to save ✅")
-                .font(AppStyles.Typography.body)
-                .foregroundColor(AppStyles.Colors.secondaryText)
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal, AppStyles.Spacing.medium)
-                .padding(.top, AppStyles.Spacing.medium)
+            .font(AppStyles.Typography.body)
+            .foregroundColor(AppStyles.Colors.secondaryText)
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, AppStyles.Spacing.medium)
+            .padding(.top, AppStyles.Spacing.medium)
     }
 
     private var gridView: some View {
@@ -182,7 +180,7 @@ struct ModelTestView: View {
                 )
                 wardrobeManager.addItems([wardrobeItem])
             }
-            presentationMode.wrappedValue.dismiss()
+            dismiss() // Dismiss after adding items
         }) {
             Text("Add Selected to Wardrobe")
                 .font(AppStyles.Typography.heading)

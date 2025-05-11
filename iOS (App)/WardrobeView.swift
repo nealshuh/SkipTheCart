@@ -8,7 +8,7 @@ struct WardrobeView: View {
     @State private var deleteIDs: Set<UUID>? = nil
     @State private var selectedItem: WardrobeItem? = nil
     @State private var showActionSheet = false
-    @State private var showModelTestView = false
+    @State private var navigateToModelTestView = false // State to trigger navigation
 
     let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
 
@@ -118,6 +118,24 @@ struct WardrobeView: View {
                         }
                     }
                 }
+                // NavigationLink to ModelTestView
+                NavigationLink(destination: ModelTestView().environmentObject(wardrobeManager), isActive: $navigateToModelTestView) {
+                    EmptyView()
+                }
+            }
+            .actionSheet(isPresented: $showActionSheet) {
+                ActionSheet(
+                    title: Text("Add Item"),
+                    buttons: [
+                        .default(Text("Select from library")) {
+                            navigateToModelTestView = true // Navigate to ModelTestView
+                        },
+                        .default(Text("Use camera")) {
+                            print("Camera option selected")
+                        },
+                        .cancel()
+                    ]
+                )
             }
             .sheet(item: $selectedItem) { item in
                 NavigationView {
@@ -162,24 +180,6 @@ struct WardrobeView: View {
                         }
                     }
                 }
-            }
-            .actionSheet(isPresented: $showActionSheet) {
-                ActionSheet(
-                    title: Text("Add Item"),
-                    buttons: [
-                        .default(Text("Select from library")) {
-                            showModelTestView = true
-                        },
-                        .default(Text("Use camera")) {
-                            print("Camera option selected")
-                        },
-                        .cancel()
-                    ]
-                )
-            }
-            .sheet(isPresented: $showModelTestView) {
-                ModelTestView()
-                    .environmentObject(wardrobeManager)
             }
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
