@@ -365,54 +365,49 @@ const SITE_CONFIGS = {
     // Revolve configuration update
     revolve: {
       cartDetection: {
-        urlPatterns: ['/ShoppingBag.jsp', '/r/ShoppingBag.jsp', '/checkout'],
+        urlPatterns: ['/ShoppingBag.jsp', '/r/ShoppingBag.jsp', '/r/mobile/ShoppingBag.jsp', '/checkout'],
         domSelectors: [
-          '.product--horizontal-shopping-bag',
-          'section[id^="item-"]',
-          '.js-product-in-bag',
-          '.product__image--horizontal'
+          '.shopping-bag__row',
+          '.js-cart-item',
+          '.shopping-bag__container',
+          'tr.shopping-bag__item-body'
         ],
         textIndicators: ['shopping bag', 'bag', 'checkout', 'cart', 'items in your cart']
       },
       itemSelectors: {
         container: [
-          'section[id^="item-"]',
-          '.product--horizontal-shopping-bag',
-          '.js-product-in-bag',
-          '.vanish.js-product-in-bag'
+          'tr.shopping-bag__row',
+          '.js-cart-item',
+          'tr.shopping-bag__item-body'
         ],
         image: [
-          '.product-image--horizontal',
-          'img.product-image',
-          '.product__image a img',
-          '.product-link img'
+          '.shopping-bag__image img',
+          '.shopping-bag__image-placeholder img',
+          'img[srcset*="revolveassets"]'
         ],
         name: [
-          '.product-name--lg',
-          '.product__title .u-weight--bold',
-          '.product-name--horizontal',
-          '.product__title div.u-padding-b--xs'
+          '.shopping-bag__body a strong',
+          '.shopping-bag__body .u-block strong',
+          '.shopping-bag__prod-info a strong'
         ],
         price: [
-          'span.price__retail',
-          '.product__price .price__retail',
-          '.price.price--lg span'
+          'span.js-price',
+          '.shopping-bag__pri .price__retail',
+          '.shopping-bag__price-wrap .price__retail'
         ],
         size: [
-          '.js-size-select option[selected]',
-          'select.js-size-select option[selected]',
-          '.product__size select option[selected]'
+          '.shopbag_item_size .sb_display',
+          'span[data]',
+          'span.sb_display[data]'
         ],
         color: [
-          '.product__detail--horizontal',
-          '.u-text--lg.u-padding-b--xs.product__detail',
-          'div.u-text--lg:contains("Color")'
+          '.u-float--left:contains("Color:")',
+          '.shopping-bag__body span:contains("Color:")'
         ],
         deleteButton: [
           'button.js-track-remove',
-          '.js-track-remove',
           'button[onclick*="removeBagProduct"]',
-          'button:contains("remove")'
+          '.u-float--left button.link:contains("remove")'
         ]
       }
     },
@@ -969,7 +964,7 @@ function processRevolveItem(item, index) {
   
   // Find image directly
   let imageUrl = '';
-  const imgEl = item.querySelector('.shopping-bag__image img');
+  const imgEl = item.querySelector('.shopping-bag__image img, .shopping-bag__image-placeholder img');
   if (imgEl && imgEl.src) {
     imageUrl = imgEl.src;
     console.log(`Found image: ${imageUrl}`);
@@ -977,7 +972,7 @@ function processRevolveItem(item, index) {
   
   // Find product name directly
   let productName = '';
-  const nameEl = item.querySelector('.shopping-bag__body .u-block strong');
+  const nameEl = item.querySelector('.shopping-bag__body a strong, .shopping-bag__prod-info a strong');
   if (nameEl) {
     productName = nameEl.textContent.trim();
     console.log(`Found name: ${productName}`);
@@ -985,7 +980,7 @@ function processRevolveItem(item, index) {
   
   // Find brand directly
   let brand = '';
-  const brandEl = item.querySelector('.shopping-bag__body .u-block div:not(:first-child)');
+  const brandEl = item.querySelector('.shopping-bag__body a div:not(:first-child)');
   if (brandEl) {
     brand = brandEl.textContent.trim();
     console.log(`Found brand: ${brand}`);
@@ -993,7 +988,7 @@ function processRevolveItem(item, index) {
   
   // Find price directly
   let price = '';
-  const priceEl = item.querySelector('.shopping-bag__pri .js-price');
+  const priceEl = item.querySelector('span.js-price, .shopping-bag__pri .price__retail');
   if (priceEl) {
     price = priceEl.textContent.trim();
     console.log(`Found price: ${price}`);
@@ -1007,7 +1002,7 @@ function processRevolveItem(item, index) {
     console.log(`Found size: ${size}`);
   }
   
-  // Find color directly
+  // Find color directly - searching for spans containing "Color:"
   let color = '';
   const colorElements = item.querySelectorAll('.u-float--left');
   for (const el of colorElements) {
@@ -1018,13 +1013,20 @@ function processRevolveItem(item, index) {
     }
   }
   
+  // Find delete button
+  const deleteButton = item.querySelector('button.js-track-remove');
+  if (deleteButton) {
+    console.log(`Found delete button for Revolve item`);
+  }
+  
   return {
     imageUrl,
     productName: productName || 'Product',
     brand: brand || '',
     price: price || '',
     size: size || '',
-    color: color || ''
+    color: color || '',
+    deleteButton
   };
 }
 
@@ -2843,3 +2845,730 @@ function createBottomPanel() {
           console.error("Error in observeCartChanges:", error);
         }
       }
+
+// Function to create the full-screen comparison panel
+function createFullScreenComparisonPanel() {
+  try {
+    // Add CSS styles for the full-screen panel
+    const style = document.createElement('style');
+    style.textContent = `
+      #cart-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: white;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease;
+        overflow: hidden;
+      }
+      
+      #cart-panel.hidden {
+        transform: translateY(100%);
+      }
+      
+      .panel-header {
+        background-color: black;
+        color: white;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .panel-header h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .panel-nav {
+        background-color: #f1f1f1;
+        padding: 8px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .panel-nav-button {
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+      }
+      
+      .panel-nav-button[disabled] {
+        color: #ccc;
+        cursor: default;
+      }
+      
+      .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .cart-item-section {
+        margin-bottom: 24px;
+      }
+      
+      .section-title {
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666;
+      }
+      
+      .image-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 8px;
+      }
+      
+      .image-container {
+        width: 192px;
+        height: 224px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        position: relative;
+      }
+      
+      .image-container img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+      }
+      
+      .item-match-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background-color: #4caf50;
+        color: white;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 9999px;
+      }
+      
+      .item-details {
+        text-align: center;
+      }
+      
+      .item-name {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      
+      .item-meta {
+        font-size: 14px;
+        color: #666;
+        margin: 4px 0;
+      }
+      
+      .item-price {
+        font-weight: bold;
+        margin-top: 4px;
+      }
+      
+      .similar-section {
+        position: relative;
+      }
+      
+      .similar-hint {
+        text-align: center;
+        margin-bottom: 4px;
+        font-size: 12px;
+        color: #999;
+      }
+      
+      .nav-arrow {
+        position: absolute;
+        top: 50%;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        padding: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        z-index: 2;
+        transform: translateY(-50%);
+        border: none;
+      }
+      
+      .nav-arrow-left {
+        left: 0;
+      }
+      
+      .nav-arrow-right {
+        right: 0;
+      }
+      
+      .dots-indicator {
+        display: flex;
+        justify-content: center;
+        margin-top: 8px;
+      }
+      
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #ddd;
+        margin: 0 4px;
+      }
+      
+      .dot.active {
+        background-color: #000;
+      }
+      
+      .panel-footer {
+        border-top: 1px solid #eee;
+        padding: 16px;
+      }
+      
+      .footer-message {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 12px;
+      }
+      
+      .footer-button {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-bottom: 8px;
+      }
+      
+      .primary-button {
+        background-color: black;
+        color: white;
+        border: none;
+      }
+      
+      .secondary-button {
+        background-color: white;
+        color: black;
+        border: 1px solid black;
+      }
+      
+      .panel-toggle-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 16px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 9998;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      
+      .close-button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 4px;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Create the panel
+    const panel = document.createElement('div');
+    panel.id = 'cart-panel';
+    panel.className = 'cart-panel';
+    document.body.appendChild(panel);
+    
+    // Initialize cart state management
+    panel.cartState = {
+      items: [], // Will be populated from extracted cart items
+      currentIndex: 0,
+      similarItems: [ /* Will be populated with mock wardrobe items */ ],
+      similarItemsIndex: {}  // Tracks the current index of similar items for each cart item
+    };
+    
+    console.log("Cart Image Extractor: Full-screen comparison panel created");
+    showDebugOverlay("Full-screen comparison panel created");
+    
+    return panel;
+  } catch (error) {
+    showDebugOverlay("ERROR in createFullScreenComparisonPanel: " + error.message);
+    console.error("Error in createFullScreenComparisonPanel:", error);
+    // Create a simple fallback panel in case of error
+    const fallbackPanel = document.createElement('div');
+    fallbackPanel.id = 'cart-panel';
+    document.body.appendChild(fallbackPanel);
+    return fallbackPanel;
+  }
+}
+
+// Function to render the comparison panel content
+function renderComparisonPanel(panel, cartItems) {
+  try {
+    if (!panel || !panel.cartState) return;
+    
+    // Clear existing content
+    panel.innerHTML = '';
+    
+    // Initialize panel state if this is first render
+    if (panel.cartState.items.length === 0 && cartItems.length > 0) {
+      // Convert extracted cart items to our format
+      panel.cartState.items = cartItems.map((item, index) => {
+        // Extract data from the cart item
+        let imageUrl = '';
+        let productName = '';
+        let price = '';
+        let size = '';
+        let color = '';
+        
+        // Process based on site-specific extraction logic
+        if (typeof item.querySelector === 'function') {
+          // This is a DOM element from the cart
+          if (window.location.hostname.includes('abercrombie.com')) {
+            const processed = processAbercrombieItem(item, index);
+            imageUrl = processed.imageUrl;
+            productName = processed.productName;
+            price = processed.price;
+            size = processed.size;
+            color = processed.color;
+          } else if (window.location.hostname.includes('revolve.com')) {
+            const processed = processRevolveItem(item, index);
+            imageUrl = processed.imageUrl;
+            productName = processed.productName;
+            price = processed.price;
+            size = processed.size;
+            color = processed.color;
+          } else {
+            // Generic processing
+            imageUrl = getImageUrl(item);
+            productName = getTextFromSelectors('name', item) || 'Product';
+            price = getTextFromSelectors('price', item) || '';
+            size = getTextFromSelectors('size', item) || '';
+            color = getTextFromSelectors('color', item) || '';
+          }
+        } else {
+          // Already processed item
+          imageUrl = item.imageUrl || '';
+          productName = item.productName || 'Product';
+          price = item.price || '';
+          size = item.size || '';
+          color = item.color || '';
+        }
+        
+        // Add similar items data based on item characteristics
+        generateSimilarItems(panel, index, productName, size, color);
+        
+        return {
+          id: index,
+          imageUrl: imageUrl,
+          productName: productName,
+          price: price,
+          size: size,
+          color: color,
+          currentSimilarIndex: 0
+        };
+      });
+    }
+    
+    // Get current cart item
+    const currentIndex = panel.cartState.currentIndex;
+    const currentItem = panel.cartState.items[currentIndex] || {};
+    
+    // Get similar items for current cart item
+    const similarItems = panel.cartState.similarItems.filter(item =>
+      item.cartItemId === currentItem.id
+    );
+    
+    // Get current similar item
+    const currentSimilarIndex = panel.cartState.similarItemsIndex[currentItem.id] || 0;
+    const currentSimilarItem = similarItems.length > 0 ?
+      similarItems[currentSimilarIndex] : null;
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    
+    const title = document.createElement('h1');
+    title.textContent = 'Similar Items Found';
+    
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-button';
+    closeButton.innerHTML = '&times;';
+    closeButton.addEventListener('click', function() {
+      panel.classList.add('hidden');
+      createToggleButton();
+    });
+    
+    header.appendChild(title);
+    header.appendChild(closeButton);
+    panel.appendChild(header);
+    
+    // Create navigation bar
+    const nav = document.createElement('div');
+    nav.className = 'panel-nav';
+    
+    const prevButton = document.createElement('button');
+    prevButton.className = 'panel-nav-button';
+    prevButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>';
+    prevButton.disabled = panel.cartState.items.length <= 1;
+    prevButton.addEventListener('click', function() {
+      if (panel.cartState.items.length <= 1) return;
+      panel.cartState.currentIndex = (currentIndex > 0) ?
+        currentIndex - 1 : panel.cartState.items.length - 1;
+      renderComparisonPanel(panel, []);
+    });
+    
+    const navInfo = document.createElement('div');
+    navInfo.className = 'panel-nav-info';
+    navInfo.textContent = `Item ${currentIndex + 1} of ${panel.cartState.items.length}`;
+    
+    const nextButton = document.createElement('button');
+    nextButton.className = 'panel-nav-button';
+    nextButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>';
+    nextButton.disabled = panel.cartState.items.length <= 1;
+    nextButton.addEventListener('click', function() {
+      if (panel.cartState.items.length <= 1) return;
+      panel.cartState.currentIndex = (currentIndex < panel.cartState.items.length - 1) ?
+        currentIndex + 1 : 0;
+      renderComparisonPanel(panel, []);
+    });
+    
+    nav.appendChild(prevButton);
+    nav.appendChild(navInfo);
+    nav.appendChild(nextButton);
+    panel.appendChild(nav);
+    
+    // Create main content area
+    const content = document.createElement('div');
+    content.className = 'panel-content';
+    
+    // Cart item section
+    const cartItemSection = document.createElement('div');
+    cartItemSection.className = 'cart-item-section';
+    
+    const cartItemTitle = document.createElement('div');
+    cartItemTitle.className = 'section-title';
+    cartItemTitle.textContent = 'In Your Shopping Cart';
+    
+    const cartImageWrapper = document.createElement('div');
+    cartImageWrapper.className = 'image-wrapper';
+    
+    const cartImageContainer = document.createElement('div');
+    cartImageContainer.className = 'image-container';
+    
+    const cartImage = document.createElement('img');
+    cartImage.src = currentItem.imageUrl || '/api/placeholder/200/250';
+    cartImage.alt = currentItem.productName || 'Product';
+    cartImage.onerror = function() {
+      this.src = '/api/placeholder/200/250';
+    };
+    
+    cartImageContainer.appendChild(cartImage);
+    cartImageWrapper.appendChild(cartImageContainer);
+    
+    const cartItemDetails = document.createElement('div');
+    cartItemDetails.className = 'item-details';
+    
+    const cartItemName = document.createElement('div');
+    cartItemName.className = 'item-name';
+    cartItemName.textContent = currentItem.productName || 'Product';
+    
+    const cartItemMeta = document.createElement('div');
+    cartItemMeta.className = 'item-meta';
+    cartItemMeta.textContent = `${currentItem.size || ''} | ${currentItem.color || ''}`;
+    
+    const cartItemPrice = document.createElement('div');
+    cartItemPrice.className = 'item-price';
+    cartItemPrice.textContent = currentItem.price || '';
+    
+    cartItemDetails.appendChild(cartItemName);
+    cartItemDetails.appendChild(cartItemMeta);
+    cartItemDetails.appendChild(cartItemPrice);
+    
+    cartItemSection.appendChild(cartItemTitle);
+    cartItemSection.appendChild(cartImageWrapper);
+    cartItemSection.appendChild(cartItemDetails);
+    
+    content.appendChild(cartItemSection);
+    
+    // Similar items section
+    const similarSection = document.createElement('div');
+    similarSection.className = 'similar-section';
+    
+    const similarTitle = document.createElement('div');
+    similarTitle.className = 'section-title';
+    similarTitle.textContent = 'Similar Items in Your Wardrobe';
+    
+    if (currentSimilarItem) {
+      const similarHint = document.createElement('div');
+      similarHint.className = 'similar-hint';
+      similarHint.textContent = similarItems.length > 1 ?
+        `Swipe to see ${similarItems.length} similar items` :
+        '1 similar item found';
+      
+      const similarImageWrapper = document.createElement('div');
+      similarImageWrapper.className = 'image-wrapper';
+      
+      // Navigation arrows for similar items
+      if (similarItems.length > 1) {
+        const prevSimilarButton = document.createElement('button');
+        prevSimilarButton.className = 'nav-arrow nav-arrow-left';
+        prevSimilarButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>';
+        prevSimilarButton.addEventListener('click', function() {
+          const itemId = currentItem.id;
+          const similarCount = similarItems.length;
+          const currentSimilarIdx = panel.cartState.similarItemsIndex[itemId] || 0;
+          
+          panel.cartState.similarItemsIndex[itemId] = (currentSimilarIdx > 0) ?
+            currentSimilarIdx - 1 : similarCount - 1;
+          
+          renderComparisonPanel(panel, []);
+        });
+        
+        const nextSimilarButton = document.createElement('button');
+        nextSimilarButton.className = 'nav-arrow nav-arrow-right';
+        nextSimilarButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>';
+        nextSimilarButton.addEventListener('click', function() {
+          const itemId = currentItem.id;
+          const similarCount = similarItems.length;
+          const currentSimilarIdx = panel.cartState.similarItemsIndex[itemId] || 0;
+          
+          panel.cartState.similarItemsIndex[itemId] = (currentSimilarIdx < similarCount - 1) ?
+            currentSimilarIdx + 1 : 0;
+          
+          renderComparisonPanel(panel, []);
+        });
+        
+        similarImageWrapper.appendChild(prevSimilarButton);
+        similarImageWrapper.appendChild(nextSimilarButton);
+      }
+      
+      const similarImageContainer = document.createElement('div');
+      similarImageContainer.className = 'image-container';
+      
+      const similarImage = document.createElement('img');
+      similarImage.src = currentSimilarItem.imageUrl || '/api/placeholder/200/250';
+      similarImage.alt = currentSimilarItem.category || 'Product';
+      similarImage.onerror = function() {
+        this.src = '/api/placeholder/200/250';
+      };
+      
+      const matchBadge = document.createElement('div');
+      matchBadge.className = 'item-match-badge';
+      matchBadge.textContent = `${Math.round(currentSimilarItem.similarityScore * 100)}% Match`;
+      
+      similarImageContainer.appendChild(similarImage);
+      similarImageContainer.appendChild(matchBadge);
+      similarImageWrapper.appendChild(similarImageContainer);
+      
+      const similarItemDetails = document.createElement('div');
+      similarItemDetails.className = 'item-details';
+      
+      const similarItemName = document.createElement('div');
+      similarItemName.className = 'item-name';
+      similarItemName.textContent = currentSimilarItem.category || 'Product';
+      
+      const similarItemMeta = document.createElement('div');
+      similarItemMeta.className = 'item-meta';
+      similarItemMeta.textContent = `Last worn: ${currentSimilarItem.lastWorn}`;
+      
+      similarItemDetails.appendChild(similarItemName);
+      similarItemDetails.appendChild(similarItemMeta);
+      
+      // Dots indicator for multiple similar items
+      if (similarItems.length > 1) {
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'dots-indicator';
+        
+        for (let i = 0; i < similarItems.length; i++) {
+          const dot = document.createElement('div');
+          dot.className = i === currentSimilarIndex ? 'dot active' : 'dot';
+          dotsContainer.appendChild(dot);
+        }
+        
+        similarItemDetails.appendChild(dotsContainer);
+      }
+      
+      similarSection.appendChild(similarTitle);
+      similarSection.appendChild(similarHint);
+      similarSection.appendChild(similarImageWrapper);
+      similarSection.appendChild(similarItemDetails);
+    } else {
+      // No similar items found
+      const noSimilarMessage = document.createElement('div');
+      noSimilarMessage.className = 'item-details';
+      noSimilarMessage.style.padding = '32px 0';
+      noSimilarMessage.textContent = 'No similar items found in your wardrobe';
+      
+      similarSection.appendChild(similarTitle);
+      similarSection.appendChild(noSimilarMessage);
+    }
+    
+    content.appendChild(similarSection);
+    panel.appendChild(content);
+    
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'panel-footer';
+    
+    if (currentSimilarItem) {
+      const footerMessage = document.createElement('div');
+      footerMessage.className = 'footer-message';
+      footerMessage.textContent = `You already own ${similarItems.length} item(s) similar to this.`;
+      footer.appendChild(footerMessage);
+    }
+    
+    const continueButton = document.createElement('button');
+    continueButton.className = 'footer-button primary-button';
+    continueButton.textContent = 'Continue Shopping';
+    continueButton.addEventListener('click', function() {
+      panel.classList.add('hidden');
+      createToggleButton();
+    });
+    
+    const seeAllButton = document.createElement('button');
+    seeAllButton.className = 'footer-button secondary-button';
+    seeAllButton.textContent = 'See All Wardrobe Items';
+    seeAllButton.addEventListener('click', function() {
+      // Navigate to wardrobe view or show all similar items
+      alert('Wardrobe view not implemented');
+    });
+    
+    footer.appendChild(continueButton);
+    footer.appendChild(seeAllButton);
+    panel.appendChild(footer);
+    
+    // Show panel
+    panel.classList.remove('hidden');
+    
+  } catch (error) {
+    showDebugOverlay("ERROR in renderComparisonPanel: " + error.message);
+    console.error("Error in renderComparisonPanel:", error);
+  }
+}
+
+// Function to generate similar wardrobe items based on cart item
+function generateSimilarItems(panel, itemId, productName, size, color) {
+  try {
+    // Skip if already generated
+    if (panel.cartState.similarItems.some(item => item.cartItemId === itemId)) {
+      return;
+    }
+    
+    // Generate 0-3 similar items based on the product name
+    const similarCount = Math.floor(Math.random() * 4);
+    
+    // Initialize similar index for this item
+    panel.cartState.similarItemsIndex[itemId] = 0;
+    
+    // Skip if no similar items to generate
+    if (similarCount === 0) {
+      return;
+    }
+    
+    // Generate some basic categories based on product name
+    let category = '';
+    let similarWords = [];
+    
+    if (productName.toLowerCase().includes('shirt') ||
+        productName.toLowerCase().includes('top') ||
+        productName.toLowerCase().includes('blouse')) {
+      category = 'Tops';
+      similarWords = ['Shirt', 'Blouse', 'Top', 'Button-Down', 'Tee'];
+    } else if (productName.toLowerCase().includes('jean') ||
+               productName.toLowerCase().includes('pant') ||
+               productName.toLowerCase().includes('trouser')) {
+      category = 'Bottoms';
+      similarWords = ['Jeans', 'Pants', 'Trousers', 'Slacks', 'Chinos'];
+    } else if (productName.toLowerCase().includes('dress') ||
+               productName.toLowerCase().includes('gown')) {
+      category = 'Dresses';
+      similarWords = ['Dress', 'Midi Dress', 'Maxi Dress', 'Mini Dress', 'Gown'];
+    } else if (productName.toLowerCase().includes('sweater') ||
+               productName.toLowerCase().includes('cardigan') ||
+               productName.toLowerCase().includes('sweatshirt')) {
+      category = 'Sweaters';
+      similarWords = ['Sweater', 'Cardigan', 'Pullover', 'Hoodie', 'Sweatshirt'];
+    } else if (productName.toLowerCase().includes('jacket') ||
+               productName.toLowerCase().includes('coat')) {
+      category = 'Outerwear';
+      similarWords = ['Jacket', 'Coat', 'Blazer', 'Parka', 'Windbreaker'];
+    } else {
+      category = 'Clothing';
+      similarWords = ['Item', 'Piece', 'Garment', 'Article', 'Attire'];
+    }
+    
+    // Adjectives for color
+    let colorAdjectives = [];
+    if (color.toLowerCase().includes('white')) {
+      colorAdjectives = ['White', 'Ivory', 'Cream', 'Off-white', 'Eggshell'];
+    } else if (color.toLowerCase().includes('black')) {
+      colorAdjectives = ['Black', 'Charcoal', 'Onyx', 'Jet black', 'Midnight'];
+    } else if (color.toLowerCase().includes('blue')) {
+      colorAdjectives = ['Blue', 'Navy', 'Denim', 'Sky blue', 'Royal blue'];
+    } else if (color.toLowerCase().includes('red')) {
+      colorAdjectives = ['Red', 'Crimson', 'Burgundy', 'Maroon', 'Scarlet'];
+    } else if (color.toLowerCase().includes('green')) {
+      colorAdjectives = ['Green', 'Olive', 'Emerald', 'Sage', 'Forest green'];
+    } else if (color.toLowerCase().includes('yellow')) {
+      colorAdjectives = ['Yellow', 'Gold', 'Mustard', 'Maize', 'Lemon'];
+    } else if (color.toLowerCase().includes('purple')) {
+      colorAdjectives = ['Purple', 'Lavender', 'Violet', 'Plum', 'Lilac'];
+    } else if (color.toLowerCase().includes('pink')) {
+      colorAdjectives = ['Pink', 'Rose', 'Blush', 'Fuchsia', 'Coral'];
+    } else if (color.toLowerCase().includes('brown')) {
+      colorAdjectives = ['Brown', 'Tan', 'Camel', 'Khaki', 'Taupe'];
+    } else {
+      colorAdjectives = ['Colored', 'Tinted', 'Shaded', 'Hued', 'Toned'];
+    }
+    
+    // Generate similar items
+    for (let i = 0; i < similarCount; i++) {
+      // Create a random similarity score between 0.7 and 0.95
+      const similarityScore = 0.7 + (Math.random() * 0.25);
+      
+      // Pick random adjective and type
+      const randomColor = colorAdjectives[Math.floor(Math.random() * colorAdjectives.length)];
+      const randomWord = similarWords[Math.floor(Math.random() * similarWords.length)];
+      
+      // Create a category name
+      const itemCategory = `${randomColor} ${randomWord}`;
+      
+      // Generate a "last worn" date
+      const timeframes = ['2 days ago', '1 week ago', '2 weeks ago', '1 month ago', '2 months ago'];
+      const lastWorn = timeframes[Math.floor(Math.random() * timeframes.length)];
+      
+      // Add to similar items
+      panel.cartState.similarItems.push({
+        id: panel.cartState.similarItems.length + 1,
+        cartItemId: itemId,
+        imageUrl: '/api/placeholder/200/250',
+        category: itemCategory,
+        similarityScore: similarityScore,
+        lastWorn: lastWorn
+      });
+    }
+  } catch (error) {
+    showDebugOverlay("ERROR in generateSimilarItems: " + error.message);
+    console.error("Error in generateSimilarItems:", error);
+  }
+}
+
+
