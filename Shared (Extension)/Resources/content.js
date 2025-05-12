@@ -1950,6 +1950,7 @@ function processUrbanOutfittersItem(item, index) {
     }
 
     // Process the cart items
+// Process the cart items to create a mobile-style layout matching the React app
 function processCartItems(cartItems, panel, usedSelector) {
   try {
     if (!currentSiteConfig) return;
@@ -1957,565 +1958,362 @@ function processCartItems(cartItems, panel, usedSelector) {
     // Clear existing content
     panel.innerHTML = '';
     
-    // Title for the panel
-    const panelTitle = document.createElement('div');
-    panelTitle.className = 'panel-title';
-    panelTitle.textContent = 'Items in Your Cart';
-    panel.appendChild(panelTitle);
+    // Initialize cart state if not already done
+    if (!panel.cartState) {
+      panel.cartState = {
+        items: [],
+        currentIndex: 0,
+        similarItems: [],
+        similarItemsIndex: {}
+      };
+    }
     
-    // Container for the images
-    const imageContainer = document.createElement('div');
-    imageContainer.className = 'image-container';
-    panel.appendChild(imageContainer);
-    
-    // Process all items using a unified approach
-    cartItems.forEach((item, index) => {
-        try {
-            console.log(`Cart Image Extractor: Processing item ${index+1}`);
-            showDebugOverlay(`Processing item ${index+1}`);
-            
-            // Get product info - use special processing for certain sites if needed
-            let productInfo;
-            let itemData = {};
-            
-            if (window.location.hostname.includes('abercrombie.com')) {
-                productInfo = processAbercrombieItem(item, index);
-            } else if (window.location.hostname.includes('ohpolly.com')) {
-                productInfo = processOhPollyItem(item, index);
-            } else if (window.location.hostname.includes('revolve.com')){
-                productInfo = processRevolveItem(item, index);
-            } else if (window.location.hostname.includes('hm.com')) {
-                productInfo = processHMItem(item, index);  // Make sure this line is present
-            } else if (window.location.hostname.includes('princesspolly.com')) {
-                productInfo = processPrincessPollyItem(item, index);
-            } else if (window.location.hostname.includes('aritzia.com')) {
-                productInfo = processAritziaItem(item, index);
-            } else if (window.location.hostname.includes('urbanoutfitters.com')) {
-                productInfo = processUrbanOutfittersItem(item, index);
-            } else if (window.location.hostname.includes('fashionnova.com')) {
-                productInfo = processFashionNovaItem(item, index);
-            } else if (window.location.hostname.includes('brandymelville.com')) {
-                productInfo = processBrandyMelvilleItem(item, index);
-            } else {
-                // Generic processing for other sites
-                itemData.imageUrl = getImageUrl(item);
-                itemData.productName = getTextFromSelectors('name', item) || 'Product';
-                itemData.price = getTextFromSelectors('price', item) || '';
-                itemData.size = getTextFromSelectors('size', item) || '';
-                itemData.color = getTextFromSelectors('color', item) || '';
-                productInfo = itemData;
-            }
-            
-            if (!productInfo.imageUrl) {
-                console.log(`Cart Image Extractor: No image found for item ${index+1}`);
-                showDebugOverlay(`No image found for item ${index+1}`);
-                return;
-            }
-            
-            console.log(`Cart Image Extractor: Found image for item ${index+1}: ${productInfo.imageUrl}`);
-            
-            // Create item container
-            const itemElement = document.createElement('div');
-            itemElement.className = 'cart-item';
-            itemElement.setAttribute('data-item-index', index);
-            
-            // Create image container
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'item-image-container';
-            
-            // Create item image
-            const itemImg = document.createElement('img');
-            itemImg.src = productInfo.imageUrl;
-            itemImg.alt = productInfo.productName;
-            itemImg.className = 'item-image';
-            itemImg.onerror = function() {
-                // If image fails to load, try to fix common URL issues
-                if (productInfo.imageUrl.includes('?')) {
-                    // Try removing query parameters
-                    this.src = productInfo.imageUrl.split('?')[0];
-                } else if (!productInfo.imageUrl.startsWith('http')) {
-                    // Try adding protocol if missing
-                    this.src = 'https:' + productInfo.imageUrl;
-                }
-            };
-            
-            imgContainer.appendChild(itemImg);
-            
-            // Create item details
-            const detailsElement = document.createElement('div');
-            detailsElement.className = 'item-details';
-            
-            // Add product name
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'item-name';
-            nameDiv.textContent = productInfo.productName;
-            detailsElement.appendChild(nameDiv);
-            
-            if (productInfo.brand) {
-                const brandDiv = document.createElement('div');
-                brandDiv.className = 'item-brand';
-                brandDiv.style.fontSize = '10px';
-                brandDiv.style.color = '#666';
-                brandDiv.textContent = productInfo.brand;
-                detailsElement.appendChild(brandDiv);
-                
-                detailsElement.appendChild(nameDiv);
-            } else {
-                detailsElement.appendChild(nameDiv);
-            }
-            
-            // Add price
-            const priceDiv = document.createElement('div');
-            priceDiv.className = 'item-price';
-            priceDiv.textContent = productInfo.price;
-            detailsElement.appendChild(priceDiv);
-            
-            // Add size and color
-            const specDiv = document.createElement('div');
-            specDiv.className = 'item-specs';
-            specDiv.textContent = `${productInfo.size} | ${productInfo.color}`;
-            detailsElement.appendChild(specDiv);
-            
-            // Add delete button if site config has delete selectors
-            if (currentSiteConfig.itemSelectors.deleteButton &&
-                currentSiteConfig.itemSelectors.deleteButton.length > 0) {
-                
-                // Create delete button
-        const deleteItemBtn = document.createElement('button');
-        deleteItemBtn.className = 'item-delete-button';
-        deleteItemBtn.textContent = 'Delete';
+    // Convert cart items to internal state format if needed
+    if (panel.cartState.items.length === 0 && cartItems.length > 0) {
+      panel.cartState.items = Array.from(cartItems).map((item, index) => {
+        // Process item data based on site
+        let productInfo;
         
-        // Add event listener to the delete button
-        deleteItemBtn.addEventListener('click', function() {
-            // Try to find the delete button in the original item
-            let deleteButton = null;
-            
-            if (window.location.hostname.includes('hm.com')) {
-                console.log(`Cart Image Extractor: Using two-step deletion for H&M item ${index+1}`);
-                
-                // Step 1: Find and click the "Decrease quantity by 1" button
-                const decreaseButton = Array.from(document.querySelectorAll('button'))
-                .find(btn => btn.textContent.includes('Decrease quantity by 1'));
-                
-                if (decreaseButton) {
-                    console.log(`Cart Image Extractor: Found decrease button for H&M, starting deletion process`);
-                    
-                    // Click the decrease button
-                    decreaseButton.click();
-                    
-                    // Step 2: Wait for the confirmation dialog and click "Remove"
-                    const interval = setInterval(() => {
-                        const removeButton = Array.from(document.querySelectorAll('button'))
-                        .find(btn => btn.textContent.includes('Remove'));
-                        
-                        if (removeButton) {
-                            console.log(`Cart Image Extractor: Found Remove confirmation button, completing deletion`);
-                            removeButton.click();
-                            clearInterval(interval);
-                            
-                            // Remove the item from our panel
-                            itemElement.remove();
-                            
-                            // Check if cart is empty
-                            setTimeout(() => {
-                                if (imageContainer.children.length === 0) {
-                                    const emptyMessage = document.createElement('div');
-                                    emptyMessage.className = 'panel-message';
-                                    emptyMessage.textContent = 'Your cart is empty';
-                                    imageContainer.appendChild(emptyMessage);
-                                }
-                            }, 100);
-                        }
-                    }, 100); // Check every 100ms
-                    
-                    // Safety timeout to prevent infinite checking
-                    setTimeout(() => {
-                        clearInterval(interval);
-                    }, 5000);
-                    
-                    return; // Exit early
-                } else {
-                    console.log(`Cart Image Extractor: Could not find decrease button for H&M item`);
-                }
-            }
-            
-            if (window.location.hostname.includes('princesspolly.com')) {
-                console.log(`Cart Image Extractor: Using special handling for Princess Polly item ${index+1}`);
-                
-                // Find the decrement button
-                const decreaseButton = item.querySelector('.cart-incrementor__button--minus') ||
-                                       item.querySelector('button[title="Remove one"]');
-                
-                // Find quantity display to check if this is the last item
-                const quantityDisplay = item.querySelector('.cart-incrementor__amount');
-                let quantity = 1;
-                
-                if (quantityDisplay) {
-                    quantity = parseInt(quantityDisplay.textContent.trim(), 10) || 1;
-                    console.log(`Cart Image Extractor: Item quantity is ${quantity}`);
-                }
-                
-                if (decreaseButton) {
-                    // Click the decrease button
-                    decreaseButton.click();
-                    console.log(`Cart Image Extractor: Clicked decrease button for Princess Polly item`);
-                    
-                    // If this was the last item (quantity=1), remove from our panel
-                    if (quantity <= 1) {
-                        itemElement.remove();
-                        
-                        // Check if cart is empty
-                        setTimeout(() => {
-                            if (imageContainer.children.length === 0) {
-                                const emptyMessage = document.createElement('div');
-                                emptyMessage.className = 'panel-message';
-                                emptyMessage.textContent = 'Your cart is empty';
-                                imageContainer.appendChild(emptyMessage);
-                            }
-                        }, 100);
-                    } else {
-                        // If quantity was > 1, show message that quantity was decreased
-                        const notification = document.createElement('div');
-                        notification.className = 'item-notification';
-                        notification.textContent = 'Quantity decreased. Click again to remove.';
-                        notification.style.fontSize = '10px';
-                        notification.style.color = '#e55';
-                        notification.style.marginTop = '5px';
-                        detailsElement.appendChild(notification);
-                        
-                        // Refresh panel after a short delay
-                        setTimeout(() => {
-                            extractAndDisplayImages();
-                        }, 2000);
-                    }
-                } else {
-                    console.log(`Cart Image Extractor: Could not find decrease button for Princess Polly item`);
-                }
-                
-                return; // Exit early
-            }
-            
-            // Special handling for Brandy Melville
-            if (window.location.hostname.includes('brandymelville.com')) {
-                console.log(`Cart Image Extractor: Using special handling for Brandy Melville item ${index+1}`);
-                
-                // Brandy Melville uses links instead of buttons for deletion
-                if (productInfo.deleteLink) {
-                    console.log(`Cart Image Extractor: Found delete link, navigating to it`);
-                    // Instead of clicking, we need to use the href since it's a navigation link
-                    window.location.href = productInfo.deleteLink.href;
-                    return; // Exit early as we're navigating away
-                } else {
-                    // Try to find any remove link directly
-                    const removeLink = item.querySelector('cart-remove-button a, a[href*="quantity=0"]');
-                    if (removeLink) {
-                        console.log(`Cart Image Extractor: Found remove link directly, navigating to it`);
-                        window.location.href = removeLink.href;
-                        return; // Exit early as we're navigating away
-                    } else {
-                        // Final attempt - look through all cart-remove-button elements
-                        const allRemoveButtons = document.querySelectorAll('cart-remove-button a');
-                        if (allRemoveButtons.length > index) {
-                            console.log(`Cart Image Extractor: Found remove link by index, navigating to it`);
-                            window.location.href = allRemoveButtons[index].href;
-                            return; // Exit early as we're navigating away
-                        }
-                        
-                        console.log(`Cart Image Extractor: Could not find any remove links for Brandy Melville`);
-                        // No navigation will happen, so we can continue with panel updates
-                    }
-                }
-                
-                // Since we're using navigation, we don't need to update the panel UI here
-                // The page will reload after deletion
-            }
-            
-            if (window.location.hostname.includes('ohpolly.com')) {
-                console.log(`Cart Image Extractor: Using special handling for OhPolly item ${index+1}`);
-                
-                // Get the delete button from productInfo if it was processed by processOhPollyItem
-                if (productInfo.deleteButton) {
-                    deleteButton = productInfo.deleteButton;
-                } else {
-                    // Otherwise try to find it directly in the item
-                    deleteButton = item.querySelector('.crt-Product_Button-remove') ||
-                                  item.querySelector('button[data-cart-item-el="remove"]');
-                }
-                
-                if (deleteButton) {
-                    console.log(`Cart Image Extractor: Found delete button for OhPolly, clicking it`);
-                    
-                    // Click the delete button
-                    deleteButton.click();
-                    
-                    // Remove the item from our panel
-                    itemElement.remove();
-                    
-                    // Check if cart is empty
-                    setTimeout(() => {
-                        if (imageContainer.children.length === 0) {
-                            const emptyMessage = document.createElement('div');
-                            emptyMessage.className = 'panel-message';
-                            emptyMessage.textContent = 'Your cart is empty';
-                            imageContainer.appendChild(emptyMessage);
-                        }
-                    }, 100);
-                    
-                    return; // Exit early
-                } else {
-                    console.log(`Cart Image Extractor: Could not find delete button for OhPolly item directly`);
-                    
-                    // Try an alternative approach - get all remove buttons and click the one at this index
-                    const allRemoveButtons = document.querySelectorAll('.crt-Product_Button-remove');
-                    if (allRemoveButtons.length > index) {
-                        console.log(`Cart Image Extractor: Found delete button by index, clicking it`);
-                        allRemoveButtons[index].click();
-                        
-                        // Remove the item from our panel
-                        itemElement.remove();
-                        return; // Exit early
-                    }
-                    
-                    console.log(`Cart Image Extractor: No matching button found for OhPolly item`);
-                    
-                    // Fallback - refresh cart panel
-                    setTimeout(() => {
-                        extractAndDisplayImages();
-                    }, 2000);
-                }
-                
-                return; // Exit early
-            }
-
-            // Special handling for Aritzia
-            if (window.location.hostname.includes('aritzia.com')) {
-                console.log(`Cart Image Extractor: Using special handling for Aritzia item ${index+1}`);
-                
-                // Try to find the remove button by data-testid
-                const removeButton = document.querySelector(`button[data-testid="remove-product-item-button"]`);
-                
-                if (removeButton) {
-                    console.log(`Cart Image Extractor: Found remove button for Aritzia, clicking it`);
-                    removeButton.click();
-                    
-                    // Remove the item from our panel
-                    itemElement.remove();
-                    
-                    // Check if cart is empty
-                    setTimeout(() => {
-                        if (imageContainer.children.length === 0) {
-                            const emptyMessage = document.createElement('div');
-                            emptyMessage.className = 'panel-message';
-                            emptyMessage.textContent = 'Your cart is empty';
-                            imageContainer.appendChild(emptyMessage);
-                        }
-                    }, 100);
-                } else {
-                    console.log(`Cart Image Extractor: Could not find remove button for Aritzia item`);
-                    
-                    // Fallback - try to find by aria-label or SVG title
-                    const removeButtonsByAriaLabel = Array.from(document.querySelectorAll('button[aria-label="Remove"]'));
-                    
-                    if (removeButtonsByAriaLabel.length > index) {
-                        console.log(`Cart Image Extractor: Found remove button by aria-label, clicking it`);
-                        removeButtonsByAriaLabel[index].click();
-                        
-                        // Remove the item from our panel
-                        itemElement.remove();
-                    } else {
-                        console.log(`Cart Image Extractor: Could not find any remove buttons for Aritzia`);
-                        
-                        // Fallback - refresh cart panel
-                        setTimeout(() => {
-                            extractAndDisplayImages();
-                        }, 2000);
-                    }
-                }
-                
-                return; // Exit early
-            }
-            
-            if (window.location.hostname.includes('urbanoutfitters.com')) {
-                console.log(`Cart Image Extractor: Using special handling for Urban Outfitters item ${index+1}`);
-                
-                // If we have the delete button from processing, use it directly
-                if (productInfo.deleteButton) {
-                    console.log(`Cart Image Extractor: Found delete button reference, clicking it`);
-                    productInfo.deleteButton.click();
-                } else {
-                    // Otherwise try to find it in the cart item
-                    const removeButton = item.querySelector('button[aria-label^="Remove"]');
-                    
-                    if (removeButton) {
-                        console.log(`Cart Image Extractor: Found remove button, clicking it`);
-                        removeButton.click();
-                    } else {
-                        console.log(`Cart Image Extractor: Trying to find remove button by direct DOM query`);
-                        
-                        // Try a more general search across the page if we can't find it in this specific item
-                        const allRemoveButtons = document.querySelectorAll('button[aria-label^="Remove"]');
-                        if (allRemoveButtons.length > index) {
-                            console.log(`Cart Image Extractor: Found remove button by index, clicking it`);
-                            allRemoveButtons[index].click();
-                        } else {
-                            console.log(`Cart Image Extractor: Could not find any remove buttons`);
-                            // Fallback - refresh cart panel
-                            setTimeout(() => {
-                                extractAndDisplayImages();
-                            }, 2000);
-                        }
-                    }
-                }
-                
-                // Remove the item from our panel
-                itemElement.remove();
-                
-                // Check if cart is empty
-                setTimeout(() => {
-                    if (imageContainer.children.length === 0) {
-                        const emptyMessage = document.createElement('div');
-                        emptyMessage.className = 'panel-message';
-                        emptyMessage.textContent = 'Your cart is empty';
-                        imageContainer.appendChild(emptyMessage);
-                    }
-                }, 100);
-                
-                return; // Exit early
-            }
-            
-            // Special handling for Fashion Nova's two-step delete process
-            if (window.location.hostname.includes('fashionnova.com')) {
-                console.log(`Cart Image Extractor: Using special handling for Fashion Nova item ${index+1}`);
-                
-                // Step 1: Click the remove button to open the confirmation dialog
-                const removeButton = item.querySelector('button[data-testid="remove-item"]') ||
-                                     item.querySelector('button[aria-label="Remove item"]');
-                
-                if (removeButton) {
-                    console.log(`Cart Image Extractor: Found remove button for Fashion Nova, clicking it to open confirmation`);
-                    removeButton.click();
-                    
-                    // Step 2: Wait for the confirmation dialog and click the "Remove" button
-                    setTimeout(() => {
-                        // Find the confirmation dialog's Remove button
-                        const confirmRemoveButton = document.querySelector('aside button.button-primary:not([disabled])');
-                        
-                        if (confirmRemoveButton) {
-                            console.log(`Cart Image Extractor: Found confirmation Remove button, completing deletion`);
-                            confirmRemoveButton.click();
-                            
-                            // Remove the item from our panel
-                            itemElement.remove();
-                            
-                            // Check if cart is empty
-                            setTimeout(() => {
-                                if (imageContainer.children.length === 0) {
-                                    const emptyMessage = document.createElement('div');
-                                    emptyMessage.className = 'panel-message';
-                                    emptyMessage.textContent = 'Your cart is empty';
-                                    imageContainer.appendChild(emptyMessage);
-                                }
-                            }, 500);
-                        } else {
-                            console.log(`Cart Image Extractor: Confirmation dialog not found or Remove button not available`);
-                            
-                            // Try an alternative approach - submit the form directly
-                            if (productInfo.removeForm && productInfo.removeForm.form) {
-                                console.log(`Cart Image Extractor: Attempting to submit remove form directly`);
-                                productInfo.removeForm.form.submit();
-                                
-                                // Remove the item from our panel
-                                itemElement.remove();
-                            } else {
-                                console.log(`Cart Image Extractor: No alternative removal method available`);
-                                // Fallback - refresh the cart panel
-                                setTimeout(() => {
-                                    extractAndDisplayImages();
-                                }, 2000);
-                            }
-                        }
-                    }, 500); // Give the dialog time to appear
-                } else {
-                    console.log(`Cart Image Extractor: Could not find remove button for Fashion Nova item`);
-                    showDebugOverlay(`Could not find remove button for Fashion Nova item ${index+1}`);
-                    
-                    // Fallback - refresh the cart panel
-                    setTimeout(() => {
-                        extractAndDisplayImages();
-                    }, 2000);
-                }
-                
-                return; // Exit early
-            }
-            
-            // Standard approach for other sites
-            for (const selector of currentSiteConfig.itemSelectors.deleteButton) {
-                deleteButton = item.querySelector(selector);
-                if (deleteButton) {
-                    console.log(`Cart Image Extractor: Found delete button with selector "${selector}"`);
-                    break;
-                }
-            }
-            
-            if (deleteButton) {
-                console.log(`Cart Image Extractor: Clicking delete button for item ${index+1}`);
-                showDebugOverlay(`Clicking delete button for item ${index+1}`);
-                
-                // Click the delete button
-                deleteButton.click();
-                
-                // Remove the item from our panel
-                itemElement.remove();
-                
-                // Update panel if no items left
-                setTimeout(() => {
-                    if (imageContainer.children.length === 0) {
-                        const emptyMessage = document.createElement('div');
-                        emptyMessage.className = 'panel-message';
-                        emptyMessage.textContent = 'Your cart is empty';
-                        imageContainer.appendChild(emptyMessage);
-                    }
-                }, 100);
-            } else {
-                console.log(`Cart Image Extractor: Could not find delete button for item ${index+1}`);
-                showDebugOverlay(`Could not find delete button for item ${index+1}`);
-                
-                // Fallback - refresh the cart panel to reflect server-side changes
-                setTimeout(() => {
-                    extractAndDisplayImages();
-                }, 2000);
-            }
-        });
-        detailsElement.appendChild(deleteItemBtn);
+        if (window.location.hostname.includes('abercrombie.com')) {
+          productInfo = processAbercrombieItem(item, index);
+        } else if (window.location.hostname.includes('ohpolly.com')) {
+          productInfo = processOhPollyItem(item, index);
+        } else if (window.location.hostname.includes('revolve.com')) {
+          productInfo = processRevolveItem(item, index);
+        } else if (window.location.hostname.includes('hm.com')) {
+          productInfo = processHMItem(item, index);
+        } else if (window.location.hostname.includes('princesspolly.com')) {
+          productInfo = processPrincessPollyItem(item, index);
+        } else if (window.location.hostname.includes('aritzia.com')) {
+          productInfo = processAritziaItem(item, index);
+        } else if (window.location.hostname.includes('urbanoutfitters.com')) {
+          productInfo = processUrbanOutfittersItem(item, index);
+        } else if (window.location.hostname.includes('fashionnova.com')) {
+          productInfo = processFashionNovaItem(item, index);
+        } else if (window.location.hostname.includes('brandymelville.com')) {
+          productInfo = processBrandyMelvilleItem(item, index);
+        } else {
+          // Generic processing
+          productInfo = {
+            imageUrl: getImageUrl(item),
+            productName: getTextFromSelectors('name', item) || 'Product',
+            price: getTextFromSelectors('price', item) || '',
+            size: getTextFromSelectors('size', item) || '',
+            color: getTextFromSelectors('color', item) || ''
+          };
+        }
+        
+        return {
+          id: index,
+          ...productInfo,
+          currentSimilarIndex: 0
+        };
+      });
+      
+      // Generate mock "similar items" for each cart item
+      panel.cartState.items.forEach(item => {
+        generateSimilarItems(panel, item.id, item.productName, item.size, item.color);
+      });
     }
     
-    itemElement.appendChild(imgContainer);
-    itemElement.appendChild(detailsElement);
-
-    // Add item to the image container
-    imageContainer.appendChild(itemElement);
-    } catch (error) {
-            console.error('Cart Image Extractor: Error processing item details:', error);
-            showDebugOverlay('Error processing item details: ' + error.message);
-    }
-    }); // <-- This closing brace and parenthesis is missing for the forEach
-    // Add close button
+    // Get current cart item
+    const currentIndex = panel.cartState.currentIndex;
+    const currentItem = panel.cartState.items[currentIndex] || {};
+    
+    // Get similar items for current cart item
+    const similarItems = panel.cartState.similarItems.filter(item =>
+      item.cartItemId === currentItem.id
+    );
+    
+    // Get current similar item
+    const currentSimilarIndex = currentItem.currentSimilarIndex || 0;
+    const currentSimilarItem = similarItems.length > 0 ?
+      similarItems[currentSimilarIndex] : null;
+    
+    // Create header (black bar with title and close button)
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    
+    const title = document.createElement('div');
+    title.className = 'panel-title';
+    title.textContent = 'Similar Items Found';
+    
     const closeButton = document.createElement('button');
     closeButton.className = 'close-button';
-    closeButton.textContent = '×';
+    closeButton.innerHTML = '×';
     closeButton.addEventListener('click', function() {
       panel.classList.add('hidden');
-      
-      // Create toggle button to reopen panel
       createToggleButton();
     });
-    panel.appendChild(closeButton);
+    
+    header.appendChild(title);
+    header.appendChild(closeButton);
+    panel.appendChild(header);
+    
+    // Create navigation bar (item 1 of X)
+    const nav = document.createElement('div');
+    nav.className = 'panel-nav';
+    
+    const prevButton = document.createElement('button');
+    prevButton.className = 'panel-nav-button';
+    prevButton.innerHTML = '&larr;';
+    prevButton.disabled = panel.cartState.items.length <= 1;
+    prevButton.addEventListener('click', function() {
+      if (panel.cartState.items.length <= 1) return;
+      
+      panel.cartState.currentIndex = currentIndex > 0 ?
+        currentIndex - 1 : panel.cartState.items.length - 1;
+      
+      processCartItems(cartItems, panel, usedSelector);
+    });
+    
+    const navInfo = document.createElement('div');
+    navInfo.className = 'panel-nav-info';
+    navInfo.textContent = `Item ${currentIndex + 1} of ${panel.cartState.items.length}`;
+    
+    const nextButton = document.createElement('button');
+    nextButton.className = 'panel-nav-button';
+    nextButton.innerHTML = '&rarr;';
+    nextButton.disabled = panel.cartState.items.length <= 1;
+    nextButton.addEventListener('click', function() {
+      if (panel.cartState.items.length <= 1) return;
+      
+      panel.cartState.currentIndex = currentIndex < panel.cartState.items.length - 1 ?
+        currentIndex + 1 : 0;
+      
+      processCartItems(cartItems, panel, usedSelector);
+    });
+    
+    nav.appendChild(prevButton);
+    nav.appendChild(navInfo);
+    nav.appendChild(nextButton);
+    panel.appendChild(nav);
+    
+    // Create main content container
+    const content = document.createElement('div');
+    content.className = 'image-container';
+    
+    // 1. Cart Item Section
+    const cartItemSection = document.createElement('div');
+    cartItemSection.className = 'cart-item-section';
+    
+    const cartSectionTitle = document.createElement('div');
+    cartSectionTitle.className = 'section-title';
+    cartSectionTitle.textContent = 'In Your Shopping Cart';
+    cartItemSection.appendChild(cartSectionTitle);
+    
+    const cartItemImageContainer = document.createElement('div');
+    cartItemImageContainer.className = 'item-image-container';
+    
+    const cartItemImage = document.createElement('img');
+    cartItemImage.className = 'item-image';
+    cartItemImage.src = currentItem.imageUrl || '/api/placeholder/200/250';
+    cartItemImage.alt = currentItem.productName || 'Product';
+    cartItemImage.onerror = function() {
+      this.src = '/api/placeholder/200/250';
+    };
+    
+    cartItemImageContainer.appendChild(cartItemImage);
+    cartItemSection.appendChild(cartItemImageContainer);
+    
+    const cartItemDetails = document.createElement('div');
+    cartItemDetails.className = 'item-details';
+    
+    const cartItemName = document.createElement('div');
+    cartItemName.className = 'item-name';
+    cartItemName.textContent = currentItem.productName || 'Product';
+    
+    const cartItemSpecs = document.createElement('div');
+    cartItemSpecs.className = 'item-specs';
+    cartItemSpecs.textContent = `${currentItem.size || ''} | ${currentItem.color || ''}`;
+    
+    const cartItemPrice = document.createElement('div');
+    cartItemPrice.className = 'item-price';
+    cartItemPrice.textContent = currentItem.price || '';
+    
+    cartItemDetails.appendChild(cartItemName);
+    cartItemDetails.appendChild(cartItemSpecs);
+    cartItemDetails.appendChild(cartItemPrice);
+    cartItemSection.appendChild(cartItemDetails);
+    
+    content.appendChild(cartItemSection);
+    
+    // 2. Similar Items Section
+    const similarSection = document.createElement('div');
+    similarSection.className = 'similar-section';
+    
+    const similarSectionTitle = document.createElement('div');
+    similarSectionTitle.className = 'section-title';
+    similarSectionTitle.textContent = 'Similar Items in Your Wardrobe';
+    similarSection.appendChild(similarSectionTitle);
+    
+    if (currentSimilarItem) {
+      // Add swipe hint if multiple similar items
+      if (similarItems.length > 1) {
+        const similarHint = document.createElement('div');
+        similarHint.className = 'similar-hint';
+        similarHint.textContent = `Swipe to see ${similarItems.length} similar items`;
+        similarSection.appendChild(similarHint);
+      } else {
+        const similarHint = document.createElement('div');
+        similarHint.className = 'similar-hint';
+        similarHint.textContent = '1 similar item found';
+        similarSection.appendChild(similarHint);
+      }
+      
+      // Similar item image container with navigation arrows
+      const similarImageWrapper = document.createElement('div');
+      similarImageWrapper.className = 'similar-image-wrapper';
+      similarImageWrapper.style.position = 'relative';
+      similarImageWrapper.style.width = '100%';
+      similarImageWrapper.style.display = 'flex';
+      similarImageWrapper.style.justifyContent = 'center';
+      
+      // Add navigation arrows for multiple similar items
+      if (similarItems.length > 1) {
+        const prevArrow = document.createElement('button');
+        prevArrow.className = 'nav-arrow nav-arrow-left';
+        prevArrow.innerHTML = '&lt;';
+        prevArrow.addEventListener('click', function() {
+          // Update similar item index
+          const newIndex = currentSimilarIndex > 0 ?
+            currentSimilarIndex - 1 : similarItems.length - 1;
+          
+          // Update the current similar index for this cart item
+          panel.cartState.items[currentIndex].currentSimilarIndex = newIndex;
+          
+          // Refresh panel
+          processCartItems(cartItems, panel, usedSelector);
+        });
+        
+        const nextArrow = document.createElement('button');
+        nextArrow.className = 'nav-arrow nav-arrow-right';
+        nextArrow.innerHTML = '&gt;';
+        nextArrow.addEventListener('click', function() {
+          // Update similar item index
+          const newIndex = currentSimilarIndex < similarItems.length - 1 ?
+            currentSimilarIndex + 1 : 0;
+          
+          // Update the current similar index for this cart item
+          panel.cartState.items[currentIndex].currentSimilarIndex = newIndex;
+          
+          // Refresh panel
+          processCartItems(cartItems, panel, usedSelector);
+        });
+        
+        similarImageWrapper.appendChild(prevArrow);
+        similarImageWrapper.appendChild(nextArrow);
+      }
+      
+      const similarImageContainer = document.createElement('div');
+      similarImageContainer.className = 'item-image-container';
+      
+      const similarImage = document.createElement('img');
+      similarImage.className = 'item-image';
+      similarImage.src = currentSimilarItem.imageUrl || '/api/placeholder/200/250';
+      similarImage.alt = currentSimilarItem.category || 'Similar Product';
+      similarImage.onerror = function() {
+        this.src = '/api/placeholder/200/250';
+      };
+      
+      // Add similarity badge
+      const matchBadge = document.createElement('div');
+      matchBadge.className = 'item-match-badge';
+      matchBadge.textContent = `${Math.round(currentSimilarItem.similarityScore * 100)}% Match`;
+      
+      similarImageContainer.appendChild(similarImage);
+      similarImageContainer.appendChild(matchBadge);
+      similarImageWrapper.appendChild(similarImageContainer);
+      similarSection.appendChild(similarImageWrapper);
+      
+      // Similar item details
+      const similarItemDetails = document.createElement('div');
+      similarItemDetails.className = 'item-details';
+      
+      const similarItemName = document.createElement('div');
+      similarItemName.className = 'item-name';
+      similarItemName.textContent = currentSimilarItem.category || 'Similar Product';
+      
+      const similarItemLastWorn = document.createElement('div');
+      similarItemLastWorn.className = 'item-specs';
+      similarItemLastWorn.textContent = `Last worn: ${currentSimilarItem.lastWorn}`;
+      
+      similarItemDetails.appendChild(similarItemName);
+      similarItemDetails.appendChild(similarItemLastWorn);
+      
+      // Add dots indicator for multiple similar items
+      if (similarItems.length > 1) {
+        const dotsIndicator = document.createElement('div');
+        dotsIndicator.className = 'dots-indicator';
+        dotsIndicator.style.marginTop = '8px';
+        dotsIndicator.style.display = 'flex';
+        dotsIndicator.style.justifyContent = 'center';
+        
+        for (let i = 0; i < similarItems.length; i++) {
+          const dot = document.createElement('div');
+          dot.className = i === currentSimilarIndex ? 'dot active' : 'dot';
+          dot.style.width = '8px';
+          dot.style.height = '8px';
+          dot.style.borderRadius = '50%';
+          dot.style.margin = '0 4px';
+          dot.style.backgroundColor = i === currentSimilarIndex ? '#000' : '#ddd';
+          dotsIndicator.appendChild(dot);
+        }
+        
+        similarItemDetails.appendChild(dotsIndicator);
+      }
+      
+      similarSection.appendChild(similarItemDetails);
+    } else {
+      // No similar items found
+      const noSimilarMessage = document.createElement('div');
+      noSimilarMessage.className = 'panel-message';
+      noSimilarMessage.textContent = 'No similar items found in your wardrobe';
+      similarSection.appendChild(noSimilarMessage);
+    }
+    
+    content.appendChild(similarSection);
+    panel.appendChild(content);
+    
+    // Footer with buttons
+    const footer = document.createElement('div');
+    footer.className = 'panel-footer';
+    
+    // Add footer message if there are similar items
+    if (currentSimilarItem) {
+      const footerMessage = document.createElement('div');
+      footerMessage.className = 'footer-message';
+      footerMessage.textContent = `You already own ${similarItems.length} item(s) similar to this.`;
+      footer.appendChild(footerMessage);
+    }
+    
+    // Continue Shopping button
+    const continueButton = document.createElement('button');
+    continueButton.className = 'footer-button primary-button';
+    continueButton.textContent = 'Continue Shopping';
+    continueButton.addEventListener('click', function() {
+      panel.classList.add('hidden');
+      createToggleButton();
+    });
+    
+    // See All Wardrobe Items button
+    const seeAllButton = document.createElement('button');
+    seeAllButton.className = 'footer-button secondary-button';
+    seeAllButton.textContent = 'See All Wardrobe Items';
+    seeAllButton.addEventListener('click', function() {
+      // This would normally navigate to a wardrobe view
+      alert('Wardrobe view would open here');
+    });
+    
+    footer.appendChild(continueButton);
+    footer.appendChild(seeAllButton);
+    panel.appendChild(footer);
     
     // Show panel
     panel.classList.remove('hidden');
     
-    console.log("Cart Image Extractor: Panel populated and displayed");
-    showDebugOverlay("Panel populated and displayed");
+    console.log("Cart Image Extractor: Mobile panel populated and displayed");
+    showDebugOverlay("Mobile panel populated and displayed");
   } catch (error) {
     showDebugOverlay("ERROR in processCartItems: " + error.message);
     console.error("Error in processCartItems:", error);
@@ -2617,123 +2415,321 @@ function createBottomPanel() {
     // Add our CSS to the page
     const style = document.createElement('style');
     style.textContent = `
+      /* Full-screen mobile-style cart panel CSS */
       #cart-panel {
         position: fixed;
-        bottom: 0;
+        top: 0;
         left: 0;
         width: 100%;
+        height: 100%;
         background-color: white;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
         z-index: 9999;
-        padding: 15px;
+        padding: 0; /* Remove padding to match mobile design */
         transition: transform 0.3s ease;
-        max-height: 300px; /* Increased from 220px */
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
       }
       
       #cart-panel.hidden {
         transform: translateY(100%);
       }
       
+      /* Header - black bar with title and close button */
+      .panel-header {
+        background-color: black;
+        color: white;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      
       .panel-title {
         font-weight: bold;
-        margin-bottom: 10px;
-        font-size: 16px;
+        font-size: 18px;
+        margin: 0;
+        text-align: left;
+        border: none;
+        padding: 0;
       }
       
-      .image-container {
+      /* Navigation bar with item counter */
+      .panel-nav {
+        background-color: #f1f1f1;
+        padding: 8px 16px;
         display: flex;
-        overflow-x: auto;
-        gap: 15px;
-        padding-bottom: 10px;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eaeaea;
       }
       
-      .cart-item {
+      .panel-nav-info {
+        font-size: 14px;
+        color: #555;
+      }
+      
+      /* Main content area */
+      .image-container {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        min-width: 140px;
-        max-width: 140px;
-        position: relative;
+        padding: 16px;
+        gap: 24px;
+        overflow-y: auto;
+        flex-wrap: nowrap; /* Override previous setting - no wrapping needed for this layout */
+        justify-content: flex-start; /* Align to top */
+        align-items: center;
       }
       
-      .item-image-container {
+      /* Cart item section */
+      .cart-item-section {
         width: 100%;
-        height: 180px; /* Fixed height container */
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .section-title {
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 8px;
+      }
+      
+      /* Cart item layout */
+      .cart-item {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: none;
+        padding: 0;
+        max-width: none;
+        transition: none;
+        background-color: transparent;
+      }
+      
+      .cart-item:hover {
+        transform: none;
+        box-shadow: none;
+      }
+      
+      /* Item image container */
+      .item-image-container {
+        width: 192px;
+        height: 224px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
+        padding: 8px;
+        margin-bottom: 8px;
         position: relative;
-        margin-bottom: 5px;
       }
       
       .item-image {
         max-height: 100%;
         max-width: 100%;
-        object-fit: contain; /* Contains the image fully within the container */
-        position: absolute;
+        object-fit: contain;
       }
       
+      /* Item details */
       .item-details {
-        padding: 5px 0;
+        width: 100%;
+        text-align: center;
+        padding: 0;
       }
       
       .item-name {
-        font-size: 12px;
-        font-weight: bold;
-        white-space: normal; /* Allow text to wrap */
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2; /* Limit to 2 lines */
-        -webkit-box-orient: vertical;
-        line-height: 1.2;
-        max-height: 2.4em; /* 2 lines */
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.3;
+        margin-bottom: 4px;
+        max-height: none;
+        display: block;
+        -webkit-line-clamp: none;
+        white-space: normal;
       }
       
       .item-price {
-        font-size: 12px;
-        color: #777;
-        margin-top: 3px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        margin-top: 4px;
       }
       
       .item-specs {
-        font-size: 10px;
+        font-size: 14px;
+        color: #666;
+        margin: 4px 0;
+      }
+      
+      /* Similar items section */
+      .similar-section {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+      }
+      
+      .similar-hint {
+        font-size: 12px;
         color: #999;
-        margin-top: 2px;
-      }
-      
-      .close-button {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #444;
-      }
-      
-      .panel-message {
-        padding: 20px;
         text-align: center;
-        color: #777;
+        margin-bottom: 4px;
       }
       
-      /* New styles for delete button */
-      .item-delete-button {
-        margin-top: 8px;
+      /* Navigation arrows for similar items */
+      .nav-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        z-index: 10;
+      }
+      
+      .nav-arrow-left {
+        left: 0;
+      }
+      
+      .nav-arrow-right {
+        right: 0;
+      }
+      
+      /* Similarity badge */
+      .item-match-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background-color: #4caf50;
+        color: white;
+        font-size: 12px;
         padding: 4px 8px;
-        background-color: #f44336;
+        border-radius: 9999px;
+      }
+      
+      /* Pagination dots */
+      .dots-indicator {
+        display: flex;
+        justify-content: center;
+        margin-top: 8px;
+      }
+      
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #ddd;
+        margin: 0 4px;
+      }
+      
+      .dot.active {
+        background-color: #000;
+      }
+      
+      /* Footer */
+      .panel-footer {
+        border-top: 1px solid #eee;
+        padding: 16px;
+      }
+      
+      .footer-message {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 12px;
+      }
+      
+      /* Buttons */
+      .footer-button {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-bottom: 8px;
+      }
+      
+      .primary-button {
+        background-color: black;
         color: white;
         border: none;
-        border-radius: 3px;
-        font-size: 10px;
+      }
+      
+      .secondary-button {
+        background-color: white;
+        color: black;
+        border: 1px solid black;
+      }
+      
+      /* Close button */
+      .close-button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 4px;
+        position: static;
+        margin: 0;
+      }
+      
+      /* Toggle button to reopen panel */
+      .panel-toggle-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 16px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: normal;
+        cursor: pointer;
+        z-index: 9998;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      
+      /* Delete button - make it look more like mobile UI */
+      .item-delete-button {
+        margin-top: 16px;
+        padding: 8px 12px;
+        background-color: transparent;
+        color: #f44336;
+        border: 1px solid #f44336;
+        border-radius: 4px;
+        font-size: 14px;
         cursor: pointer;
         transition: background-color 0.2s;
       }
       
       .item-delete-button:hover {
-        background-color: #d32f2f;
+        background-color: rgba(244, 67, 54, 0.1);
+      }
+      
+      /* Panel message style */
+      .panel-message {
+        padding: 32px 16px;
+        text-align: center;
+        color: #777;
+        font-size: 16px;
       }
     `;
     document.head.appendChild(style);
@@ -2742,10 +2738,19 @@ function createBottomPanel() {
     const panel = document.createElement('div');
     panel.id = 'cart-panel';
     panel.className = 'cart-panel';
+    
+    // Initialize cart state management
+    panel.cartState = {
+      items: [], // Will be populated from extracted cart items
+      currentIndex: 0,
+      similarItems: [], // Will be populated with mock wardrobe items
+      similarItemsIndex: {}  // Tracks the current index of similar items for each cart item
+    };
+    
     document.body.appendChild(panel);
     
-    console.log("Cart Image Extractor: Bottom panel created");
-    showDebugOverlay("Bottom panel created");
+    console.log("Cart Image Extractor: Full screen mobile-style panel created");
+    showDebugOverlay("Full screen mobile-style panel created");
     
     return panel;
   } catch (error) {
@@ -2847,624 +2852,9 @@ function createBottomPanel() {
       }
 
 // Function to create the full-screen comparison panel
-function createFullScreenComparisonPanel() {
-  try {
-    // Add CSS styles for the full-screen panel
-    const style = document.createElement('style');
-    style.textContent = `
-      #cart-panel {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: white;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.3s ease;
-        overflow: hidden;
-      }
-      
-      #cart-panel.hidden {
-        transform: translateY(100%);
-      }
-      
-      .panel-header {
-        background-color: black;
-        color: white;
-        padding: 12px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      
-      .panel-header h1 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: bold;
-      }
-      
-      .panel-nav {
-        background-color: #f1f1f1;
-        padding: 8px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      
-      .panel-nav-button {
-        background: none;
-        border: none;
-        padding: 4px;
-        cursor: pointer;
-      }
-      
-      .panel-nav-button[disabled] {
-        color: #ccc;
-        cursor: default;
-      }
-      
-      .panel-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-      }
-      
-      .cart-item-section {
-        margin-bottom: 24px;
-      }
-      
-      .section-title {
-        text-align: center;
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        color: #666;
-      }
-      
-      .image-wrapper {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        margin-bottom: 8px;
-      }
-      
-      .image-container {
-        width: 192px;
-        height: 224px;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-        position: relative;
-      }
-      
-      .image-container img {
-        max-height: 100%;
-        max-width: 100%;
-        object-fit: contain;
-      }
-      
-      .item-match-badge {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background-color: #4caf50;
-        color: white;
-        font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 9999px;
-      }
-      
-      .item-details {
-        text-align: center;
-      }
-      
-      .item-name {
-        font-size: 16px;
-        font-weight: 500;
-      }
-      
-      .item-meta {
-        font-size: 14px;
-        color: #666;
-        margin: 4px 0;
-      }
-      
-      .item-price {
-        font-weight: bold;
-        margin-top: 4px;
-      }
-      
-      .similar-section {
-        position: relative;
-      }
-      
-      .similar-hint {
-        text-align: center;
-        margin-bottom: 4px;
-        font-size: 12px;
-        color: #999;
-      }
-      
-      .nav-arrow {
-        position: absolute;
-        top: 50%;
-        background-color: rgba(255, 255, 255, 0.8);
-        border-radius: 50%;
-        padding: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-        z-index: 2;
-        transform: translateY(-50%);
-        border: none;
-      }
-      
-      .nav-arrow-left {
-        left: 0;
-      }
-      
-      .nav-arrow-right {
-        right: 0;
-      }
-      
-      .dots-indicator {
-        display: flex;
-        justify-content: center;
-        margin-top: 8px;
-      }
-      
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: #ddd;
-        margin: 0 4px;
-      }
-      
-      .dot.active {
-        background-color: #000;
-      }
-      
-      .panel-footer {
-        border-top: 1px solid #eee;
-        padding: 16px;
-      }
-      
-      .footer-message {
-        text-align: center;
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 12px;
-      }
-      
-      .footer-button {
-        width: 100%;
-        padding: 12px 16px;
-        border-radius: 4px;
-        font-size: 16px;
-        cursor: pointer;
-        margin-bottom: 8px;
-      }
-      
-      .primary-button {
-        background-color: black;
-        color: white;
-        border: none;
-      }
-      
-      .secondary-button {
-        background-color: white;
-        color: black;
-        border: 1px solid black;
-      }
-      
-      .panel-toggle-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 16px;
-        background-color: black;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 14px;
-        cursor: pointer;
-        z-index: 9998;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      }
-      
-      .close-button {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 24px;
-        cursor: pointer;
-        padding: 4px;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    // Create the panel
-    const panel = document.createElement('div');
-    panel.id = 'cart-panel';
-    panel.className = 'cart-panel';
-    document.body.appendChild(panel);
-    
-    // Initialize cart state management
-    panel.cartState = {
-      items: [], // Will be populated from extracted cart items
-      currentIndex: 0,
-      similarItems: [ /* Will be populated with mock wardrobe items */ ],
-      similarItemsIndex: {}  // Tracks the current index of similar items for each cart item
-    };
-    
-    console.log("Cart Image Extractor: Full-screen comparison panel created");
-    showDebugOverlay("Full-screen comparison panel created");
-    
-    return panel;
-  } catch (error) {
-    showDebugOverlay("ERROR in createFullScreenComparisonPanel: " + error.message);
-    console.error("Error in createFullScreenComparisonPanel:", error);
-    // Create a simple fallback panel in case of error
-    const fallbackPanel = document.createElement('div');
-    fallbackPanel.id = 'cart-panel';
-    document.body.appendChild(fallbackPanel);
-    return fallbackPanel;
-  }
-}
 
-// Function to render the comparison panel content
-function renderComparisonPanel(panel, cartItems) {
-  try {
-    if (!panel || !panel.cartState) return;
-    
-    // Clear existing content
-    panel.innerHTML = '';
-    
-    // Initialize panel state if this is first render
-    if (panel.cartState.items.length === 0 && cartItems.length > 0) {
-      // Convert extracted cart items to our format
-      panel.cartState.items = cartItems.map((item, index) => {
-        // Extract data from the cart item
-        let imageUrl = '';
-        let productName = '';
-        let price = '';
-        let size = '';
-        let color = '';
-        
-        // Process based on site-specific extraction logic
-        if (typeof item.querySelector === 'function') {
-          // This is a DOM element from the cart
-          if (window.location.hostname.includes('abercrombie.com')) {
-            const processed = processAbercrombieItem(item, index);
-            imageUrl = processed.imageUrl;
-            productName = processed.productName;
-            price = processed.price;
-            size = processed.size;
-            color = processed.color;
-          } else if (window.location.hostname.includes('revolve.com')) {
-            const processed = processRevolveItem(item, index);
-            imageUrl = processed.imageUrl;
-            productName = processed.productName;
-            price = processed.price;
-            size = processed.size;
-            color = processed.color;
-          } else {
-            // Generic processing
-            imageUrl = getImageUrl(item);
-            productName = getTextFromSelectors('name', item) || 'Product';
-            price = getTextFromSelectors('price', item) || '';
-            size = getTextFromSelectors('size', item) || '';
-            color = getTextFromSelectors('color', item) || '';
-          }
-        } else {
-          // Already processed item
-          imageUrl = item.imageUrl || '';
-          productName = item.productName || 'Product';
-          price = item.price || '';
-          size = item.size || '';
-          color = item.color || '';
-        }
-        
-        // Add similar items data based on item characteristics
-        generateSimilarItems(panel, index, productName, size, color);
-        
-        return {
-          id: index,
-          imageUrl: imageUrl,
-          productName: productName,
-          price: price,
-          size: size,
-          color: color,
-          currentSimilarIndex: 0
-        };
-      });
-    }
-    
-    // Get current cart item
-    const currentIndex = panel.cartState.currentIndex;
-    const currentItem = panel.cartState.items[currentIndex] || {};
-    
-    // Get similar items for current cart item
-    const similarItems = panel.cartState.similarItems.filter(item =>
-      item.cartItemId === currentItem.id
-    );
-    
-    // Get current similar item
-    const currentSimilarIndex = panel.cartState.similarItemsIndex[currentItem.id] || 0;
-    const currentSimilarItem = similarItems.length > 0 ?
-      similarItems[currentSimilarIndex] : null;
-    
-    // Create header
-    const header = document.createElement('div');
-    header.className = 'panel-header';
-    
-    const title = document.createElement('h1');
-    title.textContent = 'Similar Items Found';
-    
-    const closeButton = document.createElement('button');
-    closeButton.className = 'close-button';
-    closeButton.innerHTML = '&times;';
-    closeButton.addEventListener('click', function() {
-      panel.classList.add('hidden');
-      createToggleButton();
-    });
-    
-    header.appendChild(title);
-    header.appendChild(closeButton);
-    panel.appendChild(header);
-    
-    // Create navigation bar
-    const nav = document.createElement('div');
-    nav.className = 'panel-nav';
-    
-    const prevButton = document.createElement('button');
-    prevButton.className = 'panel-nav-button';
-    prevButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>';
-    prevButton.disabled = panel.cartState.items.length <= 1;
-    prevButton.addEventListener('click', function() {
-      if (panel.cartState.items.length <= 1) return;
-      panel.cartState.currentIndex = (currentIndex > 0) ?
-        currentIndex - 1 : panel.cartState.items.length - 1;
-      renderComparisonPanel(panel, []);
-    });
-    
-    const navInfo = document.createElement('div');
-    navInfo.className = 'panel-nav-info';
-    navInfo.textContent = `Item ${currentIndex + 1} of ${panel.cartState.items.length}`;
-    
-    const nextButton = document.createElement('button');
-    nextButton.className = 'panel-nav-button';
-    nextButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>';
-    nextButton.disabled = panel.cartState.items.length <= 1;
-    nextButton.addEventListener('click', function() {
-      if (panel.cartState.items.length <= 1) return;
-      panel.cartState.currentIndex = (currentIndex < panel.cartState.items.length - 1) ?
-        currentIndex + 1 : 0;
-      renderComparisonPanel(panel, []);
-    });
-    
-    nav.appendChild(prevButton);
-    nav.appendChild(navInfo);
-    nav.appendChild(nextButton);
-    panel.appendChild(nav);
-    
-    // Create main content area
-    const content = document.createElement('div');
-    content.className = 'panel-content';
-    
-    // Cart item section
-    const cartItemSection = document.createElement('div');
-    cartItemSection.className = 'cart-item-section';
-    
-    const cartItemTitle = document.createElement('div');
-    cartItemTitle.className = 'section-title';
-    cartItemTitle.textContent = 'In Your Shopping Cart';
-    
-    const cartImageWrapper = document.createElement('div');
-    cartImageWrapper.className = 'image-wrapper';
-    
-    const cartImageContainer = document.createElement('div');
-    cartImageContainer.className = 'image-container';
-    
-    const cartImage = document.createElement('img');
-    cartImage.src = currentItem.imageUrl || '/api/placeholder/200/250';
-    cartImage.alt = currentItem.productName || 'Product';
-    cartImage.onerror = function() {
-      this.src = '/api/placeholder/200/250';
-    };
-    
-    cartImageContainer.appendChild(cartImage);
-    cartImageWrapper.appendChild(cartImageContainer);
-    
-    const cartItemDetails = document.createElement('div');
-    cartItemDetails.className = 'item-details';
-    
-    const cartItemName = document.createElement('div');
-    cartItemName.className = 'item-name';
-    cartItemName.textContent = currentItem.productName || 'Product';
-    
-    const cartItemMeta = document.createElement('div');
-    cartItemMeta.className = 'item-meta';
-    cartItemMeta.textContent = `${currentItem.size || ''} | ${currentItem.color || ''}`;
-    
-    const cartItemPrice = document.createElement('div');
-    cartItemPrice.className = 'item-price';
-    cartItemPrice.textContent = currentItem.price || '';
-    
-    cartItemDetails.appendChild(cartItemName);
-    cartItemDetails.appendChild(cartItemMeta);
-    cartItemDetails.appendChild(cartItemPrice);
-    
-    cartItemSection.appendChild(cartItemTitle);
-    cartItemSection.appendChild(cartImageWrapper);
-    cartItemSection.appendChild(cartItemDetails);
-    
-    content.appendChild(cartItemSection);
-    
-    // Similar items section
-    const similarSection = document.createElement('div');
-    similarSection.className = 'similar-section';
-    
-    const similarTitle = document.createElement('div');
-    similarTitle.className = 'section-title';
-    similarTitle.textContent = 'Similar Items in Your Wardrobe';
-    
-    if (currentSimilarItem) {
-      const similarHint = document.createElement('div');
-      similarHint.className = 'similar-hint';
-      similarHint.textContent = similarItems.length > 1 ?
-        `Swipe to see ${similarItems.length} similar items` :
-        '1 similar item found';
-      
-      const similarImageWrapper = document.createElement('div');
-      similarImageWrapper.className = 'image-wrapper';
-      
-      // Navigation arrows for similar items
-      if (similarItems.length > 1) {
-        const prevSimilarButton = document.createElement('button');
-        prevSimilarButton.className = 'nav-arrow nav-arrow-left';
-        prevSimilarButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>';
-        prevSimilarButton.addEventListener('click', function() {
-          const itemId = currentItem.id;
-          const similarCount = similarItems.length;
-          const currentSimilarIdx = panel.cartState.similarItemsIndex[itemId] || 0;
-          
-          panel.cartState.similarItemsIndex[itemId] = (currentSimilarIdx > 0) ?
-            currentSimilarIdx - 1 : similarCount - 1;
-          
-          renderComparisonPanel(panel, []);
-        });
-        
-        const nextSimilarButton = document.createElement('button');
-        nextSimilarButton.className = 'nav-arrow nav-arrow-right';
-        nextSimilarButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>';
-        nextSimilarButton.addEventListener('click', function() {
-          const itemId = currentItem.id;
-          const similarCount = similarItems.length;
-          const currentSimilarIdx = panel.cartState.similarItemsIndex[itemId] || 0;
-          
-          panel.cartState.similarItemsIndex[itemId] = (currentSimilarIdx < similarCount - 1) ?
-            currentSimilarIdx + 1 : 0;
-          
-          renderComparisonPanel(panel, []);
-        });
-        
-        similarImageWrapper.appendChild(prevSimilarButton);
-        similarImageWrapper.appendChild(nextSimilarButton);
-      }
-      
-      const similarImageContainer = document.createElement('div');
-      similarImageContainer.className = 'image-container';
-      
-      const similarImage = document.createElement('img');
-      similarImage.src = currentSimilarItem.imageUrl || '/api/placeholder/200/250';
-      similarImage.alt = currentSimilarItem.category || 'Product';
-      similarImage.onerror = function() {
-        this.src = '/api/placeholder/200/250';
-      };
-      
-      const matchBadge = document.createElement('div');
-      matchBadge.className = 'item-match-badge';
-      matchBadge.textContent = `${Math.round(currentSimilarItem.similarityScore * 100)}% Match`;
-      
-      similarImageContainer.appendChild(similarImage);
-      similarImageContainer.appendChild(matchBadge);
-      similarImageWrapper.appendChild(similarImageContainer);
-      
-      const similarItemDetails = document.createElement('div');
-      similarItemDetails.className = 'item-details';
-      
-      const similarItemName = document.createElement('div');
-      similarItemName.className = 'item-name';
-      similarItemName.textContent = currentSimilarItem.category || 'Product';
-      
-      const similarItemMeta = document.createElement('div');
-      similarItemMeta.className = 'item-meta';
-      similarItemMeta.textContent = `Last worn: ${currentSimilarItem.lastWorn}`;
-      
-      similarItemDetails.appendChild(similarItemName);
-      similarItemDetails.appendChild(similarItemMeta);
-      
-      // Dots indicator for multiple similar items
-      if (similarItems.length > 1) {
-        const dotsContainer = document.createElement('div');
-        dotsContainer.className = 'dots-indicator';
-        
-        for (let i = 0; i < similarItems.length; i++) {
-          const dot = document.createElement('div');
-          dot.className = i === currentSimilarIndex ? 'dot active' : 'dot';
-          dotsContainer.appendChild(dot);
-        }
-        
-        similarItemDetails.appendChild(dotsContainer);
-      }
-      
-      similarSection.appendChild(similarTitle);
-      similarSection.appendChild(similarHint);
-      similarSection.appendChild(similarImageWrapper);
-      similarSection.appendChild(similarItemDetails);
-    } else {
-      // No similar items found
-      const noSimilarMessage = document.createElement('div');
-      noSimilarMessage.className = 'item-details';
-      noSimilarMessage.style.padding = '32px 0';
-      noSimilarMessage.textContent = 'No similar items found in your wardrobe';
-      
-      similarSection.appendChild(similarTitle);
-      similarSection.appendChild(noSimilarMessage);
-    }
-    
-    content.appendChild(similarSection);
-    panel.appendChild(content);
-    
-    // Footer
-    const footer = document.createElement('div');
-    footer.className = 'panel-footer';
-    
-    if (currentSimilarItem) {
-      const footerMessage = document.createElement('div');
-      footerMessage.className = 'footer-message';
-      footerMessage.textContent = `You already own ${similarItems.length} item(s) similar to this.`;
-      footer.appendChild(footerMessage);
-    }
-    
-    const continueButton = document.createElement('button');
-    continueButton.className = 'footer-button primary-button';
-    continueButton.textContent = 'Continue Shopping';
-    continueButton.addEventListener('click', function() {
-      panel.classList.add('hidden');
-      createToggleButton();
-    });
-    
-    const seeAllButton = document.createElement('button');
-    seeAllButton.className = 'footer-button secondary-button';
-    seeAllButton.textContent = 'See All Wardrobe Items';
-    seeAllButton.addEventListener('click', function() {
-      // Navigate to wardrobe view or show all similar items
-      alert('Wardrobe view not implemented');
-    });
-    
-    footer.appendChild(continueButton);
-    footer.appendChild(seeAllButton);
-    panel.appendChild(footer);
-    
-    // Show panel
-    panel.classList.remove('hidden');
-    
-  } catch (error) {
-    showDebugOverlay("ERROR in renderComparisonPanel: " + error.message);
-    console.error("Error in renderComparisonPanel:", error);
-  }
-}
 
-// Function to generate similar wardrobe items based on cart item
+
 function generateSimilarItems(panel, itemId, productName, size, color) {
   try {
     // Skip if already generated
@@ -3472,16 +2862,12 @@ function generateSimilarItems(panel, itemId, productName, size, color) {
       return;
     }
     
-    // Generate 0-3 similar items based on the product name
-    const similarCount = Math.floor(Math.random() * 4);
+    // Generate 0-3 similar items based on the product name - ensure at least 1 for comparison UI
+    // This ensures there's almost always something to compare with
+    const similarCount = Math.max(1, Math.floor(Math.random() * 4));
     
     // Initialize similar index for this item
     panel.cartState.similarItemsIndex[itemId] = 0;
-    
-    // Skip if no similar items to generate
-    if (similarCount === 0) {
-      return;
-    }
     
     // Generate some basic categories based on product name
     let category = '';
@@ -3541,8 +2927,8 @@ function generateSimilarItems(panel, itemId, productName, size, color) {
     
     // Generate similar items
     for (let i = 0; i < similarCount; i++) {
-      // Create a random similarity score between 0.7 and 0.95
-      const similarityScore = 0.7 + (Math.random() * 0.25);
+      // Create a random similarity score - higher to ensure good matches
+      const similarityScore = 0.75 + (Math.random() * 0.20);
       
       // Pick random adjective and type
       const randomColor = colorAdjectives[Math.floor(Math.random() * colorAdjectives.length)];
@@ -3570,5 +2956,3 @@ function generateSimilarItems(panel, itemId, productName, size, color) {
     console.error("Error in generateSimilarItems:", error);
   }
 }
-
-
