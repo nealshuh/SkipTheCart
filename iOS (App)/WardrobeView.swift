@@ -1,6 +1,8 @@
 import SwiftUI
 import UIKit
 
+// MARK: - CategoryButton
+
 struct CategoryButton: View {
     let title: String
     let isSelected: Bool
@@ -21,6 +23,8 @@ struct CategoryButton: View {
         }
     }
 }
+
+// MARK: - CategoryItemsView
 
 struct CategoryItemsView: View {
     let category: String
@@ -129,6 +133,118 @@ struct CategoryItemsView: View {
     }
 }
 
+// MARK: - ItemDetailView
+
+struct ItemDetailView: View {
+    let item: WardrobeItem
+    @State private var showFullImage = false
+    @Environment(\.dismiss) var dismiss
+    
+    private var fullImage: UIImage {
+        if let originalFilename = item.originalImageFilename,
+           let originalImage = WardrobeManager.shared.loadImage(filename: originalFilename) {
+            return originalImage
+        }
+        return item.image
+    }
+    
+    private var displayImage: UIImage {
+        if let originalFilename = item.originalImageFilename,
+           let x = item.boundingBoxX,
+           let y = item.boundingBoxY,
+           let width = item.boundingBoxWidth,
+           let height = item.boundingBoxHeight,
+           let originalImage = WardrobeManager.shared.loadImage(filename: originalFilename) {
+            let boundingBox = CGRect(x: x, y: y, width: width, height: height)
+            return cropImage(originalImage, to: boundingBox) ?? item.image
+        }
+        return item.image
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                VStack(spacing: AppStyles.Spacing.medium) {
+                    Text("\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))")
+                        .font(AppStyles.Typography.heading)
+                        .foregroundColor(AppStyles.Colors.text)
+                        .padding(AppStyles.Spacing.small)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
+                                .fill(AppStyles.Colors.secondaryBackground)
+                        )
+                        .padding(.top, AppStyles.Spacing.medium)
+                    Image(uiImage: displayImage)
+                        .resizable()
+                        .scaledToFit()
+                        .cardStyle()
+                    Button("View Full Image") {
+                        showFullImage = true
+                    }
+                    .font(AppStyles.Typography.body)
+                    .foregroundColor(AppStyles.Colors.primary)
+                    Spacer()
+                }
+                .padding()
+                if showFullImage {
+                    Color.black.opacity(0.8)
+                        .edgesIgnoringSafeArea(.all)
+                    ZStack {
+                        Image(uiImage: fullImage)
+                            .resizable()
+                            .scaledToFit()
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Button(action: { showFullImage = false }) {
+                                    Image(systemName: "xmark")
+                                        .foregroundColor(.white)
+                                        .padding()
+                                }
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(AppStyles.Typography.body)
+                    .foregroundColor(AppStyles.Colors.primary)
+                }
+            }
+        }
+    }
+    
+    private func cropImage(_ image: UIImage, to rect: CGRect) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        let scale = image.scale
+        let scaledRect = CGRect(
+            x: rect.origin.x * scale,
+            y: rect.origin.y * scale,
+            width: rect.size.width * scale,
+            height: rect.size.height * scale
+        )
+        guard let croppedCGImage = cgImage.cropping(to: scaledRect) else { return nil }
+        return UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
+    }
+    
+    private func singularCategory(_ category: String) -> String {
+        switch category {
+        case "Tops": return "top"
+        case "Bottoms": return "bottom"
+        case "Dresses": return "dress"
+        case "Skirts": return "skirt"
+        default: return category.lowercased()
+        }
+    }
+}
+
+// MARK: - WardrobeView
+
 struct WardrobeView: View {
     @EnvironmentObject var processingManager: ProcessingManager
     @ObservedObject private var wardrobeManager = WardrobeManager.shared
@@ -142,16 +258,6 @@ struct WardrobeView: View {
     @State private var showProcessingCompleteAlert = false
     
     let categories = ["Tops", "Bottoms", "Dresses", "Skirts"]
-
-    func singularCategory(_ category: String) -> String {
-        switch category {
-        case "Tops": return "top"
-        case "Bottoms": return "bottom"
-        case "Dresses": return "dress"
-        case "Skirts": return "skirt"
-        default: return category.lowercased()
-        }
-    }
 
     var body: some View {
         NavigationView {
@@ -255,46 +361,7 @@ struct WardrobeView: View {
                 )
             }
             .sheet(item: $selectedItem) { item in
-                NavigationView {
-                    VStack(spacing: AppStyles.Spacing.medium) {
-                        Text("\(item.colorLabel.capitalized) \(singularCategory(item.categoryName))")
-                            .font(AppStyles.Typography.heading)
-                            .foregroundColor(AppStyles.Colors.text)
-                            .padding(AppStyles.Spacing.small)
-                            .background(
-                                RoundedRectangle(cornerRadius: AppStyles.Layout.smallCornerRadius)
-                                    .fill(AppStyles.Colors.secondaryBackground)
-                            )
-                            .padding(.top, AppStyles.Spacing.medium)
-                        let displayImage: UIImage = {
-                            if let originalFilename = item.originalImageFilename,
-                               let x = item.boundingBoxX,
-                               let y = item.boundingBoxY,
-                               let width = item.boundingBoxWidth,
-                               let height = item.boundingBoxHeight,
-                               let originalImage = wardrobeManager.loadImage(filename: originalFilename) {
-                                let boundingBox = CGRect(x: x, y: y, width: width, height: height)
-                                return cropImage(originalImage, to: boundingBox) ?? item.image
-                            }
-                            return item.image
-                        }()
-                        Image(uiImage: displayImage)
-                            .resizable()
-                            .scaledToFit()
-                            .cardStyle()
-                        Spacer()
-                    }
-                    .padding()
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                selectedItem = nil
-                            }
-                            .font(AppStyles.Typography.body)
-                            .foregroundColor(AppStyles.Colors.primary)
-                        }
-                    }
-                }
+                ItemDetailView(item: item)
             }
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
@@ -353,20 +420,9 @@ struct WardrobeView: View {
             Spacer()
         }
     }
-
-    private func cropImage(_ image: UIImage, to rect: CGRect) -> UIImage? {
-        guard let cgImage = image.cgImage else { return nil }
-        let scale = image.scale
-        let scaledRect = CGRect(
-            x: rect.origin.x * scale,
-            y: rect.origin.y * scale,
-            width: rect.size.width * scale,
-            height: rect.size.height * scale
-        )
-        guard let croppedCGImage = cgImage.cropping(to: scaledRect) else { return nil }
-        return UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
-    }
 }
+
+// MARK: - Previews
 
 struct WardrobeView_Previews: PreviewProvider {
     static var previews: some View {
