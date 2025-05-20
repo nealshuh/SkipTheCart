@@ -109,7 +109,7 @@ class ClothingModelAPI {
                         let maskedImage = self.createMaskedImage(labels: labels, width: width, height: height, for: label, originalImage: resizedImage)
                         if let maskedImage = maskedImage {
                             let (color, colorLabel) = self.getDominantColorAndLabelFromMaskedImage(maskedImage)
-                            let previewItem = PreviewItem(category: name, image: maskedImage, color: color, colorLabel: colorLabel, originalImageFilename: originalFilename, boundingBox: boundingBoxOriginal)
+                            let previewItem = PreviewItem(category: name, image: maskedImage, colorLabel: colorLabel, originalImageFilename: originalFilename, boundingBox: boundingBoxOriginal)
                             previewItems.append(previewItem)
                         }
                     }

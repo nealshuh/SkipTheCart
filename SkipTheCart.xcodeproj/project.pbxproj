@@ -150,6 +150,8 @@
 				EmailConfirmationSuccessView.swift,
 				EmailConfirmationView.swift,
 				ModelTestView.swift,
+				PendingItemsView.swift,
+				ProcessingManager.swift,
 				SceneDelegate.swift,
 				SegFormerClothes.mlpackage,
 				SettingsView.swift,

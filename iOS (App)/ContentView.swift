@@ -77,6 +77,7 @@ struct ContentView: View {
                 .sheet(isPresented: $showSettings) {
                     SettingsView(isAuthenticated: $isUserAuthenticated)
                 }
+                .environmentObject(ProcessingManager.shared) // Added for ProcessingManager access
             } else {
                 // Authentication welcome screen
                 WelcomeScreen(
@@ -165,7 +166,7 @@ struct ContentView: View {
             Spacer()
             
             // App explanation
-            Text("SkipTheCart compares items in your shopping carts to what  you already own.")
+            Text("SkipTheCart compares items in your shopping carts to what you already own.")
                 .font(AppStyles.Typography.body)
                 .foregroundColor(AppStyles.Colors.secondaryText)
                 .multilineTextAlignment(.center)
@@ -292,23 +293,6 @@ struct ContentView: View {
             }
         }
     }
-    
-    // Sign out function
-    private func signOut() {
-        Task {
-            do {
-                try await AuthService.shared.signOut()
-                
-                DispatchQueue.main.async {
-                    isUserAuthenticated = false
-                    needsEmailVerification = false
-                    showEmailConfirmationSuccess = false
-                }
-            } catch {
-                print("Error signing out: \(error)")
-            }
-        }
-    }
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -330,12 +314,12 @@ let pages = [
     PageInfo(label: "Shop Like Always... But Smarter", text: "Visit your favorite stores and add items to your cart. We work seamlessly in the background while you shop!", image: .shop),
     PageInfo(label: "Instant Cart Insights", text: "Before checkout, we scan your cart. See how similar items are to your closet – by color, style, or exact duplicates.", image: .cart),
     PageInfo(label: "Your Money, Your Impact.", text: "Track your savings. See how mindfulness turns into real savings and a clutter-free closet.", image: .insights),
-    
+
 ]
 
 struct WelcomeView: View {
     @Binding var hasSeenWelcomePage: Bool
-    
+
     var body: some View {
         VStack(spacing: 20) {
             // Header
@@ -400,6 +384,8 @@ struct WelcomeView: View {
             UIPageControl.appearance().currentPageIndicatorTintColor = .systemCyan
             UIPageControl.appearance().pageIndicatorTintColor = .systemGray
         }
-        
+
     }
 }
+
+
