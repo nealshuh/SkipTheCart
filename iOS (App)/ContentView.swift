@@ -101,7 +101,7 @@ struct ContentView: View {
         .onAppear {
             checkAuthStatus()
             
-            // Set up notification observer for direct return to welcome screen
+//             Set up notification observer for direct return to welcome screen
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ReturnToWelcomeScreen"), object: nil, queue: .main) { _ in
                 cleanReturnToWelcome = true
                 // Reset all sheets and views
@@ -319,64 +319,38 @@ let pages = [
 
 struct WelcomeView: View {
     @Binding var hasSeenWelcomePage: Bool
-
+    
     var body: some View {
-        VStack(spacing: 20) {
-            // Header
-            HStack {
-                Text("SkipTheCart")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                Spacer()
-                Button(action: { /* Show settings */ }) {
-                    Image(systemName: "gear")
-                        .font(.title)
+        VStack {
+            TabView {
+                ForEach(pages) { page in
+                    VStack{
+                        Text(page.label)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .multilineTextAlignment(.center)
+                            .padding(10)
+                        
+                        Text(page.text)
+                            .fontWeight(.medium)
+                            .padding(35)
+                        
+                        Image(page.image)
+                        
+                    }
                 }
             }
-            .padding(.horizontal)
-
-            // App Explanation
-            Text("Shop smarter with wardrobe insights.")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            // Safari Extension Button
-            Button(action: { /* Show instructions modal */ }) {
-                Label("Set Up Safari Extension", systemImage: "safari")
-                    .font(.headline)
-                    .padding()
+            Button {
+                hasSeenWelcomePage.toggle()
+                
+            } label: {
+                Text("OK")
+                    .font(.title)
+                    .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
             }
-            .padding(.horizontal)
-
-            // Wardrobe Prompt
-            VStack(spacing: 10) {
-                Image(systemName: "tshirt.fill")
-                    .font(.largeTitle)
-                    .foregroundColor(.green)
-                Text("Start building your digital wardrobe!")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                Button(action: { /* Go to Wardrobe tab */ }) {
-                    Text("Go to My Wardrobe")
-                        .font(.headline)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-            }
+            .buttonStyle(.borderedProminent)
             .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
-            .padding(.horizontal)
-
-            Spacer()
         }
         .interactiveDismissDisabled()
         .tabViewStyle(.page)
@@ -384,8 +358,6 @@ struct WelcomeView: View {
             UIPageControl.appearance().currentPageIndicatorTintColor = .systemCyan
             UIPageControl.appearance().pageIndicatorTintColor = .systemGray
         }
-
+        
     }
 }
-
-
