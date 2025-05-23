@@ -33,6 +33,7 @@ class ProcessingManager: ObservableObject {
     func addImagesToProcess(_ images: [ImageToProcess]) {
         imageQueue.append(contentsOf: images)
         if !isProcessing {
+            pendingItems = []
             currentBatchSize = imageQueue.count
             processedInBatch = 0
             isProcessing = true
