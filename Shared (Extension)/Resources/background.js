@@ -12,7 +12,7 @@ browser.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.greeting === "hello") {
         sendResponse({ farewell: "goodbye" });
     } else if (request.action === "getBottoms") {
-        browser.runtime.sendNativeMessage("com.example.app", { action: "getBottoms" }, function(response) {
+        browser.runtime.sendNativeMessage("com.NealAndPrafull.ReturnGuard", { action: "getBottoms" }, function(response) {
             if (browser.runtime.lastError) {
                 console.error("Error: ", browser.runtime.lastError.message);
                 sendResponse({ error: "Failed to get bottoms" });

@@ -10,8 +10,8 @@ import Foundation
 import SafariServices
 
 class WebExtensionHandler: NSObject, NSExtensionRequestHandling {
-    private let defaults = UserDefaults(suiteName: "group.com.example.app")
-    private let sharedContainerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.example.app")
+    private let defaults = UserDefaults(suiteName: "group.com.NealAndPrafull.ReturnGuard")
+    private let sharedContainerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.NealAndPrafull.ReturnGuard")
     
     func beginRequest(with context: NSExtensionContext) {
         guard let item = context.inputItems.first as? NSExtensionItem,
