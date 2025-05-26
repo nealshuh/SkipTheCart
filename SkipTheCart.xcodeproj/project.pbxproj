@@ -64,6 +64,8 @@
 		1F07C4282D729B3800755618 /* SkipTheCart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkipTheCart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F07C4342D729B3800755618 /* SkipTheCart Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "SkipTheCart Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F07C43E2D729B3800755618 /* SkipTheCart Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "SkipTheCart Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EF9C30D62DE3F6A8009A3F90 /* SkipTheCart (iOS).entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SkipTheCart (iOS).entitlements"; sourceTree = "<group>"; };
+		EF9C30D72DE3F6B1009A3F90 /* SkipTheCart Extension (iOS).entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SkipTheCart Extension (iOS).entitlements"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -108,12 +110,15 @@
 		1F07C4762D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				bottoms.html,
+				popup.html,
 				Resources/_locales,
 				Resources/background.js,
 				Resources/content.css,
 				Resources/content.js,
 				Resources/images,
 				Resources/manifest.json,
+				Resources/manifest2.json,
 				SafariWebExtensionHandler.swift,
 			);
 			target = 1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */;
@@ -121,12 +126,15 @@
 		1F07C4772D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				bottoms.html,
+				popup.html,
 				Resources/_locales,
 				Resources/background.js,
 				Resources/content.css,
 				Resources/content.js,
 				Resources/images,
 				Resources/manifest.json,
+				Resources/manifest2.json,
 				SafariWebExtensionHandler.swift,
 			);
 			target = 1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */;
@@ -260,6 +268,8 @@
 		1F07C3F92D729B3500755618 = {
 			isa = PBXGroup;
 			children = (
+				EF9C30D72DE3F6B1009A3F90 /* SkipTheCart Extension (iOS).entitlements */,
+				EF9C30D62DE3F6A8009A3F90 /* SkipTheCart (iOS).entitlements */,
 				1F07C3FE2D729B3500755618 /* Shared (App) */,
 				1F07C4072D729B3800755618 /* Shared (Extension) */,
 				1F07C4292D729B3800755618 /* macOS (App) */,
@@ -507,6 +517,7 @@
 		1F07C4652D729B3800755618 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "SkipTheCart Extension (iOS).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A468F6QV86;
@@ -538,6 +549,7 @@
 		1F07C4662D729B3800755618 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "SkipTheCart Extension (iOS).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A468F6QV86;
@@ -572,6 +584,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "SkipTheCart (iOS).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A468F6QV86;
@@ -609,6 +622,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "SkipTheCart (iOS).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A468F6QV86;

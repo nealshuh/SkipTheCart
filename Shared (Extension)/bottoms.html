@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bottoms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #bottoms-list > div {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        img {
+            max-width: 200px;
+            height: auto;
+        }
+        p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bottoms</h1>
+    <div id="bottoms-list"></div>
+    <script>
+        browser.runtime.sendMessage({ action: "getBottoms" }, function(response) {
+            if (response.error) {
+                console.error(response.error);
+                const list = document.getElementById("bottoms-list");
+                list.innerHTML = `<p>Error: ${response.error}</p>`;
+                return;
+            }
+            const bottoms = response.bottoms || [];
+            const list = document.getElementById("bottoms-list");
+            if (bottoms.length === 0) {
+                list.innerHTML = "<p>No bottoms found in your wardrobe.</p>";
+                return;
+            }
+            bottoms.forEach(bottom => {
+                const item = document.createElement("div");
+                item.innerHTML = `
+                    <p><strong>ID:</strong> ${bottom.id}</p>
+                    <p><strong>Category:</strong> ${bottom.categoryName}</p>
+                    <p><strong>Color:</strong> ${bottom.colorLabel}</p>
+                    <p><strong>Date Added:</strong> ${bottom.dateAdded}</p>
+                    ${bottom.image ? `<img src="data:image/jpeg;base64,${bottom.image}" alt="Bottom Image">` : `<p>No image available</p>`}
+                `;
+                list.appendChild(item);
+            });
+        });
+    </script>
+</body>
+</html>

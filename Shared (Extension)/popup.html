@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wardrobe Extension</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <button id="view-bottoms">View Bottoms</button>
+    <script>
+        document.getElementById("view-bottoms").addEventListener("click", function() {
+            browser.tabs.create({url: "bottoms.html"});
+        });
+    </script>
+</body>
+</html>
