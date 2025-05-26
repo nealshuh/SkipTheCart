@@ -41,7 +41,7 @@ struct ModelTestView: View {
                 dismiss()
             }
         } message: {
-            Text("Your images are being processed in the background. You will be notified when they are ready.")
+            Text("Keep the App Open! Your images are being processed in the background - you'll be notified when they are ready.")
         }
     }
 
