@@ -120,7 +120,7 @@
 				Resources/images,
 				Resources/manifest.json,
 				Resources/manifest2.json,
-				SafariWebExtensionHandler.swift,
+				WebExtensionHandler.swift,
 			);
 			target = 1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */;
 		};
@@ -137,7 +137,7 @@
 				Resources/images,
 				Resources/manifest.json,
 				Resources/manifest2.json,
-				SafariWebExtensionHandler.swift,
+				WebExtensionHandler.swift,
 			);
 			target = 1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */;
 		};

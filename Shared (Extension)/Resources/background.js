@@ -1,52 +1,36 @@
-browser.browserAction.onClicked.addListener(function(tab) {
-    console.log("Extension icon clicked, sending message to content script");
-    
-    browser.tabs.sendMessage(tab.id, { action: "showInterface" })
-        .then(response => {
-            console.log("Content script responded:", response);
-        })
-        .catch(error => {
-            console.error("Error sending message to content script:", error);
-        });
-});
-
-// Handle messages from content script
 browser.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    console.log("Background script received request:", request);
-    
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[background.js] Received request at ${timestamp}: `, request);
+
     if (request.greeting === "hello") {
-        console.log("Handling 'hello' greeting");
+        console.log(`[background.js] Handling test greeting at ${timestamp}`);
         sendResponse({ farewell: "goodbye" });
-        
     } else if (request.action === "getBottoms") {
-        console.log("Handling getBottoms request");
-        console.log("Returning fake data for testing");
-        
-        // Send response the SAME WAY as the test button (which works)
-        const fakeData = {
-            bottoms: [
-                {
-                    id: "test-123",
-                    categoryName: "Test Jeans",
-                    colorLabel: "Blue",
-                    dateAdded: "2025-01-26",
-                    image: null
-                },
-                {
-                    id: "test-456",
-                    categoryName: "Test Shorts",
-                    colorLabel: "Black",
-                    dateAdded: "2025-01-25",
-                    image: null
+        console.log(`[background.js] Sending native message for getBottoms to com.NealAndPrafull.ReturnGuard at ${timestamp}`);
+        try {
+            browser.runtime.sendNativeMessage("application", { action: "getBottoms" }, function(response) {
+                const responseTime = new Date().toLocaleTimeString();
+                if (browser.runtime.lastError) {
+                    console.error(`[background.js] Native messaging error at ${responseTime}: `, browser.runtime.lastError.message);
+                    sendResponse({ error: "Failed to get bottoms: " + browser.runtime.lastError.message });
+                    return;
                 }
-            ]
-        };
-        
-        console.log("Sending fake data:", fakeData);
-        sendResponse(fakeData);
-        
+                console.log(`[background.js] Raw response from native app at ${responseTime}: `, response);
+                if (response && typeof response === "object" && Array.isArray(response.bottoms)) {
+                    console.log(`[background.js] Valid bottoms array received at ${responseTime}, sending to content script: `, response.bottoms);
+                    sendResponse({ bottoms: response.bottoms });
+                } else {
+                    console.error(`[background.js] Native app returned unexpected data format at ${responseTime}: `, response);
+                    sendResponse({ error: "Native app returned unexpected data format: " + (response ? JSON.stringify(response) : "undefined") });
+                }
+            });
+        } catch (error) {
+            console.error(`[background.js] Exception in sendNativeMessage at ${timestamp}: `, error.message);
+            sendResponse({ error: "Native messaging failed: " + error.message });
+        }
+        return true; // Indicates asynchronous response
     } else {
-        console.log("Unknown request action:", request.action);
-        sendResponse({ error: "Unknown action" });
+        console.log(`[background.js] Unknown request action at ${timestamp}: `, request.action);
+        sendResponse({ error: "Unknown action: " + (request.action || "undefined") });
     }
 });

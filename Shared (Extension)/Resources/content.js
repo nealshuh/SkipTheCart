@@ -1,4 +1,9 @@
-// content.js - Wardrobe interface injected into web pages
+/**
+ * SkipTheCart content script
+ *
+ * This content script runs on specified websites (like Zara, H&M, etc.) and provides functionality
+ * to interact with wardrobe items, including fetching and displaying "bottoms" from the native app.
+ */
 
 console.log("Wardrobe content script loaded");
 
@@ -334,50 +339,65 @@ function setupWardrobeEventListeners() {
         }
     });
 
-    // View bottoms button - EXACT COPY of test button pattern
+    // View bottoms button
     document.getElementById('wardrobe-view-bottoms').addEventListener('click', () => {
         logMessage("View bottoms button clicked");
         errorContainer.textContent = '';
+        resultsContainer.innerHTML = '<p>Loading bottoms...</p>';
         
-        // Test message to background script - EXACT SAME AS TEST BUTTON
         if (typeof browser !== 'undefined' && browser.runtime) {
             logMessage("Sending getBottoms request");
             browser.runtime.sendMessage({ action: "getBottoms" }, (response) => {
                 if (browser.runtime.lastError) {
                     logMessage("Runtime error: " + browser.runtime.lastError.message, true);
                     errorContainer.textContent = "Runtime error: " + browser.runtime.lastError.message;
+                    resultsContainer.innerHTML = '';
                 } else {
                     logMessage("Response received: " + JSON.stringify(response));
                     
-                    // Now handle the bottoms data
-                    if (response && response.bottoms) {
+                    if (response && response.error) {
+                        logMessage("Error: " + response.error, true);
+                        errorContainer.textContent = "Error: " + response.error;
+                        resultsContainer.innerHTML = '';
+                        return;
+                    }
+                    
+                    if (response && Array.isArray(response.bottoms)) {
                         const bottoms = response.bottoms;
                         logMessage(`Bottoms received: ${bottoms.length} items`);
                         
                         resultsContainer.innerHTML = '';
-                        bottoms.forEach((bottom, index) => {
-                            logMessage(`Rendering bottom ${index + 1}`);
-                            const item = document.createElement("div");
-                            item.innerHTML = `
-                                <div class="item-info">
-                                    <p><strong>ID:</strong> ${bottom.id}</p>
-                                    <p><strong>Category:</strong> ${bottom.categoryName}</p>
-                                    <p><strong>Color:</strong> ${bottom.colorLabel}</p>
-                                    <p><strong>Date Added:</strong> ${bottom.dateAdded}</p>
-                                </div>
-                            `;
-                            resultsContainer.appendChild(item);
-                        });
-                        logMessage("Finished rendering bottoms");
+                        if (bottoms.length === 0) {
+                            resultsContainer.innerHTML = '<p>No bottoms found in your wardrobe.</p>';
+                            logMessage("No bottoms to display");
+                        } else {
+                            bottoms.forEach((bottom, index) => {
+                                logMessage(`Rendering bottom ${index + 1}`);
+                                const item = document.createElement("div");
+                                item.innerHTML = `
+                                    ${bottom.image ? `<img src="data:image/jpeg;base64,${bottom.image}" alt="Bottom Image">` : `<p>No image available</p>`}
+                                    <div class="item-info">
+                                        <p><strong>ID:</strong> ${bottom.id}</p>
+                                        <p><strong>Category:</strong> ${bottom.categoryName}</p>
+                                        <p><strong>Color:</strong> ${bottom.colorLabel}</p>
+                                        <p><strong>Date Added:</strong> ${bottom.dateAdded}</p>
+                                    </div>
+                                `;
+                                resultsContainer.appendChild(item);
+                            });
+                            logMessage("Finished rendering bottoms");
+                        }
                     } else {
-                        logMessage("No bottoms data in response", true);
-                        errorContainer.textContent = "No bottoms data received";
+                        logMessage("Invalid or no bottoms data in response: " + JSON.stringify(response), true);
+                        errorContainer.textContent = "Failed to load bottoms: Invalid response format";
+                        resultsContainer.innerHTML = '';
                     }
                 }
             });
         } else {
             logMessage("Browser runtime API not available", true);
             errorContainer.textContent = "Browser API not available";
+            resultsContainer.innerHTML = '';
         }
     });
 
@@ -394,9 +414,7 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Create interface immediately when content script loads
-// Auto-show for testing - you can remove this line later if you only want it to show when clicking the extension icon
 setTimeout(() => {
     createWardrobeInterface();
     console.log("🟢 Wardrobe extension loaded! Look for the blue button in the bottom-right corner.");
 }, 1000);
- 
