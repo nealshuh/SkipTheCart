@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Safari Test</title>
+    <style>
+        body {
+            width: 200px;
+            height: 150px;
+            padding: 10px;
+            font-family: system-ui;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px 0;
+            display: block;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h3>Safari Test</h3>
+    <button onclick="testAlert()">Alert Test</button>
+    <button onclick="testDOM()">DOM Test</button>
+    <div id="result">Ready</div>
+    
+    <script>
+        function testAlert() {
+            alert("Safari alert works!");
+        }
+        
+        function testDOM() {
+            document.getElementById('result').innerHTML = 'DOM works! ' + new Date().toLocaleTimeString();
+        }
+        
+        // Test if script loads
+        document.getElementById('result').innerHTML = 'Script loaded!';
+    </script>
+</body>
+</html>

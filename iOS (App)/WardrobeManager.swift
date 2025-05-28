@@ -7,6 +7,7 @@ struct WardrobeItem: Identifiable, Codable {
     let categoryName: String
     var colorLabel: String
     let dateAdded: Date
+//    let Juno
     let originalImageFilename: String?
     let boundingBoxX: CGFloat?
     let boundingBoxY: CGFloat?
@@ -59,8 +60,12 @@ class WardrobeManager: ObservableObject {
     
     @Published var items: [WardrobeItem] = []
     private let itemsKey = "wardrobe_items"
+    private let defaults: UserDefaults?
+    private let sharedContainerURL: URL?
     
     private init() {
+        self.defaults = UserDefaults(suiteName: "group.com.NealAndPrafull.ReturnGuard")
+        self.sharedContainerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.NealAndPrafull.ReturnGuard")
         loadItems()
     }
     
@@ -95,23 +100,23 @@ class WardrobeManager: ObservableObject {
     
     private func saveItems() {
         if let encoded = try? JSONEncoder().encode(items) {
-            UserDefaults.standard.set(encoded, forKey: itemsKey)
+            defaults?.set(encoded, forKey: itemsKey)
         }
     }
     
     private func loadItems() {
-        if let data = UserDefaults.standard.data(forKey: itemsKey),
+        if let data = defaults?.data(forKey: itemsKey),
            let decoded = try? JSONDecoder().decode([WardrobeItem].self, from: data) {
             items = decoded
         }
     }
     
     func saveImage(_ image: UIImage, filename: String) -> Bool {
-        guard let data = image.jpegData(compressionQuality: 0.7) else { return false }
-        guard let directory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true) else { return false }
-        
+        guard let data = image.jpegData(compressionQuality: 0.7),
+              let sharedURL = sharedContainerURL else { return false }
+        let fileURL = sharedURL.appendingPathComponent(filename)
         do {
-            try data.write(to: directory.appendingPathComponent(filename))
+            try data.write(to: fileURL)
             return true
         } catch {
             print("Error saving image: \(error)")
@@ -120,9 +125,8 @@ class WardrobeManager: ObservableObject {
     }
     
     func loadImage(filename: String) -> UIImage? {
-        guard let directory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return nil }
-        let fileURL = directory.appendingPathComponent(filename)
-        
+        guard let sharedURL = sharedContainerURL else { return nil }
+        let fileURL = sharedURL.appendingPathComponent(filename)
         do {
             let imageData = try Data(contentsOf: fileURL)
             return UIImage(data: imageData)
@@ -133,9 +137,8 @@ class WardrobeManager: ObservableObject {
     }
     
     private func deleteImage(filename: String) {
-        guard let directory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
-        let fileURL = directory.appendingPathComponent(filename)
-        
+        guard let sharedURL = sharedContainerURL else { return }
+        let fileURL = sharedURL.appendingPathComponent(filename)
         do {
             try FileManager.default.removeItem(at: fileURL)
         } catch {
@@ -145,11 +148,9 @@ class WardrobeManager: ObservableObject {
     
     func getCategoryCounts() -> [String: Int] {
         var counts: [String: Int] = [:]
-        
         for item in items {
             counts[item.categoryName, default: 0] += 1
         }
-        
         return counts
     }
     
@@ -165,6 +166,8 @@ class WardrobeManager: ObservableObject {
     }
 }
 
+
+
 //import SwiftUI
 //import Combine
 //
@@ -172,7 +175,7 @@ class WardrobeManager: ObservableObject {
 //    let id: UUID
 //    let imageFilename: String
 //    let categoryName: String
-//    let colorLabel: String
+//    var colorLabel: String
 //    let dateAdded: Date
 //    let originalImageFilename: String?
 //    let boundingBoxX: CGFloat?
@@ -323,4 +326,12 @@ class WardrobeManager: ObservableObject {
 //    func getRecentItems(count: Int = 5) -> [WardrobeItem] {
 //        return Array(items.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(count))
 //    }
+//    
+//    func updateColorLabel(for id: UUID, to color: String) {
+//        if let index = items.firstIndex(where: { $0.id == id }) {
+//            items[index].colorLabel = color
+//            saveItems()
+//        }
+//    }
 //}
+//
