@@ -110,13 +110,10 @@
 		1F07C4762D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				bottoms.html,
-				popup.html,
 				Resources/_locales,
 				Resources/background.js,
 				Resources/content.css,
 				Resources/content.js,
-				Resources/content2.js,
 				Resources/images,
 				Resources/manifest.json,
 				Resources/manifest2.json,
@@ -127,13 +124,10 @@
 		1F07C4772D729B3800755618 /* Exceptions for "Shared (Extension)" folder in "SkipTheCart Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				bottoms.html,
-				popup.html,
 				Resources/_locales,
 				Resources/background.js,
 				Resources/content.css,
 				Resources/content.js,
-				Resources/content2.js,
 				Resources/images,
 				Resources/manifest.json,
 				Resources/manifest2.json,

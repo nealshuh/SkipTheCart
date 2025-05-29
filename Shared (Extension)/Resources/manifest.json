@@ -7,6 +7,20 @@
         "activeTab",
         "tabs"
     ],
+    "host_permissions": [
+      "*://www.zara.com/*",
+      "*://www.hm.com/*",
+      "*://www2.hm.com/*",
+      "*://www.aritzia.com/*",
+      "*://edikted.com/*",
+      "*://www.abercrombie.com/*",
+      "*://us.princesspolly.com/*",
+      "*://www.revolve.com/*",
+      "*://tigermist.com/*",
+      "*://us.ohpolly.com/*",
+      "*://www.fashionnova.com/*",
+      "*://www.urbanoutfitters.com/*"
+    ],
     "background": {
         "scripts": ["background.js"],
         "persistent": false
@@ -20,5 +34,13 @@
             "js": ["content.js"],
             "run_at": "document_end"
         }
-    ]
+    ],
+    "action": {
+      "default_title": "SkipTheCart"
+    },
+    "icons": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
 }
