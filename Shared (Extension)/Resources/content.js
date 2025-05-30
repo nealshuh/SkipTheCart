@@ -1994,8 +1994,10 @@ function processCartItems(cartItems, panel, usedSelector) {
       wardrobeBottoms: []
     };
 
-    // Convert cart items to internal state format if needed
+    // --- State Processing: This block now runs only ONCE per set of cart items ---
+    // If the cart items in our state are empty, process them from the DOM.
     if (panel.cartState.items.length === 0 && cartItems.length > 0) {
+      // 1. Convert cart items from DOM to our internal state format
       panel.cartState.items = Array.from(cartItems).map((item, index) => {
         let productInfo;
         if (window.location.hostname.includes('abercrombie.com')) {
@@ -2031,32 +2033,35 @@ function processCartItems(cartItems, panel, usedSelector) {
           currentSimilarIndex: 0
         };
       });
+      
+      // 2. Clear and rebuild the similar items mapping. This now happens only
+      //    once when the cart items are first processed.
+      panel.cartState.similarItems = [];
+      const wardrobeBottoms = panel.cartState.wardrobeBottoms || [];
+      if (wardrobeBottoms.length > 0) {
+        panel.cartState.items.forEach((cartItem) => {
+          const itemId = cartItem.id;
+          wardrobeBottoms.forEach((bottom, bottomIndex) => {
+            panel.cartState.similarItems.push({
+              id: `${itemId}-bottom-${bottomIndex}`,
+              cartItemId: itemId,
+              imageUrl: bottom.image ? `data:image/jpeg;base64,${bottom.image}` : '/api/placeholder/200/250',
+              category: bottom.categoryName || 'Bottom',
+              similarityScore: 0.8, // Default for MVP
+              lastWorn: bottom.dateAdded ? new Date(bottom.dateAdded).toLocaleDateString() : 'Unknown'
+            });
+          });
+        });
+      }
     }
 
-    // Clear previous similar items
-    panel.cartState.similarItems = [];
-
-    // Map wardrobe bottoms to similar items for each cart item
-    panel.cartState.items.forEach((item, index) => {
-      const itemId = item.id || `item-${index}`;
-      const wardrobeBottoms = panel.cartState.wardrobeBottoms || [];
-      wardrobeBottoms.forEach((bottom, bottomIndex) => {
-        panel.cartState.similarItems.push({
-          id: `${itemId}-bottom-${bottomIndex}`,
-          cartItemId: itemId,
-          imageUrl: bottom.image ? `data:image/jpeg;base64,${bottom.image}` : '/api/placeholder/200/250',
-          category: bottom.categoryName || 'Bottom',
-          similarityScore: 0.8, // Default for MVP
-          lastWorn: bottom.dateAdded ? new Date(bottom.dateAdded).toLocaleDateString() : 'Unknown'
-        });
-      });
-    });
+    // --- UI Rendering: This section now only reads from the existing state ---
 
     // Get current cart item
     const currentIndex = panel.cartState.currentIndex;
     const currentItem = panel.cartState.items[currentIndex] || {};
 
-    // Get similar items for current cart item
+    // Get similar items for current cart item by filtering the pre-built list
     const similarItems = panel.cartState.similarItems.filter(item => item.cartItemId === currentItem.id);
     const currentSimilarIndex = currentItem.currentSimilarIndex || 0;
     const currentSimilarItem = similarItems.length > 0 ? similarItems[currentSimilarIndex] : null;
@@ -2343,39 +2348,51 @@ function getImageUrl(item) {
           if (!toggleBtn) {
             toggleBtn = document.createElement('button');
             toggleBtn.id = 'panel-toggle-button';
-            toggleBtn.textContent = 'Show Cart Items';
+            toggleBtn.textContent = '🛒 Show Cart Items';
             toggleBtn.className = 'panel-toggle-button';
             
             // Style the toggle button
             toggleBtn.style.position = 'fixed';
-            toggleBtn.style.bottom = '20px';
+            toggleBtn.style.bottom = '70px';
             toggleBtn.style.right = '20px';
             toggleBtn.style.zIndex = '9998';
             toggleBtn.style.padding = '10px 15px';
-            toggleBtn.style.backgroundColor = '#000';
+            toggleBtn.style.backgroundColor = '#6A0DAD';
             toggleBtn.style.color = '#fff';
             toggleBtn.style.border = 'none';
-            toggleBtn.style.borderRadius = '5px';
+            toggleBtn.style.borderRadius = '8px';
             toggleBtn.style.cursor = 'pointer';
             toggleBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-            
-            // Add event listener
-            toggleBtn.addEventListener('click', function() {
-              const panel = document.getElementById('cart-panel');
-              if (panel) {
-                panel.classList.remove('hidden');
-                toggleBtn.style.display = 'none';
-              }
-            });
-            
-            document.body.appendChild(toggleBtn);
-          }
-          
-          toggleBtn.style.display = 'block';
-        } catch (error) {
-          showDebugOverlay("ERROR in createToggleButton: " + error.message);
-          console.error("Error in createToggleButton:", error);
-        }
+            toggleBtn.style.fontSize = '16px'; // Adjust font size if needed
+            toggleBtn.style.display = 'flex'; // For aligning emoji and text
+            toggleBtn.style.alignItems = 'center'; // Center emoji and text vertically
+            toggleBtn.style.gap = '8px'; // Space between emoji and text
+        
+              toggleBtn.addEventListener('click', function() {
+                            const panel = document.getElementById('cart-panel');
+                            if (panel) {
+                              panel.classList.remove('hidden');
+                              toggleBtn.style.display = 'none'; // Hide button when panel is open
+                            }
+                          });
+                          
+                          document.body.appendChild(toggleBtn);
+                        }
+                        
+                        // Ensure the button is visible when the panel is hidden
+                        const panel = document.getElementById('cart-panel');
+                        if (panel && panel.classList.contains('hidden')) {
+                          toggleBtn.style.display = 'flex'; // Use 'flex' to maintain alignment
+                        } else if (!panel) { // If panel doesn't exist yet, show button
+                           toggleBtn.style.display = 'flex';
+                        } else { // If panel exists and is visible, hide button
+                          toggleBtn.style.display = 'none';
+                        }
+
+                      } catch (error) {
+                        showDebugOverlay("ERROR in createToggleButton: " + error.message);
+                        console.error("Error in createToggleButton:", error);
+                      }
       }
 
       // Function to create the bottom panel
