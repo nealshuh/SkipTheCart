@@ -31,7 +31,13 @@
     "content_scripts": [
         {
             "matches": ["*://*.zara.com/*", "*://*.hm.com/*", "*://*.aritzia.com/*", "*://*.abercrombie.com/*", "*://*.edikted.com/*", "*://*.princesspolly.com/*", "*://*.revolve.com/*", "*://*.ohpolly.com/*", "*://*.fashionnova.com/*", "*://*.urbanoutfitters.com/*", "*://*.brandymelville.com/*"],
-            "js": ["content.js"],
+            "js": [
+                    "siteConfigs.js",
+                    "content.js",
+                    "uiElements.js",
+                    "processItems.js",
+                    "itemProcessors.js"
+                  ],
             "run_at": "document_end"
         }
     ],

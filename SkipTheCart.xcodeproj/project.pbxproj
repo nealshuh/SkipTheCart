@@ -115,8 +115,12 @@
 				Resources/content.css,
 				Resources/content.js,
 				Resources/images,
+				Resources/itemProcessors.js,
 				Resources/manifest.json,
 				Resources/manifest2.json,
+				Resources/processItems.js,
+				Resources/siteConfigs.js,
+				Resources/uiElements.js,
 				WebExtensionHandler.swift,
 			);
 			target = 1F07C4332D729B3800755618 /* SkipTheCart Extension (iOS) */;
@@ -129,8 +133,12 @@
 				Resources/content.css,
 				Resources/content.js,
 				Resources/images,
+				Resources/itemProcessors.js,
 				Resources/manifest.json,
 				Resources/manifest2.json,
+				Resources/processItems.js,
+				Resources/siteConfigs.js,
+				Resources/uiElements.js,
 				WebExtensionHandler.swift,
 			);
 			target = 1F07C43D2D729B3800755618 /* SkipTheCart Extension (macOS) */;
